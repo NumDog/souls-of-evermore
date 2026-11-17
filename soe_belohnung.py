@@ -1,0 +1,48 @@
+# Belohnung waechst mit der Schwierigkeit: Erfahrung und Geld der Gegner x Faktor
+# (Normal x1, Schwer x1,5, Sehr schwer x2, Extrem x3, Wahnsinn x5, Albtraum x10; Stufe in SRAM $30:7E91, Bit0 von 7E90 = Normal).
+# Erfahrung (32 Bit, Vorlage +0x23/+0x25): 8F:8292 Junge (0A49/0A4B), 8F:82D4 Hund (0A93/0A95). Geld (Vorlage +0x27): 8F:866E.
+import sys; sys.path.insert(0, __file__.rsplit('/',1)[0]); from asm import assemble
+pfad = sys.argv[1]
+d = bytearray(open(pfad,'rb').read()); H = len(d) % 1024; r = memoryview(d)[H:]
+def at(x): return x & 0x3FFFFF if (x>>16) >= 0xC0 else (((x>>16)&0x3F)<<16)|(x&0xFFFF)
+CODE, NUM = 0xF03E00, 0xF03F00
+# SRAM-Zwischenspeicher: 7EF8/7EFA Wert (lo/hi), 7EFC/7EFE Basis (lo/hi)
+def lng(a): return [a&0xFF, (a>>8)&0xFF, a>>16]
+V0, V1, B0, B1 = 0x307EF8, 0x307EFA, 0x307EFC, 0x307EFE
+code, lab = assemble(CODE, [
+  # ---- Erfahrung Junge
+  'xpj:', [0xBF,0x23,0x00,0x8E, 0x8F]+lng(V0), [0xBF,0x25,0x00,0x8E, 0x8F]+lng(V1), ('jsr','skal'),
+  [0x18, 0xAF]+lng(V0), [0x6F,0x49,0x0A,0x7E, 0x8F,0x49,0x0A,0x7E, 0xAF]+lng(V1), [0x6F,0x4B,0x0A,0x7E, 0x8F,0x4B,0x0A,0x7E, 0x6B],
+  # ---- Erfahrung Hund
+  'xph:', [0xBF,0x23,0x00,0x8E, 0x8F]+lng(V0), [0xBF,0x25,0x00,0x8E, 0x8F]+lng(V1), ('jsr','skal'),
+  [0x18, 0xAF]+lng(V0), [0x6F,0x93,0x0A,0x7E, 0x8F,0x93,0x0A,0x7E, 0xAF]+lng(V1), [0x6F,0x95,0x0A,0x7E, 0x8F,0x95,0x0A,0x7E, 0x6B],
+  # ---- Geld (16 Bit, Deckel FFFF)
+  'geld:', [0xBF,0x27,0x00,0x8E, 0x8F]+lng(V0), [0xA9,0x00,0x00, 0x8F]+lng(V1), ('jsr','skal'),
+  [0xAF]+lng(V1), ('bra8',0xF0,'g_ok'), [0xA9,0xFF,0xFF, 0x6B], 'g_ok:', [0xAF]+lng(V0), [0x6B],
+  # ---- skal: (V1:V0) *= Faktor. Normal -> unveraendert. Stufe 0: x3/2, 1: x2, 2: x3, 3: x5, 4: x10
+  'skal:', [0xDA, 0xAF,0x90,0x7E,0x30, 0x4A], ('bra8',0x90,'s_hart'), [0xFA, 0x60],
+  's_hart:', [0xAF,0x90,0x7E,0x30, 0xEB, 0x29,0xFF,0x00, 0xC9,0x05,0x00], ('bra8',0x90,'s_lv'), [0xA9,0x00,0x00],
+  's_lv:', [0x48],                                                               # Stufe merken
+  [0xAA, 0xBF]+lng(NUM), [0x29,0xFF,0x00, 0xAA],                                 # X = Faktor (Zaehler)
+  [0xAF]+lng(V0), [0x8F]+lng(B0), [0xAF]+lng(V1), [0x8F]+lng(B1),
+  [0xA9,0x00,0x00, 0x8F]+lng(V0), [0x8F]+lng(V1),
+  's_add:', [0x18, 0xAF]+lng(V0), [0x6F]+lng(B0), [0x8F]+lng(V0), [0xAF]+lng(V1), [0x6F]+lng(B1), [0x8F]+lng(V1), [0xCA], ('bra8',0xD0,'s_add'),
+  [0x68], ('bra8',0xD0,'s_fertig'),                                              # Stufe 0 (Schwer): noch /2
+  [0xAF]+lng(V1), [0x4A, 0x8F]+lng(V1), [0xAF]+lng(V0), [0x6A, 0x8F]+lng(V0),
+  's_fertig:', [0xFA, 0x60],
+])
+num = bytes([3, 2, 3, 5, 10])
+for adr, c in ((CODE, code), (NUM, num)):
+    o = at(adr); assert all(b == 0xFF for b in r[o:o+len(c)]), hex(adr); r[o:o+len(c)] = c
+assert CODE + len(code) <= NUM
+def jsl(x): return bytes([0x22, x&0xFF, (x>>8)&0xFF, x>>16])
+for site, orig, ziel in (
+    (0x8F8292, bytes.fromhex('bf23008e186d490a8d490abf25008e6d4b0a8d4b0a'), lab['xpj']),
+    (0x8F82D4, bytes.fromhex('bf23008e186d930a8d930abf25008e6d950a8d950a'), lab['xph']),
+    (0x8F866E, bytes.fromhex('bf27008e'), lab['geld'])):
+    o = at(site); assert bytes(r[o:o+len(orig)]) == orig, (hex(site), bytes(r[o:o+len(orig)]).hex())
+    r[o:o+len(orig)] = jsl(ziel) + b'\xEA' * (len(orig) - 4)
+h = 0xFFC0
+for _ in range(2):
+    c = sum(r) & 0xFFFF; r[h+0x1E:h+0x20] = c.to_bytes(2,'little'); r[h+0x1C:h+0x1E] = (c^0xFFFF).to_bytes(2,'little')
+open(pfad,'wb').write(d); print("Belohnung je Schwierigkeit eingebaut, %d Bytes" % len(code))

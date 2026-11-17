@@ -1,0 +1,10 @@
+*.smc
+*.sfc
+*.srm
+*.bin
+*.png
+*.log
+mesen/
+work/
+.DS_Store
+__pycache__/

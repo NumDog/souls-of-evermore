@@ -1,0 +1,62 @@
+Secret of Evermore (deutsch) – Mod "Evermore Plus"  (Beta, Stand v73)
+=====================================================================
+
+Ein Patch für die DEUTSCHE Version von Secret of Evermore (SNES).
+Die ROM ist NICHT enthalten. Du brauchst deine eigene, legal erstellte Kopie.
+
+Passende ROM
+------------
+- Secret of Evermore (Deutschland), ohne 512-Byte-Header
+- CRC32: 27F60E77
+- Mit Header (.smc mit 512 Byte mehr) vorher den Header entfernen.
+  ROM Patcher JS (https://www.marcrobledo.com/RomPatcher.js/) kann das automatisch.
+
+Patch anwenden
+--------------
+1. ROM Patcher JS im Browser öffnen (oder Floating IPS / "Flips").
+2. Deine ROM und die Datei SoE-DE-Evermore-Plus-v73-beta.bps auswählen.
+3. "Apply patch" – fertig. Ergebnis: 4 MB ROM, läuft z. B. in OpenEmu, snes9x, bsnes, Mesen.
+
+Was ist neu?
+------------
+Einstellungsmenü nach "Neues Spiel":
+- Gegner: Original / Ähnlich / Gebiet / Chaos, jeweils fest oder "je Raum neu"
+- Schwierigkeit: Normal (Original) / Schwer x1,5 / Sehr schwer x2 / Extrem x3 / Wahnsinn x5 / Albtraum x10
+  (Lebenspunkte und Angriff der Gegner; Erfahrung und Geld wachsen im selben Maß mit)
+- Fundsachen: Original oder Zufall (fest pro Durchgang / immer neu)
+- Händler: Original oder Zufall mit Original-Preisen, ohne doppelte Waren
+
+New Game+:
+- Nach dem Abspann ("ENDE") geht es mit Level, Ausrüstung und Formeln weiter: "New Game +N"
+- Gegner pro Zyklus stärker (NG+1 x3, NG+2 x4 ... bis x10) plus Level-Bonus
+- Story-Gegenstände (Bronze-Axt, Bronze-Speer, Telekinese, Enthüller, Matschpfeffer) kommen neu
+
+Waffen und Formeln:
+- Waffe doppelt geschenkt/gefunden = "+1" (jeweils +50 % Kraft, bis +15), im Ring-Menü mit echter Kraft sichtbar
+- Formel doppelt gelernt = Stufe +1
+- Startwaffe je nach Einstellung: Knochenknüppel, Drachentöter oder Laserschwert
+  (auf Schwer mit kleinem Spruch des Jungen)
+
+Zufall:
+- Sonderfunde (Rüstung, Waffe, Formel): Chaos 100 % -> -10 % pro Fund, Gebiet 50 % -> -5 %,
+  Ähnlich 5 %, Original auf Schwer 5 %; ab Extrem (x3) in allen Modi 100 % -> -5 % pro Fund
+- Waffen aus dem Zufall gibt es pro Durchgang nur einmal, mit Meldung "<Waffe> erhalten!"
+- Zauberperlen- und Matschpfeffer-Fundstellen bleiben original (Story)
+
+Sonstiges:
+- Kein Game Over mehr (alle Einstellungen). Der Junge wacht mit vollen LP am Eingang des Raums wieder auf (in Bossräumen an Ort und Stelle),
+  sein Geld bleibt an der Todesstelle liegen; dort hinlaufen holt es zurück (stirbt man vorher erneut, ist es weg)
+- Vulgor mit doppelten Lavawürmern; nach der Belohnung (neue Waffe) rächen ihn bis zu 10 starke Raptoren. Mindestschaden im NG+
+- Geräusche fremder Gegner (Zufall, Rache-Raptoren) sind stumm statt falsch
+- Sicherheitsnetz: Fällt der Ton aus, läuft das Spiel stumm weiter statt zu hängen
+
+Bekannte Grenzen (Beta)
+-----------------------
+- Fremde Gegner (Chaos/Ähnlich) haben teils falsche Farben.
+- Gebiet hat eine feste Gegnerliste bisher nur für Prähistorika; andere Epochen lernen beim Spielen.
+- Noch nicht komplett durchgespielt. Fehler gern melden (Screenshot + Spielstand).
+
+Rechtliches
+-----------
+Secret of Evermore ist (c) Square / Square Enix. Dies ist ein nicht-kommerzielles Fan-Projekt.
+Der Patch enthält keine Daten des Originalspiels außer den geänderten Stellen.
