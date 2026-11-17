@@ -1,4 +1,5 @@
-# Formel +1: Setzt ein Skript das "Formel gelernt"-Bit (Flag 0..34 bei $2258..) erneut, steigt die Alchemie-Stufe (+1, max 9).
+# Formel +N: Setzt ein Skript das "Formel gelernt"-Bit (Flag 0..34 bei $2258..) erneut, steigt der Formel-Zaehler +N
+# (Nibble je Formel in 7E:20B0..20C1, max 15; v88 – vorher Alchemie-Stufe +1). Schaden x1,25 je +N siehe soe_formel_kraft.py.
 # Hook: 8C:DC49 (ORA $0000,X ; STA $0000,X im Skriptbefehl "Flag setzen", A = 8 bit Maske, X = Flag-Byte-Adresse)
 import sys; sys.path.insert(0, __file__.rsplit('/',1)[0]); from asm import assemble
 pfad = sys.argv[1]
@@ -15,8 +16,13 @@ code,_ = assemble(ALCH, [
   [0xE2,0x20, 0xA3,0x06],                     # SEP #$20 ; LDA 6,S (Maske)
   'such:', [0x4A], ('bra8',0xB0,'gefunden'), [0xC8], ('bra8',0x80,'such'),
   'gefunden:', [0xC2,0x20, 0x98, 0xC9,35,0x00], ('bra8',0xB0,'raus'),
-  [0x0A,0xAA, 0xBF,0x98,0x2F,0x7E, 0xC9,0x09,0x00], ('bra8',0xB0,'raus'),
-  [0x1A, 0x9F,0x98,0x2F,0x7E],                # Stufe +1
+  # v88 (Max): nicht mehr Stufe +1, sondern eigener Zaehler +N (Nibble in 7E:20B0 + i/2, gerade i = unten), max 15
+  [0x8F,0x30,0xE3,0x7E],                      # Formel-Nr. fuer die Meldung (7E:E330)
+  [0x4A, 0xAA, 0xE2,0x20, 0xBF,0xB0,0x20,0x7E], ('bra8',0xB0,'hoch'),          # Carry = ungerade
+  [0x29,0x0F, 0xC9,0x0F], ('bra8',0xF0,'z_voll'), [0xBF,0xB0,0x20,0x7E, 0x1A], ('bra8',0x80,'z_st'),
+  'hoch:', [0x29,0xF0, 0xC9,0xF0], ('bra8',0xF0,'z_voll'), [0xBF,0xB0,0x20,0x7E, 0x18, 0x69,0x10],
+  'z_st:', [0x9F,0xB0,0x20,0x7E],
+  'z_voll:', [0xC2,0x20],
   'raus:', [0x28,0x7A,0xFA],                  # PLP PLY PLX
   'neu:', [0x68, 0x1D,0x00,0x00, 0x9D,0x00,0x00, 0x6B],   # PLA ; ORA $0000,X ; STA $0000,X ; RTL
 ])
