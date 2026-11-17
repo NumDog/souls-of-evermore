@@ -7,7 +7,7 @@ pfad = sys.argv[1]
 d = bytearray(open(pfad,'rb').read()); H = len(d) % 1024; r = memoryview(d)[H:]
 def at(x): return x & 0x3FFFFF if (x>>16) >= 0xC0 else (((x>>16)&0x3F)<<16)|(x&0xFFFF)
 CODE = 0xF05C00
-ZEILEN = ["Secret of Evermore - Evermore Plus",
+ZEILEN = ["Souls of Evermore",
           "Mod-Design und Idee: " + D.NAME,
           "Umsetzung: " + D.NAME,
           "Neues Spiel starten = New Game +",
