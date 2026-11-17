@@ -85,6 +85,7 @@ assert NEUSIG != J['sig1']
 NMI = 0xF07100
 KADR = DAT + len(DATA)
 nmi, nlab = assemble(NMI, [
+  [0x22,0x00,0x80,0xF0],                                                 # ENDE-Bildschirm (soe_ende_bild.py)
   [0xDA, 0x5A],
   [0xAF,FLAG&0xFF,(FLAG>>8)&0xFF,FLAG>>16], ('bra8',0xF0,'n_aus'),
   [0xAF,TIM&0xFF,(TIM>>8)&0xFF,TIM>>16, 0xC9,0x78,0x05], ('bra8',0xB0,'n_los'),     # erst nach ~1400 Bildern (Logo fertig, Copyright da)
