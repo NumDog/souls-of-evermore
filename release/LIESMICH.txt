@@ -1,4 +1,4 @@
-Secret of Evermore (deutsch) – Mod "Evermore Plus"  (Beta, Stand v76)
+Secret of Evermore (deutsch) – Mod "Evermore Plus"  (Beta, Stand v81)
 =====================================================================
 
 Ein Patch für die DEUTSCHE Version von Secret of Evermore (SNES).
@@ -14,7 +14,7 @@ Passende ROM
 Patch anwenden
 --------------
 1. ROM Patcher JS im Browser öffnen (oder Floating IPS / "Flips").
-2. Deine ROM und die Datei SoE-DE-Evermore-Plus-v76-beta.bps auswählen.
+2. Deine ROM und die Datei SoE-DE-Evermore-Plus-v81-beta.bps auswählen.
 3. "Apply patch" – fertig. Ergebnis: 4 MB ROM, läuft z. B. in OpenEmu, snes9x, bsnes, Mesen.
 
 Was ist neu?
