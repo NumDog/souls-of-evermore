@@ -105,7 +105,8 @@ def stuecke(t, n=22): return [t[i:i+n] for i in range(0, len(t), n)] or ['']
 HINWEIS = 'A: weiter   B: zurueck'
 SEITEN = [['Evermore Plus - Info', 'Mod von: '+INFO_NAME, INFO_MAIL] + INFO_TEXT,
           ['Trinkgeld Ethereum (ETH):'] + ['  '+x for x in stuecke(INFO_ETH)],
-          ['Trinkgeld Bitcoin (BTC):'] + ['  '+x for x in stuecke(INFO_BTC)]]
+          ['Trinkgeld Bitcoin (BTC):'] + ['  '+x for x in stuecke(INFO_BTC)],
+          ['Trinkgeld Solana (SOL):'] + ['  '+x for x in stuecke(D.SOL)]]
 iz = []
 for sz in SEITEN:
     sz = sz[:4] + [''] * (4 - len(sz[:4])) + [HINWEIS]; assert len(sz) == 5

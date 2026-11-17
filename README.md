@@ -3,7 +3,7 @@
 Eine Fan-Mod für die **deutsche SNES-Version von Secret of Evermore**.
 Im Spiel heißt sie noch „Evermore Plus“. Mehr Herausforderung, mehr Zufall, ein New Game+ – und ein Tod wie in Dark Souls.
 
-> **Beta (Stand v73):** Noch nicht komplett durchgespielt. Fehler gern melden (am besten mit Screenshot und Spielstand).
+> **Beta (Stand v74):** Noch nicht komplett durchgespielt. Fehler gern melden (am besten mit Screenshot und Spielstand).
 
 ## Hauptfunktionen
 
@@ -23,7 +23,7 @@ Die ausführliche Liste steht in [`release/LIESMICH.txt`](release/LIESMICH.txt).
 
 1. ROM: *Secret of Evermore (Deutschland)*, ohne 512-Byte-Header, **CRC32 `27F60E77`**.
 2. Einen BPS-Patcher öffnen, z. B. [Rom Patcher JS](https://www.marcrobledo.com/RomPatcher.js/) (im Browser, entfernt einen Header automatisch) oder Floating IPS (Flips).
-3. ROM und [`release/SoE-DE-Evermore-Plus-v73-beta.bps`](release/) auswählen und anwenden.
+3. ROM und [`release/SoE-DE-Evermore-Plus-v74-beta.bps`](release/) auswählen und anwenden.
 4. Die fertige 4-MB-ROM läuft z. B. in OpenEmu, snes9x, bsnes oder Mesen.
 
 ## Selbst bauen
@@ -37,6 +37,7 @@ Werkzeuge: `asm.py` (Mini-Assembler), `dis65816.py` (Disassembler), `bps.py` (BP
 - E-Mail: numdoks@gmail.com
 - BTC: `bc1pfky3u0htczylv8tdf2jjcclhdc005e294rljvcwutcwjgqak67rswl2nv3`
 - ETH: `0xcDf1355E4365A2ad842F0333E4737372D2128064`
+- SOL: `3paG1KXBdFamy7cBVxvHj1yKQ9XGgm4bWHzYQhDoqNKJ`
 
 ## Rechtliches
 
