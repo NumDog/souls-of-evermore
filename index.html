@@ -47,6 +47,16 @@
   .tipp { display: grid; gap: 10px; }
   .tipp div { background: var(--karte); border: 1px solid var(--rand); border-radius: 8px; padding: 10px 14px; }
   .tipp b { color: var(--gold2); display: inline-block; min-width: 4.5em; }
+  .knopf.spende { background: linear-gradient(#ff8fa3, #d6335a); color: #fff; box-shadow: 0 4px 0 #7a1630; }
+  .spenden { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 18px; }
+  .spenden .karte { text-align: center; padding-bottom: 6px; }
+  .spenden .karte img { width: 70%; max-width: 220px; margin: 18px auto 8px; border: 0; background: #fff; border-radius: 6px; }
+  .kopie { background: var(--gold); color: #231500; border: 0; border-radius: 6px; padding: 6px 12px; font-weight: 700; cursor: pointer; margin-top: 8px; }
+  .galerie { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+  .galerie figure { margin: 0; background: var(--karte); border: 1px solid var(--rand); border-radius: 8px; overflow: hidden; }
+  .galerie img { width: 100%; display: block; }
+  .galerie figcaption { padding: 8px 12px; color: var(--leise); font-size: .9rem; }
+  .forum { background: var(--karte); border: 1px solid var(--rand); border-radius: 10px; padding: 20px 22px; }
   footer { border-top: 1px solid var(--rand); color: var(--leise); text-align: center; padding: 28px 16px 40px; font-size: .9rem; }
   @media (max-width: 520px) { body { font-size: 16px; } ol.schritte li { padding-left: 56px; } }
 </style>
@@ -59,7 +69,9 @@
     <h1>Souls of Evermore</h1>
     <p class="unter">Eine Fan-Mod für die deutsche SNES-Version von <i>Secret of Evermore</i> – härter, zufälliger, mit Dark-Souls-Tod und New Game+.</p>
     <a class="knopf" href="release/Souls-of-Evermore-v87-beta.bps" download>Patch herunterladen (v87 Beta)</a>
+    <a class="knopf spende" href="#spenden">♥ Spenden</a>
     <a class="knopf zwei" href="#anleitung">So spielst du</a>
+    <a class="knopf zwei" href="#forum">Ideen &amp; Forum</a>
     <p class="klein">Nur der Patch – du brauchst deine eigene, legal erworbene deutsche ROM.</p>
   </div>
 </header>
@@ -69,11 +81,11 @@
 <section id="funktionen">
   <h2>Was ist neu?</h2>
   <div class="raster">
-    <div class="karte"><img class="pix" src="img/menue.png" alt="Einstellungsmenü"><div>
+    <div class="karte"><img src="img/albtraum.jpg" alt="Einstellungsmenü mit Albtraum x10"><div>
       <h3>Einstellungen vor dem Start</h3>
       <p>Gegner original, ähnlich, aus dem Gebiet oder komplettes Chaos – fest oder je Raum neu. Schwierigkeit von <b>Normal</b> bis <b>Albtraum x10</b>, Fundsachen und Händler wahlweise zufällig.</p>
     </div></div>
-    <div class="karte"><img class="pix" src="img/kreis.png" alt="Blauer Kreis an der Todesstelle"><div>
+    <div class="karte"><img src="img/geld_liegt.jpg" alt="Geld bleibt hier liegen"><div>
       <h3>Tod wie bei Dark Souls</h3>
       <p>Statt Hauptmenü wachst du am Raumeingang auf. Dein Geld bleibt an der Todesstelle liegen – ein blauer Kreis zeigt sie. Hol es zurück, bevor du noch einmal stirbst!</p>
     </div></div>
@@ -81,11 +93,11 @@
       <h3>Der Goldene Vulgor</h3>
       <p>Nach dem ersten Sieg wartet einmal pro Durchgang ein goldener Vulgor – fünfmal so stark. Wer stirbt, landet vor dem Eingang und versucht es erneut.</p>
     </div></div>
-    <div class="karte"><img class="pix" src="img/orb.png" alt="Waffen-Orb"><div>
+    <div class="karte"><img src="img/orb_gold.jpg" alt="Waffen-Orb am goldenen Vulgor"><div>
       <h3>Waffen-Orb &amp; Vulgors Rache</h3>
       <p>Der Sieg bringt einen <b>Waffen-Orb</b>: deine ausgerüstete Waffe wird +1. Danach stürmen zehn starke Raptoren die Arena.</p>
     </div></div>
-    <div class="karte"><img class="pix" src="img/ende.png" alt="ENDE-Bildschirm mit New Game+"><div>
+    <div class="karte"><img src="img/ngplus.jpg" alt="New Game +1 im Lade-Menü"><div>
       <h3>New Game+</h3>
       <p>Nach dem Abspann startest du mit Level, Waffen und Ausrüstung neu – die Gegner werden mit jedem Durchgang stärker, Waffen sammeln +N.</p>
     </div></div>
@@ -120,14 +132,45 @@
   </table>
 </section>
 
-<section id="kontakt">
-  <h2>Kontakt &amp; Trinkgeld</h2>
-  <p>Souls of Evermore ist ein Hobby-Projekt von <b>Max Gisbrecht</b>. Fehler gefunden? Schreib mir an <a href="mailto:numdoks@gmail.com">numdoks@gmail.com</a> – am besten mit Screenshot und Spielstand. Wenn dir die Mod gefällt, freue ich mich über ein Trinkgeld:</p>
-  <div class="tipp">
-    <div><b>ETH</b> <code>0xcDf1355E4365A2ad842F0333E4737372D2128064</code></div>
-    <div><b>BTC</b> <code>bc1pfky3u0htczylv8tdf2jjcclhdc005e294rljvcwutcwjgqak67rswl2nv3</code></div>
-    <div><b>SOL</b> <code>3paG1KXBdFamy7cBVxvHj1yKQ9XGgm4bWHzYQhDoqNKJ</code></div>
+
+<section id="galerie">
+  <h2>Aus dem Spiel</h2>
+  <div class="galerie">
+    <figure><img src="img/jedi1.jpg" alt=""><figcaption>Schwer gewählt? Dann bringt der Hund das Laserschwert …</figcaption></figure>
+    <figure><img src="img/jedi2.jpg" alt=""><figcaption>„Verdammt, wir haben SCHWER eingestellt!“</figcaption></figure>
+    <figure><img src="img/jedi3.jpg" alt=""><figcaption>„Ab jetzt bin ich ein Jedi und du bist mein haariger Kumpel!“</figcaption></figure>
+    <figure><img src="img/chaos.jpg" alt=""><figcaption>Chaos-Modus: fremde Gegner in jedem Raum</figcaption></figure>
+    <figure><img src="img/geld_zurueck.jpg" alt=""><figcaption>Geld an der Todesstelle wiedergefunden</figcaption></figure>
+    <figure><img src="img/raptoren.jpg" alt=""><figcaption>Vulgors Rache: zehn Raptoren</figcaption></figure>
+    <figure><img src="img/tarantel.jpg" alt=""><figcaption>Waffen sammeln +N – Tarantelaxt +2</figcaption></figure>
+    <figure><img src="img/laser15.jpg" alt=""><figcaption>… bis zum Laserschwert +15 im New Game+</figcaption></figure>
+    <figure><img class="pix" src="img/ende.png" alt=""><figcaption>Das Ende – und New Game+ ist freigeschaltet</figcaption></figure>
   </div>
+</section>
+
+<section id="forum">
+  <h2>Ideen &amp; Forum</h2>
+  <div class="forum">
+    <p>Du hast eine Idee für die nächste Version, einen Fehler gefunden oder willst einfach von deinem Albtraum-Durchgang erzählen? Im Forum sammeln wir Ideen und beantworten Fragen.</p>
+    <p><a class="knopf" href="https://github.com/NumDog/souls-of-evermore/discussions" target="_blank" rel="noopener">Zum Forum (GitHub Discussions)</a>
+       <a class="knopf zwei" href="https://github.com/NumDog/souls-of-evermore/discussions/new?category=ideas" target="_blank" rel="noopener">Neue Idee einreichen</a></p>
+    <p class="klein">Zum Schreiben brauchst du ein kostenloses GitHub-Konto.</p>
+  </div>
+</section>
+
+<section id="spenden">
+  <h2>♥ Spenden</h2>
+  <p>Souls of Evermore ist kostenlos. Wenn dir die Mod Spaß macht, freue ich mich über ein Trinkgeld – jeder Betrag hilft, weiterzubauen.</p>
+  <div class="spenden">
+    <div class="karte"><img src="img/qr_eth.png" alt="QR-Code Ethereum"><div><h3>Ethereum (ETH)</h3><code id="a_eth">0xcDf1355E4365A2ad842F0333E4737372D2128064</code><br><button class="kopie" data-ziel="a_eth">Adresse kopieren</button></div></div>
+    <div class="karte"><img src="img/qr_btc.png" alt="QR-Code Bitcoin"><div><h3>Bitcoin (BTC)</h3><code id="a_btc">bc1pfky3u0htczylv8tdf2jjcclhdc005e294rljvcwutcwjgqak67rswl2nv3</code><br><button class="kopie" data-ziel="a_btc">Adresse kopieren</button></div></div>
+    <div class="karte"><img src="img/qr_sol.png" alt="QR-Code Solana"><div><h3>Solana (SOL)</h3><code id="a_sol">3paG1KXBdFamy7cBVxvHj1yKQ9XGgm4bWHzYQhDoqNKJ</code><br><button class="kopie" data-ziel="a_sol">Adresse kopieren</button></div></div>
+  </div>
+</section>
+
+<section id="kontakt">
+  <h2>Kontakt</h2>
+  <p>Souls of Evermore ist ein Hobby-Projekt von <b>Max Gisbrecht</b>. Fehler gefunden? Schreib mir an <a href="mailto:numdoks@gmail.com">numdoks@gmail.com</a> – am besten mit Screenshot und Spielstand – oder poste es im <a href="#forum">Forum</a>. Den Quellcode findest du auf <a href="https://github.com/NumDog/souls-of-evermore" target="_blank" rel="noopener">GitHub</a>.</p>
 </section>
 
 </main>
@@ -137,5 +180,13 @@
   Es wird keine ROM verteilt – nur ein Patch für deine eigene Kopie.</p>
 </footer>
 
+<script>
+document.querySelectorAll('.kopie').forEach(b => b.addEventListener('click', async () => {
+  const t = document.getElementById(b.dataset.ziel).textContent;
+  try { await navigator.clipboard.writeText(t); b.textContent = 'Kopiert ✓'; }
+  catch (e) { b.textContent = 'Bitte markieren & kopieren'; }
+  setTimeout(() => b.textContent = 'Adresse kopieren', 2000);
+}));
+</script>
 </body>
 </html>
