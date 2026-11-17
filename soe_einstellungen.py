@@ -114,18 +114,57 @@ for sz in SEITEN:
     iz += sz
 PAGE, TMP2 = 0x307FD8, 0x307FDA
 NP = len(SEITEN)
-INFOTXT = INFO + 0x200
+INFOTXT = INFO + 0x400
 iblob = bytearray(); iptr = []
 for t in iz: iptr.append(INFOTXT + len(iblob)); iblob += (' ' + t).encode('ascii') + b'\x00'
 IPTR = INFOTXT + len(iblob) + (len(iblob) & 1)
 iptab = b''.join((p & 0xFFFF).to_bytes(2,'little') for p in iptr)
+# ---- QR-Codes fuer die Trinkgeld-Seiten (Seite 1..3): erzeugt mit tools/qr (macOS CoreImage), 4 Pixel je Punkt,
+# je Kachel 2x2 Punkte -> 16 Kachelmuster (BG2, 2bpp, Kacheln 0x3CD.., Farbe 1 hell / 2 dunkel aus Palette 0).
+# Karte 19x19 Kacheln ab Zeile 6 / Spalte 6 in die BG2-Spiegelkarte 7F:C800 (Original vorher nach 7E:E400 gesichert).
+import subprocess, os as _os
+QRTOOL = _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), 'tools', 'qr')
+def qr_matrix(text):
+    for lvl in ('M', 'L'):
+        rows = [l.strip() for l in subprocess.run([QRTOOL, 'gen', text, lvl], capture_output=True, text=True, check=True).stdout.split() if l.strip()]
+        m = [r[1:-1] for r in rows[1:-1]]          # CoreImage-Rand (1 Punkt) weg
+        if len(m) <= 34: return m
+    raise SystemExit('QR zu gross: ' + text)
+KACHEL0, QZ, QS = 0x3CD, 6, 6                    # erste Kachel, Zeile, Spalte
+def qr_karte(text):
+    m = qr_matrix(text); n = len(m); o = (38 - n) // 2
+    dunkel = lambda y, x: 0 <= y - o < n and 0 <= x - o < n and m[y-o][x-o] == '1'
+    out = b''
+    for ty in range(19):
+        for tx in range(19):
+            p = (dunkel(2*ty,2*tx) << 3) | (dunkel(2*ty,2*tx+1) << 2) | (dunkel(2*ty+1,2*tx) << 1) | dunkel(2*ty+1,2*tx+1)
+            out += (0x2000 | (KACHEL0 + p)).to_bytes(2, 'little')
+    return out
+def kachel(p):
+    t = b''
+    for r in range(8):
+        l = (p >> 3) & 1 if r < 4 else (p >> 1) & 1; rr = (p >> 2) & 1 if r < 4 else p & 1
+        dk = (0xF0 if l else 0) | (0x0F if rr else 0)
+        t += bytes([dk ^ 0xFF, dk])                 # Ebene 0 = hell (Farbe 1), Ebene 1 = dunkel (Farbe 2)
+    return t
+QRDAT = 0xF06000
+KACHELN = b''.join(kachel(p) for p in range(16))
+KARTEN = qr_karte(D.ETH) + qr_karte(D.BTC) + qr_karte(D.SOL)
+Q_MIR = QRDAT + len(KACHELN) + len(KARTEN)          # 19 Zieladressen (Spiegel 7F)
+Q_BAK = Q_MIR + 38                                  # 19 Sicherungsadressen (7E:E400..)
+Q_SRC = Q_BAK + 38                                  # 57 Quelladressen (Bank F0)
+qtab  = b''.join((0xC800 + ((QZ+r)*32 + QS)*2).to_bytes(2,'little') for r in range(19))
+qtab += b''.join((0xE400 + r*38).to_bytes(2,'little') for r in range(19))
+qtab += b''.join(((QRDAT + len(KACHELN) + q*722 + r*38) & 0xFFFF).to_bytes(2,'little') for q in range(3) for r in range(19))
+qblob = KACHELN + KARTEN + qtab
+R_, QB_, AKT_ = 0x7EE300, 0x7EE302, 0x7EE304
 icode, _ = assemble(INFO, [
-  [0xA9,0x00,0x00, 0x8F]+lng(PAGE),
-  'i_draw:', ('jsr','seite'),
+  [0xA9,0x00,0x00, 0x8F]+lng(PAGE), [0x8F]+lng(AKT_), ('jsr','kacheln'),
+  'i_draw:', ('jsr','seite'), ('jsr','qr'),
   'i_loop:', [0xAF,0x00,0x01,0x7E, 0x8F]+lng(BILD),
   'i_warte:', [0xAF,0x00,0x01,0x7E, 0xCF]+lng(BILD), ('bra8',0xF0,'i_warte'),
   [0xAF,0x18,0x42,0x00, 0x48, 0xAF]+lng(PAD), [0x49,0xFF,0xFF, 0x23,0x01, 0x83,0x01, 0xAF,0x18,0x42,0x00, 0x8F]+lng(PAD),
-  [0xA3,0x01, 0x89,0x00,0x90], ('bra8',0xF0,'i_kein_b'), [0x68, 0x60],          # B oder Start -> zurueck
+  [0xA3,0x01, 0x89,0x00,0x90], ('bra8',0xF0,'i_kein_b'), ('jsr','qr_aus'), [0x68, 0x60],   # B oder Start -> zurueck
   'i_kein_b:', [0xA3,0x01, 0x89,0x80,0x00], ('bra8',0xF0,'i_kein_a'),
   [0xAF]+lng(PAGE), [0x1A, 0xC9,NP,0x00], ('bra8',0x90,'i_p_ok'), [0xA9,0x00,0x00],
   'i_p_ok:', [0x8F]+lng(PAGE), [0x68], ('jmp','i_draw'),
@@ -140,9 +179,32 @@ icode, _ = assemble(INFO, [
   [0x22,0x98,0xA1,0x8C],
   [0xFA, 0xE8, 0xE0,0x05,0x00], ('bra8',0xD0,'s_loop'),
   [0x22,0x97,0xB3,0x8C, 0x60],
+  # --- 16 QR-Kacheln nach VRAM (Bild kurz aus; direkt nach dem Bildwechsel aufgerufen)
+  'kacheln:', [0x08, 0xE2,0x20, 0xA9,0x80, 0x8F,0x00,0x21,0x00, 0x8F,0x15,0x21,0x00, 0xC2,0x20],
+  [0xA9]+list((KACHEL0*8).to_bytes(2,'little')), [0x8F,0x16,0x21,0x00, 0xA9,0x01,0x18, 0x8F,0x10,0x43,0x00],
+  [0xA9]+list((QRDAT & 0xFFFF).to_bytes(2,'little')), [0x8F,0x12,0x43,0x00, 0xA9]+list(len(KACHELN).to_bytes(2,'little')), [0x8F,0x15,0x43,0x00],
+  [0xE2,0x20, 0xA9,0xF0, 0x8F,0x14,0x43,0x00, 0xA9,0x02, 0x8F,0x0B,0x42,0x00, 0xA9,0x0F, 0x8F,0x00,0x21,0x00, 0x28, 0x60],
+  # --- QR zeigen (Seite 1..3) bzw. wegnehmen (Seite 0)
+  'qr:', [0xAF]+lng(PAGE), ('bra8',0xD0,'qr_an'), ('jmp','qr_aus'),
+  'qr_an:', [0x3A, 0x8F]+lng(QB_), [0x0A,0x0A,0x0A,0x0A, 0x18, 0x6F]+lng(QB_), [0x18, 0x6F]+lng(QB_), [0x0A, 0x8F]+lng(QB_),   # QB = q*38
+  [0x8B, 0xAF]+lng(AKT_), ('bra8',0xD0,'q_kopie'),
+  [0xA9,0x00,0x00, 0x8F]+lng(R_),                                                       # Original sichern (7F -> 7E)
+  'q_b:', [0xAF]+lng(R_), [0x0A, 0xAA, 0xBF]+lng(Q_BAK), [0xA8, 0xBF]+lng(Q_MIR), [0xAA, 0xA9,37,0x00, 0x54,0x7E,0x7F],
+  [0xAF]+lng(R_), [0x1A, 0x8F]+lng(R_), [0xC9,19,0x00], ('bra8',0x90,'q_b'),
+  [0xA9,0x01,0x00, 0x8F]+lng(AKT_),
+  'q_kopie:', [0xA9,0x00,0x00, 0x8F]+lng(R_),                                           # QR-Zeilen (F0 -> 7F)
+  'q_c:', [0xAF]+lng(R_), [0x0A, 0x18, 0x6F]+lng(QB_), [0xAA, 0xBF]+lng(Q_SRC), [0x48],
+  [0xAF]+lng(R_), [0x0A, 0xAA, 0xBF]+lng(Q_MIR), [0xA8, 0xFA, 0xA9,37,0x00, 0x54,0x7F,0xF0],
+  [0xAF]+lng(R_), [0x1A, 0x8F]+lng(R_), [0xC9,19,0x00], ('bra8',0x90,'q_c'),
+  [0xAB, 0x22,0x97,0xB3,0x8C, 0x60],
+  'qr_aus:', [0xAF]+lng(AKT_), ('bra8',0xD0,'q_r0'), [0x60],
+  'q_r0:', [0x8B, 0xA9,0x00,0x00, 0x8F]+lng(R_),                                         # Original zurueck (7E -> 7F)
+  'q_r:', [0xAF]+lng(R_), [0x0A, 0xAA, 0xBF]+lng(Q_MIR), [0xA8, 0xBF]+lng(Q_BAK), [0xAA, 0xA9,37,0x00, 0x54,0x7F,0x7E],
+  [0xAF]+lng(R_), [0x1A, 0x8F]+lng(R_), [0xC9,19,0x00], ('bra8',0x90,'q_r'),
+  [0xA9,0x00,0x00, 0x8F]+lng(AKT_), [0xAB, 0x22,0x97,0xB3,0x8C, 0x60],
 ])
 assert INFO + len(icode) <= INFOTXT and IPTR + len(iptab) <= INFO + 0x800
-for adr,c in ((MENU,code),(TXT,bytes(blob)),(PTAB,ptab),(STAB,slottab),(LT,lt),(INFO,icode),(INFOTXT,bytes(iblob)),(IPTR,iptab)):
+for adr,c in ((MENU,code),(TXT,bytes(blob)),(PTAB,ptab),(STAB,slottab),(LT,lt),(INFO,icode),(INFOTXT,bytes(iblob)),(IPTR,iptab),(QRDAT,qblob)):
     o=at(adr); assert all(b==0xFF for b in r[o:o+len(c)]), hex(adr); r[o:o+len(c)]=c
 o=at(0x8DCBC0); assert bytes(r[o:o+4])==bytes([0x22,0x3B,0xE5,0x8E]); r[o:o+4]=bytes([0x22,MENU&0xFF,(MENU>>8)&0xFF,MENU>>16])
 h=0xFFC0

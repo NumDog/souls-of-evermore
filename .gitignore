@@ -8,3 +8,4 @@ mesen/
 work/
 .DS_Store
 __pycache__/
+tools/qr
