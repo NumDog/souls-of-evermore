@@ -9,3 +9,7 @@ work/
 .DS_Store
 __pycache__/
 tools/qr
+
+# Website-Bilder erlaubt
+!img/
+!img/*.png

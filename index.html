@@ -57,6 +57,12 @@
   .galerie img { width: 100%; display: block; }
   .galerie figcaption { padding: 8px 12px; color: var(--leise); font-size: .9rem; }
   .forum { background: var(--karte); border: 1px solid var(--rand); border-radius: 10px; padding: 20px 22px; }
+  details { background: var(--karte); border: 1px solid var(--rand); border-radius: 8px; padding: 12px 16px; margin-bottom: 10px; }
+  details summary { cursor: pointer; font-weight: 700; color: var(--gold2); }
+  details p { margin: 10px 0 2px; }
+  .versionen { border-left: 3px solid var(--gold); padding-left: 18px; }
+  .versionen h3 { margin: 18px 0 4px; color: var(--gold2); font-size: 1.05rem; }
+  .versionen ul { margin: 4px 0; padding-left: 20px; }
   footer { border-top: 1px solid var(--rand); color: var(--leise); text-align: center; padding: 28px 16px 40px; font-size: .9rem; }
   @media (max-width: 520px) { body { font-size: 16px; } ol.schritte li { padding-left: 56px; } }
 </style>
@@ -72,6 +78,7 @@
     <a class="knopf spende" href="#spenden">♥ Spenden</a>
     <a class="knopf zwei" href="#anleitung">So spielst du</a>
     <a class="knopf zwei" href="#forum">Ideen &amp; Forum</a>
+    <a class="knopf zwei" href="#faq">FAQ</a>
     <p class="klein">Nur der Patch – du brauchst deine eigene, legal erworbene deutsche ROM.</p>
   </div>
 </header>
@@ -165,6 +172,34 @@
     <div class="karte"><img src="img/qr_eth.png" alt="QR-Code Ethereum"><div><h3>Ethereum (ETH)</h3><code id="a_eth">0xcDf1355E4365A2ad842F0333E4737372D2128064</code><br><button class="kopie" data-ziel="a_eth">Adresse kopieren</button></div></div>
     <div class="karte"><img src="img/qr_btc.png" alt="QR-Code Bitcoin"><div><h3>Bitcoin (BTC)</h3><code id="a_btc">bc1pfky3u0htczylv8tdf2jjcclhdc005e294rljvcwutcwjgqak67rswl2nv3</code><br><button class="kopie" data-ziel="a_btc">Adresse kopieren</button></div></div>
     <div class="karte"><img src="img/qr_sol.png" alt="QR-Code Solana"><div><h3>Solana (SOL)</h3><code id="a_sol">3paG1KXBdFamy7cBVxvHj1yKQ9XGgm4bWHzYQhDoqNKJ</code><br><button class="kopie" data-ziel="a_sol">Adresse kopieren</button></div></div>
+  </div>
+</section>
+
+
+<section id="faq">
+  <h2>Häufige Fragen</h2>
+  <details><summary>Welche ROM brauche ich?</summary><p>Die <b>deutsche</b> SNES-Version von <i>Secret of Evermore</i>, ohne Änderungen. Die passende Datei hat (ohne 512-Byte-Kopfteil) die Prüfsumme <code>CRC32 27F60E77</code>. Der Patch funktioniert nicht mit der englischen oder französischen Version.</p></details>
+  <details><summary>Wo bekomme ich die ROM?</summary><p>ROMs werden hier nicht verteilt. Erstelle eine Sicherungskopie deines eigenen Moduls (z. B. mit einem Retrode oder ähnlichem Gerät).</p></details>
+  <details><summary>Funktioniert das auf echter Hardware?</summary><p>Getestet ist die Mod in Emulatoren (OpenEmu/snes9x, Mesen). Die ROM wird auf 4 MB erweitert – auf echter Hardware brauchst du ein Flash-Modul, das 4-MB-HiROM unterstützt (z. B. SD2SNES/FXPak). Ungetestet.</p></details>
+  <details><summary>Kann ich meine alten Spielstände weiterverwenden?</summary><p>Spielstände aus dem Original lassen sich laden, die Mod-Einstellungen (Schwierigkeit, Zufall …) wählst du aber nur beim Start eines neuen Spiels. Für das volle Erlebnis lieber neu beginnen.</p></details>
+  <details><summary>Wie funktioniert New Game+?</summary><p>Spiel das Spiel bis zum „ENDE“-Bildschirm durch und setze die Konsole zurück. Im Lade-Menü steht dann „New Game +1“: du startest mit Level, Waffen und Ausrüstung neu, die Gegner werden stärker. Jeder weitere Durchgang erhöht die Stufe.</p></details>
+  <details><summary>Was passiert, wenn ich sterbe?</summary><p>Du wachst am Eingang des Raumes auf, in Bossräumen vor dem Boss-Eingang. Dein Geld bleibt an der Todesstelle liegen (blauer Kreis) – lauf hin, um es zurückzuholen. Stirbst du vorher noch einmal, ist es weg.</p></details>
+  <details><summary>Ich habe einen Fehler gefunden!</summary><p>Super – bitte im <a href="#forum">Forum</a> melden oder per E-Mail, am besten mit Screenshot und Spielstand.</p></details>
+</section>
+
+<section id="versionen">
+  <h2>Versionen</h2>
+  <div class="versionen">
+    <h3>v87 Beta – aktuell</h3>
+    <ul><li>Neues Titelbild „SOULS of EVERMORE“ mit „Remake 2026“</li><li>ENDE-Bildschirm mit „New Game+ freigeschaltet“</li><li>Fix: abgebrochene Wiederbelebung beim Sturz in einen Ausgang</li></ul>
+    <h3>v79 – v81</h3>
+    <ul><li>Goldener Vulgor: echter Bosskampf mit Larven und Herzkammer, x5 Stärke</li><li>Tod im Bossraum führt vor den Boss-Eingang, Kampf beginnt neu</li></ul>
+    <h3>v71 – v75</h3>
+    <ul><li>Goldener Vulgor mit Waffen-Orb und Vulgors Rache</li><li>Infoseite im Einstellungsmenü mit QR-Codes</li></ul>
+    <h3>v62 – v70</h3>
+    <ul><li>Blauer Kreis zeigt die Todesstelle mit deinem Geld</li><li>Ton-Fixes für fremde Gegner</li></ul>
+    <h3>v61 – erste Beta</h3>
+    <ul><li>Schwierigkeit bis x10, New Game+, Zufallsmodi für Gegner, Fundsachen und Händler, Dark-Souls-Tod, Waffen +N, Startwaffe je Modus</li></ul>
   </div>
 </section>
 
