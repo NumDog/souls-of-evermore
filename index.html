@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Souls of Evermore – Mod für Secret of Evermore</title>
+<meta name="description" content="Souls of Evermore: Fan-Mod für die deutsche SNES-Version von Secret of Evermore – Schwierigkeit bis x10, New Game+, Zufallsmodi, Dark-Souls-Tod, Goldener Vulgor.">
+<style>
+  :root {
+    --bg: #07070c; --bg2: #11111a; --karte: #161622; --rand: #2a2a3a;
+    --gold: #f2b233; --gold2: #ffd479; --text: #e9e6dc; --leise: #a7a3b5;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 17px/1.6 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  a { color: var(--gold2); }
+  .pix { image-rendering: pixelated; image-rendering: crisp-edges; }
+  header.held {
+    min-height: 92vh; display: grid; place-items: center; text-align: center; padding: 48px 16px 32px;
+    background: radial-gradient(ellipse at 50% 30%, #2a1d05 0%, var(--bg) 62%);
+  }
+  .held img { width: min(640px, 92vw); border: 3px solid var(--rand); border-radius: 6px; box-shadow: 0 0 60px #f2b23333; }
+  h1 { font-size: clamp(2.2rem, 6vw, 4rem); margin: 28px 0 4px; letter-spacing: .04em; color: var(--gold); text-shadow: 0 2px 0 #6b4300; }
+  .unter { color: var(--leise); margin: 0 0 28px; font-size: 1.1rem; }
+  .knopf {
+    display: inline-block; background: linear-gradient(#ffd479, #e39b14); color: #231500; font-weight: 700; text-decoration: none;
+    padding: 14px 28px; border-radius: 8px; font-size: 1.1rem; box-shadow: 0 4px 0 #8a5a00; margin: 6px;
+  }
+  .knopf.zwei { background: transparent; color: var(--gold2); border: 2px solid var(--gold); box-shadow: none; }
+  .klein { color: var(--leise); font-size: .9rem; margin-top: 14px; }
+  main { max-width: 1080px; margin: 0 auto; padding: 0 16px 64px; }
+  section { padding: 56px 0 8px; }
+  h2 { color: var(--gold); font-size: 1.8rem; margin: 0 0 18px; }
+  .raster { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 22px; }
+  .karte { background: var(--karte); border: 1px solid var(--rand); border-radius: 10px; overflow: hidden; }
+  .karte img { width: 100%; display: block; border-bottom: 1px solid var(--rand); }
+  .karte div { padding: 16px 18px 18px; }
+  .karte h3 { margin: 0 0 6px; color: var(--gold2); font-size: 1.15rem; }
+  .karte p { margin: 0; color: var(--text); }
+  ol.schritte { counter-reset: s; list-style: none; padding: 0; display: grid; gap: 14px; }
+  ol.schritte li { counter-increment: s; background: var(--karte); border: 1px solid var(--rand); border-radius: 10px; padding: 14px 18px 14px 64px; position: relative; }
+  ol.schritte li::before { content: counter(s); position: absolute; left: 18px; top: 12px; width: 32px; height: 32px; border-radius: 50%; background: var(--gold); color: #231500; font-weight: 800; display: grid; place-items: center; }
+  code { background: #000; padding: 2px 6px; border-radius: 4px; color: var(--gold2); word-break: break-all; }
+  table { width: 100%; border-collapse: collapse; background: var(--karte); border-radius: 10px; overflow: hidden; }
+  th, td { padding: 10px 14px; border-bottom: 1px solid var(--rand); text-align: left; }
+  th { color: var(--gold2); background: #1d1d2b; }
+  .tipp { display: grid; gap: 10px; }
+  .tipp div { background: var(--karte); border: 1px solid var(--rand); border-radius: 8px; padding: 10px 14px; }
+  .tipp b { color: var(--gold2); display: inline-block; min-width: 4.5em; }
+  footer { border-top: 1px solid var(--rand); color: var(--leise); text-align: center; padding: 28px 16px 40px; font-size: .9rem; }
+  @media (max-width: 520px) { body { font-size: 16px; } ol.schritte li { padding-left: 56px; } }
+</style>
+</head>
+<body>
+
+<header class="held">
+  <div>
+    <img class="pix" src="img/titel.png" alt="Titelbild: SOULS of EVERMORE – Remake 2026">
+    <h1>Souls of Evermore</h1>
+    <p class="unter">Eine Fan-Mod für die deutsche SNES-Version von <i>Secret of Evermore</i> – härter, zufälliger, mit Dark-Souls-Tod und New Game+.</p>
+    <a class="knopf" href="release/Souls-of-Evermore-v87-beta.bps" download>Patch herunterladen (v87 Beta)</a>
+    <a class="knopf zwei" href="#anleitung">So spielst du</a>
+    <p class="klein">Nur der Patch – du brauchst deine eigene, legal erworbene deutsche ROM.</p>
+  </div>
+</header>
+
+<main>
+
+<section id="funktionen">
+  <h2>Was ist neu?</h2>
+  <div class="raster">
+    <div class="karte"><img class="pix" src="img/menue.png" alt="Einstellungsmenü"><div>
+      <h3>Einstellungen vor dem Start</h3>
+      <p>Gegner original, ähnlich, aus dem Gebiet oder komplettes Chaos – fest oder je Raum neu. Schwierigkeit von <b>Normal</b> bis <b>Albtraum x10</b>, Fundsachen und Händler wahlweise zufällig.</p>
+    </div></div>
+    <div class="karte"><img class="pix" src="img/kreis.png" alt="Blauer Kreis an der Todesstelle"><div>
+      <h3>Tod wie bei Dark Souls</h3>
+      <p>Statt Hauptmenü wachst du am Raumeingang auf. Dein Geld bleibt an der Todesstelle liegen – ein blauer Kreis zeigt sie. Hol es zurück, bevor du noch einmal stirbst!</p>
+    </div></div>
+    <div class="karte"><img class="pix" src="img/gold.png" alt="Goldener Vulgor"><div>
+      <h3>Der Goldene Vulgor</h3>
+      <p>Nach dem ersten Sieg wartet einmal pro Durchgang ein goldener Vulgor – fünfmal so stark. Wer stirbt, landet vor dem Eingang und versucht es erneut.</p>
+    </div></div>
+    <div class="karte"><img class="pix" src="img/orb.png" alt="Waffen-Orb"><div>
+      <h3>Waffen-Orb &amp; Vulgors Rache</h3>
+      <p>Der Sieg bringt einen <b>Waffen-Orb</b>: deine ausgerüstete Waffe wird +1. Danach stürmen zehn starke Raptoren die Arena.</p>
+    </div></div>
+    <div class="karte"><img class="pix" src="img/ende.png" alt="ENDE-Bildschirm mit New Game+"><div>
+      <h3>New Game+</h3>
+      <p>Nach dem Abspann startest du mit Level, Waffen und Ausrüstung neu – die Gegner werden mit jedem Durchgang stärker, Waffen sammeln +N.</p>
+    </div></div>
+    <div class="karte"><img class="pix" src="img/qr.png" alt="Infoseite mit QR-Code"><div>
+      <h3>Und noch mehr</h3>
+      <p>Echte Waffenkraft im Menü, Startwaffe je Modus (bis zum Laserschwert), Erfahrung und Geld je nach Schwierigkeit, Infoseite mit QR-Codes im Einstellungsmenü.</p>
+    </div></div>
+  </div>
+</section>
+
+<section id="anleitung">
+  <h2>So spielst du</h2>
+  <ol class="schritte">
+    <li>Besorge dir deine eigene <b>deutsche ROM</b> von <i>Secret of Evermore</i> (SNES). Prüfsumme der passenden Datei (ohne Kopfteil): <code>CRC32 27F60E77</code>.</li>
+    <li>Lade den <a href="release/Souls-of-Evermore-v87-beta.bps" download>Patch (BPS)</a> herunter.</li>
+    <li>Öffne den <a href="https://www.marcrobledo.com/RomPatcher.js/" target="_blank" rel="noopener">Rom Patcher JS</a> im Browser (oder Floating IPS / Flips), wähle deine ROM und den Patch und klicke auf „Patch anwenden“.</li>
+    <li>Starte die neue ROM in deinem Emulator (z. B. OpenEmu, snes9x, Mesen, RetroArch). Im Titelbild steht dann <b>SOULS of EVERMORE</b>.</li>
+    <li>Bei „Neues Spiel“ erscheint das Einstellungsmenü: Gegner, Schwierigkeit, Fundsachen und Händler wählen – mit <b>Start</b> geht’s los.</li>
+  </ol>
+</section>
+
+<section id="schwierigkeit">
+  <h2>Schwierigkeitsstufen</h2>
+  <table>
+    <tr><th>Stufe</th><th>Gegner (Leben &amp; Angriff)</th><th>Erfahrung &amp; Geld</th></tr>
+    <tr><td>Normal</td><td>wie im Original</td><td>wie im Original</td></tr>
+    <tr><td>Schwer</td><td>x1,5</td><td>x1,5</td></tr>
+    <tr><td>Sehr schwer</td><td>x2</td><td>x2</td></tr>
+    <tr><td>Extrem</td><td>x3</td><td>x3</td></tr>
+    <tr><td>Wahnsinn</td><td>x5</td><td>x5</td></tr>
+    <tr><td>Albtraum</td><td>x10</td><td>x10</td></tr>
+  </table>
+</section>
+
+<section id="kontakt">
+  <h2>Kontakt &amp; Trinkgeld</h2>
+  <p>Souls of Evermore ist ein Hobby-Projekt von <b>Max Gisbrecht</b>. Fehler gefunden? Schreib mir an <a href="mailto:numdoks@gmail.com">numdoks@gmail.com</a> – am besten mit Screenshot und Spielstand. Wenn dir die Mod gefällt, freue ich mich über ein Trinkgeld:</p>
+  <div class="tipp">
+    <div><b>ETH</b> <code>0xcDf1355E4365A2ad842F0333E4737372D2128064</code></div>
+    <div><b>BTC</b> <code>bc1pfky3u0htczylv8tdf2jjcclhdc005e294rljvcwutcwjgqak67rswl2nv3</code></div>
+    <div><b>SOL</b> <code>3paG1KXBdFamy7cBVxvHj1yKQ9XGgm4bWHzYQhDoqNKJ</code></div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <p><i>Secret of Evermore</i> © 1995 Square / Square Enix. Dies ist ein nicht-kommerzielles Fan-Projekt ohne Verbindung zu Square Enix oder Nintendo.<br>
+  Es wird keine ROM verteilt – nur ein Patch für deine eigene Kopie.</p>
+</footer>
+
+</body>
+</html>
