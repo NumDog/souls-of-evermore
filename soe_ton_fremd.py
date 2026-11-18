@@ -1,4 +1,5 @@
-# Geraeusche stummschalten – seit v69 NUR noch Vulgors Rache-Raptoren (Raum 0x18) und der Blutfleck-Kreis.
+# Geraeusche stummschalten – v90: eingetauschte Gegner (Aehnlich/Chaos/Gebiet) und Vulgors Rache-Raptoren spielen nur Geraeusche,
+# die ein heimischer Gegner im Raum schon gespielt hat (GUT); dazu der Blutfleck-Kreis. (v69-v89: nur Raptoren + Kreis.)
 # (Frueher alle eingetauschten Gegner; das sperrte auch Ringmenue, Schwerthieb, Gegner-Angriffe.)
 # Alte Beschreibung: Geraeusche fremder Gegner stummschalten. Jede Gegend laedt nur die Geraeusch-Samples ihrer Musik (siehe WISSEN „Sound“).
 # Fremde Gegner (Chaos/Aehnlich/Gebiet-Tausch, Vulgors Rache-Raptoren) fordern Geraeusche an, die dann falsch klingen
@@ -44,7 +45,12 @@ code, lab = assemble(CODE, [
   [0xAF]+L(ORIG), [0xC9,RAPTOR89&0xFF,RAPTOR89>>8], ('bra8',0xD0,'s_nat'),
   [0xAF,0xDB,0x0A,0x7E, 0x29,0xFF,0x00, 0xC9,0x18,0x00], ('bra8',0xD0,'s_nat'),
   [0xAF]+L(ORIG), ('jsr','fr_add'), ('bra8',0x80,'s_fertig'),                     # Rache-Raptor = fremd
-  's_nat:', [0xAF]+L(ORIG), ('jsr','nat_add'),                                  # v69: eingetauschte Gegner NICHT mehr fremd (Max: nur Kreis + Rache-Raptoren stumm)
+  's_nat:', [0xAF]+L(ORIG), ('jsr','nat_add'),
+  # v90: eingetauschte Vorlage ($02 nach GZ) != Original -> fremd (v69 hatte das abgeschaltet -> Satyr in der Wueste spielte
+  # Geraeusche ohne passende Samples = schrecklicher Ton / Soundchip-Absturz). Fremd heisst jetzt nur noch: SEINE Geraeusche
+  # werden ausgelassen, solange sie kein heimischer Gegner im Raum gespielt hat. Junge/Hund/Ring/Schwert nie betroffen.
+  [0xA5,0x02, 0xCF]+L(ORIG), ('bra8',0xF0,'s_fertig'), [0xA5,0x02], ('jsr','nat_hat'), ('bra8',0xB0,'s_fertig'),
+  [0xA5,0x02], ('jsr','fr_add'),
   's_fertig:', [0x7A,0xFA,0x68,0x28, 0x6B],
   # ---- Geraeusch: JML von 8C:8662 (A = Nr)
   'snd:', [0x08, 0xC2,0x30, 0x48,0xDA,0x5A], ('jsr','kartechk'),
@@ -55,8 +61,8 @@ code, lab = assemble(CODE, [
   [0xA6,0x4C, 0xE0,0xE5,0x3D], ('bra8',0x90,'n_pruef'), [0xE0,0x89,0x4E], ('bra8',0xB0,'n_pruef'),
   [0xBF,0x60,0x00,0x7E], ('jsr','fr_hat'), ('bra8',0x90,'n_nativ'),               # fremder Gegner?
   [0xA6,0x4C, 0xBF,0x60,0x00,0x7E], ('jsr','nat_hat'), ('bra8',0xB0,'n_nativ'),     # (X neu laden: _hat benutzt X) (auch heimisch -> nicht fremd)
-  [0xAF]+L(NR), [0x4A,0x4A,0x4A, 0xAA, 0xE2,0x20, 0xBF]+L(BAD), [0x0F]+L(MSK), [0x9F]+L(BAD), [0xC2,0x20],   # „passt nicht“
-  ('bra8',0x80,'n_pruef'),
+  # v90: fremder Gegner -> nur spielen, wenn die Nr als sicher bekannt ist; KEIN globales „passt nicht“ mehr (sperrte in v68 auch Junge/Ring)
+  [0xAF]+L(NR), [0x4A,0x4A,0x4A, 0xAA, 0xBF]+L(GUT), [0x2F]+L(MSK), [0x29,0xFF,0x00], ('bra8',0xD0,'n_spielen'), ('bra8',0x80,'n_stumm'),
   # heimischer Gegner -> Nr passt zum Sample-Set dieses Raums: „sicher“ merken (wird nie gesperrt, auch nicht fuer Junge/Hund)
   'n_nativ:', [0xAF]+L(NR), [0x4A,0x4A,0x4A, 0xAA, 0xE2,0x20, 0xBF]+L(GUT), [0x0F]+L(MSK), [0x9F]+L(GUT), [0xC2,0x20],
   'n_pruef:', [0xAF]+L(NR), [0x4A,0x4A,0x4A, 0xAA, 0xBF]+L(BAD), [0x2F]+L(MSK), [0x29,0xFF,0x00], ('bra8',0xF0,'n_spielen'),

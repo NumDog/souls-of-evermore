@@ -3,7 +3,7 @@
 Eine Fan-Mod für die **deutsche SNES-Version von Secret of Evermore**.
 Im Spiel heißt sie noch „Souls of Evermore“. Mehr Herausforderung, mehr Zufall, ein New Game+ – und ein Tod wie in Dark Souls.
 
-> **Beta (Stand v88):** Noch nicht komplett durchgespielt. Fehler gern melden (am besten mit Screenshot und Spielstand).
+> **Beta (Stand v97):** Noch nicht komplett durchgespielt. Fehler gern melden (am besten mit Screenshot und Spielstand).
 
 ## Hauptfunktionen
 
@@ -12,6 +12,9 @@ Im Spiel heißt sie noch „Souls of Evermore“. Mehr Herausforderung, mehr Zuf
 - **Zufallsmodi:** Gegner (Original / Ähnlich / Gebiet / Chaos, fest oder je Raum neu), Fundsachen (fest pro Durchgang oder immer neu) und Händler (mit Original-Preisen, ohne doppelte Waren).
 - **Dark-Souls-Tod:** Kein Game Over mehr. Der Junge steht wieder auf, sein Geld bleibt an der Todesstelle liegen (markiert durch einen leuchtenden Kreis). Hinlaufen holt es zurück – wer vorher erneut stirbt, verliert es.
 - **Waffen +N:** Doppelt gefundene Waffen werden stärker (+50 % pro Stufe, bis +15), die echte Kraft steht im Ring-Menü. Doppelt bekommene Formeln werden „+1“ (je +1 = 25 % mehr Wirkung, bis +15); die Zauberleiste zeigt +N und Level.
+- **Talismane:** genaue Beschreibung mit Zahlen; doppelt bekommen = +1 (Bonus nochmal). Mythenschärpe +10 % Erfahrung/Geld, Schleifstab +10 % Schwertkraft.
+- **Schaden bis 9999** pro Schlag.
+- **Grenzen raus:** Level bis 999, KP bis 9999, New Game+ bis +99.
 - **Goldener Vulgor:** Einmal pro Durchgang ein goldener Rückkampf (x5). Sieg bringt einen **Waffen-Orb** (+1 auf die ausgerüstete Waffe) – danach rächen ihn 10 Raptoren.
 - Startwaffe je nach Einstellung (Knochenknüppel, Drachentöter oder Laserschwert), Vulgor mit doppelten Lavawürmern, Sicherheitsnetz gegen Tonhänger.
 
@@ -23,7 +26,7 @@ Die ausführliche Liste steht in [`release/LIESMICH.txt`](release/LIESMICH.txt).
 
 1. ROM: *Secret of Evermore (Deutschland)*, ohne 512-Byte-Header, **CRC32 `27F60E77`**.
 2. Einen BPS-Patcher öffnen, z. B. [Rom Patcher JS](https://www.marcrobledo.com/RomPatcher.js/) (im Browser, entfernt einen Header automatisch) oder Floating IPS (Flips).
-3. ROM und [`release/Souls-of-Evermore-v88-beta.bps`](release/) auswählen und anwenden.
+3. ROM und [`release/Souls-of-Evermore-v97-beta.bps`](release/) auswählen und anwenden.
 4. Die fertige 4-MB-ROM läuft z. B. in OpenEmu, snes9x, bsnes oder Mesen.
 
 ## Selbst bauen

@@ -53,7 +53,8 @@ grenzen = sorted(teile) + [0xF09280]
 for i,a in enumerate(sorted(teile)):
     c,_ = assemble(a, teile[a]); assert a+len(c) <= grenzen[i+1], (hex(a),len(c))
     o = at(a); assert all(b == 0xFF for b in r[o:o+len(c)]), hex(a); r[o:o+len(c)] = c
-for adr,alt,neu in ((0xCDC4A4, [0xBF,0x6F,0x03,0xC5,0x85,0x22], MENU), (0xD1CC05, [0xAF,0x14,0x42,0x00,0x85,0x12], KRAFT)):
+# CD:BC80 = zweite Formel-Liste (Auswahl beim Alchemisten, Max 18.11.)
+for adr,alt,neu in ((0xCDC4A4, [0xBF,0x6F,0x03,0xC5,0x85,0x22], MENU), (0xCDBC80, [0xBF,0x6F,0x03,0xC5,0x85,0x22], MENU), (0xD1CC05, [0xAF,0x14,0x42,0x00,0x85,0x12], KRAFT)):
     o = at(adr); assert bytes(r[o:o+6]) == bytes(alt), (hex(adr), bytes(r[o:o+6]).hex())
     r[o:o+6] = bytes([0x22]+L(neu)+[0xEA,0xEA])
 # Ringmenue-Kopfzeile beim Formel-Ring (8E:A6F0, gleiches Muster wie 8E:A479) -> dieselbe Ring-Routine aus soe_menue_plus
