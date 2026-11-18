@@ -1,0 +1,428 @@
+# DarkSoulCave v145 (Max: "erst mit den fertig geprueften Karten"), Bank F3:0000-2FFF (Code) + F7:0000-0FFF (Tabellen).
+# Ersetzt v143/v144 (Kisten/Schalter/SCHALTG/STAIROK sind weg, soe_funde ist nicht mehr im Bau).
+#  - Schachbrett 5E = Knoten mit vier Zugaengen: links (Tuer nach 5F, x<400), rechts (5F, x>=400), unten (5D), OBEN = Positions-
+#    Ausloeser im Bild-Hook (x160-191 / y200-231, nur beim frischen Betreten des Bereichs; die alte Tuer 1032 ist zu Fuss unerreichbar).
+#  - Jeder Zugang -> zufaelliger Raum aus dem GEPRUEFTEN POOL (40 Ankuenfte, jedes Betreten neu gewuerfelt, Ankunft exakt mit 238F=0).
+#    Jede Tuer im Pool-Raum -> zurueck auf 5E vor den benutzten Zugang.
+#  - Saeuberung: alle Monster tot (kein lebender Gegner in den Objekt-Plaetzen ausserhalb der Freiliste UND kein Eintrag der
+#    Spawnliste 7E:5DC3.. mit Rest-Anzahl +0C > 0) -> "Der Raum ist gesaeubert!", 150 Bilder spaeter zum Schachbrett vor den Zugang,
+#    Zugang versiegelt (Bit in SIEGEL). Respawn: in Hoehlen-Raeumen wird die Anzahl je Spawn-Eintrag auf 1 begrenzt (Hook 8F:DE7C);
+#    getoetete Gegner kommen nicht wieder (Eintrag bleibt 0), weggelaufene (despawnte) zaehlen wieder als offen (Mesen: Karte 12).
+#    Notfall: Raum ohne jeden Gegner und ohne Spawn-Eintrag gilt nach 300 Bildern als gesaeubert.
+#  - Versiegelter Zugang -> "Dieser Zugang ist versiegelt." und man bleibt auf 5E (Landestelle vor dem Zugang).
+#  - Boss nur auf Stockwerk 5, 10, 15 ... : OBEN -> Bossraum (zufaellig aus 5 Bossen mit gemessenem Sieg-Flag), Flag-Sicherung BSNAP
+#    (7E:2258-2347 -> 30:7400), Sieg-Flag geloescht. Sieg (Flag wieder gesetzt, 240 Bilder) -> Flags zurueck (ohne Formeln/Talismane/
+#    Waffen+N/Waffenbesitz), Boss erledigt (SIEGEL Bit 4), Waffen-Orb + Meldung, zurueck vor den oberen Zugang. Tuer = Flucht (Flags
+#    zurueck, Boss bleibt offen). Tod: soe_hoehle 'verlassen' ruft kverl (Flags zurueck). Bosswerte: KP x8, Angriff/Abwehr x1,5 ueber
+#    den Vorlagen-Zeiger (soe_hoehle stat -> kbkp/kbatk).
+#  - Treppe (Mitte, Ziel 0x60) nur offen, wenn SIEGEL Bits 1-4 alle gesetzt (normal: 4 Raeume; Boss-Ebene: 3 Raeume + Boss).
+#  - Original-Loot: Fund-Merker (Story-Flags) der Truhen/Kuerbisse/Schnueffelstellen des Pool-Raums werden beim Betreten gesichert und
+#    geloescht, beim Verlassen (Tuer, Saeuberung, Tod, Gotteshand) zurueckgeschrieben.
+#  - Monster-Beute: jeder Sieg in der Hoehle (soe_hoehle FUND) -> 100 % Beute (Zutat/Verbrauchsgut, Meldung "X gefunden!" ueber das
+#    Spiel-Skript a3 3e/3f), davon 1 % selten: Formel / Waffe / Talisman / Ruestung, die man noch nicht hat (sonst Waffen-Orb).
+#  - Meldungs-Warteschlange (16 Eintraege): Text-IDs und Beute werden nacheinander gezeigt (Abstand QABST Bilder).
+# Vektoren (feste Adressen, soe_hoehle ruft sie): F3:0000 kt (Tuer), 0004 kverl, 0008 kns (neues Stockwerk), 000C qpl (A = Meldung),
+# 0010 kdrop (Sieg), 0014 kbkp, 0018 kbatk, 001C kcap.
+import sys; sys.path.insert(0, __file__.rsplit('/',1)[0]); from asm import assemble
+pfad = sys.argv[1]
+d = bytearray(open(pfad,'rb').read()); H = len(d) % 1024; r = memoryview(d)[H:]
+def at(x): return x & 0x3FFFFF if (x>>16) >= 0xC0 else (((x>>16)&0x3F)<<16)|(x&0xFFFF)
+def L(a): return [a&0xFF,(a>>8)&0xFF,a>>16]
+def w(v): return [v&0xFF,(v>>8)&0xFF]
+def rd(a,n): o=at(a); return bytes(r[o:o+n])
+def rw(a): b=rd(a,2); return b[0]|b[1]<<8
+CODE, TAB = 0xF30000, 0xF70000
+# ---- SRAM (Bank 30, ungespeichert)
+AKT, FLOOR, TOD, FEST, MELDZ, MSGP = 0x307002, 0x307004, 0x307008, 0x30700C, 0x307010, 0x307026
+TUERM = 0x307038
+BOSSAKT, BOSSI, BOSSW = 0x30703A, 0x30703C, 0x30703E
+SIEGEL, OBENREQ, INOBEN, RAUMAKT, RZEIT, SEEN, CLRW = 0x3070C0, 0x3070C2, 0x3070C4, 0x3070C6, 0x3070C8, 0x3070CA, 0x3070CC
+BOSSV, FLAKT, FLMAP, KTK, KTX, KTY, QCOOL, QH, QT = 0x3070CE, 0x3070D0, 0x3070D2, 0x3070D4, 0x3070D6, 0x3070D8, 0x3070DA, 0x3070DC, 0x3070DE
+TMP1, TMP2, TMP3, TMP4, TMP5, TMP6, LIVE, PEND = [0x3070E0+2*i for i in range(8)]
+BEAM = 0x3070F0                                  # Rueckweg-Skript laeuft (Bilder bis Zeitablauf)
+BEAMRT = 0x3070F2                                # Rueckweg gewuenscht (bis der Tuer-Hook ihn ausfuehrt; Wiederholung nach Zeitablauf)
+SIEGR = 0x3070F6                                 # nach dem Sieg beim Rueckweg BSNAP nochmal zurueck (Boss-Skript gibt Story-Dinge erst nach der Sieg-Erkennung)
+BRTW = 0x3070F4                                  # Bilder, die der Rueckweg schon auf den freien Jungen wartet (ab 900 trotzdem)
+BOSSFEST, DROPTEST = 0x3070BC, 0x3070BE          # Testhilfen: Boss-Index+1 / seltene Beute erzwingen (1-4 = Art, 5 = normal)
+BSNAP, MTXT = 0x307400, 0x307500                 # Boss-Flag-Sicherung 7E:2258-2347 / Text-Puffer FFB
+QBUF = 0x307580                                  # 16 Woerter
+FLSAVE = 0x3075A0                                # je Fund-Merker 1 Byte (max 32)
+FREIM = 0x3075C0                                 # 30 Byte: Objekt-Platz frei
+RSNAP = 0x307600                                 # Flag-Sicherung 7E:2258-22FF beim Betreten eines Pool-Raums (bis 76A7, soe_speicher ab 7700)
+assert FREIM + 32 <= 0x307600
+WARPM, WARPX, WARPY, WARPT, WARPB = 0x307EF0, 0x307EF2, 0x307EF4, 0x307EF6, 0x307EED   # soe_aufstehen-Warp
+WINC = 0xF1B080
+QABST = 80                                       # Bilder zwischen zwei Meldungen
+OBEN = (160, 192, 200, 232)                      # Ausloeser oben (x von/bis, y von/bis)
+LANDE = [(176,440), (64,448), (288,448), (176,760), (176,296)]   # 0 Mitte, 1 links, 2 rechts, 3 unten, 4 oben (unter dem Ausloeser)
+
+# ---- GEPRUEFTER POOL (Karte, x, y px; Ankunft mit 238F=0 geprueft, Max v145)
+POOL = [[64,88,72],[64,216,608],[65,56,576],[79,56,600],[79,168,264],[79,464,600],[84,880,184],[84,664,680],[87,976,744],[89,72,168],
+        [89,864,272],[91,72,440],[91,144,104],[91,816,280],[91,816,424],[5,696,616],[5,360,48],[5,32,376],[6,1240,904],[7,48,488],
+        [7,504,544],[15,888,328],[15,96,320],[18,1208,128],[18,272,328],[22,416,128],[22,400,1312],[23,224,688],[23,232,80],[23,48,544],
+        [23,48,400],[23,48,256],[27,472,240],[14,328,344],[41,328,984],[40,1064,1240],[112,120,328],[33,72,200],[58,120,312],[76,176,480]]
+NPOOL = len(POOL); assert NPOOL < 256
+# ---- Bosse (Bauplan 2.2, Sieg gemessen r_bossraeume): Karte, Ankunft (gemessene Stelle des Jungen), Sieg-Flag, Vorlage
+# 18 Vulgor-Herz raus (Mesen v145: nach dem Sieg bleibt der Junge in der Story-Szene gesperrt, kein Rueckweg)
+BOSSE = [(0x2A,504,616,0x407,0xCFE8), (0x2C,72,280,0x48E,0xD282), (0x45,464,624,0x477,0xDA50), (0x58,264,448,0x406,0xCEC0)]
+# BSNAP-Rueckschrieb: 2258-22FF ohne Formeln (2258-225C), Talismane/Hund (2261-2263), Waffe+N (22CE-22D0, 22D3-22D6), Waffenbesitz (22DA/DB)
+BREST = [(0x225D,4), (0x2264,0x22CE-0x2264), (0x22D1,2), (0x22D7,3), (0x22DC,0x2300-0x22DC)]
+# Beute: 21 Zutaten 0x200-0x215 ohne 0x205 + 11 Verbrauchsgueter (ohne 0x804 Fluegel, 0x807 Zauberperle), wie soe_funde v144
+BEUTE = [0x200+i for i in range(0x16) if i != 5] + [0x800]*3 + [0x801]*3 + [0x802]*2 + [0x803, 0x805, 0x806]
+assert len(BEUTE) == 32
+TXT_FA = b"\x97Die Treppe ist versperrt.\x00"
+TXT_F9 = b"\x97Der Raum ist ges\xe3ubert!\x00"
+TXT_F8 = b"\x97Dieser Zugang ist versiegelt.\x00"
+SUF = {'gelernt': b" gelernt!\x00", 'gefunden': b" gefunden!\x00", 'erhalten': b" erhalten!\x00"}
+
+# ---- Fund-Merker je Pool-Karte aus dem ROM (B-/Lauf-Ausloeser, deren Skript mit "08 85 ff ff LL 00" beginnt und im
+#      bedingten Teil 18 39 01 (Item) und a3 39/3a/3b (Fund/Truhe) hat; r_kisten/r_schnueffeln)
+def p3(a): b=rd(a,3); return b[0]|b[1]<<8|b[2]<<16
+def padr(p): return ((0x93+(p>>15))<<16)|0x8000|(p&0x7FFF)
+def trig(i): return padr(p3(0x938000+rw(0x938000)+i))
+# nie anfassen: Formeln, Talismane, Waffe+N (soe_waffe99), Waffenbesitz, Rattus-Flag
+SPERRB = set(range(0x2258,0x225D)) | {0x2261,0x2262,0x2263,0x22CE,0x22CF,0x22D0,0x22D3,0x22D4,0x22D5,0x22D6,0x22DA,0x22DB,0x22DD}
+FLAGS = {}; GESPERRT = []
+for m in sorted(set(p[0] for p in POOL)):
+    p = p3(0xA0FDE5+4*m); y = 13; fl = []
+    for li_ in (1,2):
+        n = rw(p+y); y += 2
+        for k in range(n//6):
+            e = rd(p+y+6*k,6); i = e[4]|e[5]<<8; s = rd(trig(i),64)
+            if s[0]==0x08 and s[1]==0x85 and s[5]==0:
+                win = s[:6+s[4]]
+                if b'\x18\x39\x01' in win and any(bytes([0xA3,c]) in win for c in (0x39,0x3A,0x3B)):
+                    f = s[2]|s[3]<<8
+                    if (0x2258+(f>>3)) in SPERRB: GESPERRT.append((m,f)); continue
+                    if f not in fl and f != 0x490: fl.append(f)
+        y += n
+    assert len(fl) <= 32, (hex(m), len(fl))
+    FLAGS[m] = fl
+
+# ---- Tabellen in Bank F7 (Assert: frei)
+T_POOL  = TAB + 0x0000           # je 6 Byte Karte, x, y
+T_LAND  = TAB + 0x0100           # je 4 Byte x, y (Index TUERM)
+T_BIT   = TAB + 0x0120           # Bit je Zugang (Wort)
+T_BOSS  = TAB + 0x0140           # je 16 Byte: Karte, x, y, Flag-Byte (ab 2258), Maske, Vorlage
+T_LOOT  = TAB + 0x01A0           # 32 Woerter
+T_SKR   = TAB + 0x8000           # Beute-Skript (Skripte ab Adresse 8000: Fadenstart 8C:D257 kodiert Bank 93+p>>15, Adresse 8000|p)
+T_TSKR  = TAB + 0x8020           # Tuer-Skript nach 5E (wie die linke Schachbrett-Treppe: a3 19 22 x y kk 00)
+T_SUF   = TAB + 0x0210           # Endungen der Meldungen
+T_TXT   = TAB + 0x0240           # Texte FFA/FF9/FF8
+T_FLP   = TAB + 0x0400           # 128 Zeiger (Bank F7) auf Fund-Merker-Listen
+T_FLL   = TAB + 0x0500           # Listen: Anzahl, dann je Merker Byte-Versatz ab 2258 (Wort) + Maske (Byte)
+tabs = {}
+tabs[T_POOL] = b''.join(m.to_bytes(2,'little')+x.to_bytes(2,'little')+y.to_bytes(2,'little') for m,x,y in POOL)
+tabs[T_LAND] = b''.join(x.to_bytes(2,'little')+y.to_bytes(2,'little') for x,y in LANDE)
+tabs[T_BIT]  = b''.join((0 if i == 0 else 1<<i).to_bytes(2,'little') for i in range(5))
+tabs[T_BOSS] = b''.join(bytes(w(m)+w(x)+w(y)+w(f>>3)+w(1<<(f&7))+w(v)+[0]*4) for m,x,y,f,v in BOSSE)
+tabs[T_LOOT] = b''.join(v.to_bytes(2,'little') for v in BEUTE)
+# Beute-Skript: Junge anhalten (bc), buecken, Platz pruefen, geben + "X gefunden!" bzw. "Du hast genug X!", freigeben (bd).
+# Mesen v145: ohne bc/Buecken (nur a3 3e/3f) stuerzte das Spiel nach der Meldung ab (STP 00:885F), wenn der Junge gerade angriff.
+tabs[T_SKR]  = bytes.fromhex('bc78d01800b0a714a33e098590040500a33f040200a341bd0c9004b000')   # wie soe_funde v144 (GEPRUEFT): anhalten, buecken, geben, freigeben
+tabs[T_TSKR] = bytes([0xA3,0x19, 0x22, 176//8, 440//8, 0x5E,0x00, 0x00])
+sufadr = {}; sb = b''
+for k,v in SUF.items(): sufadr[k] = (T_SUF + len(sb)) & 0xFFFF; sb += v
+tabs[T_SUF] = sb
+T_FA = T_TXT; T_F9 = T_FA + len(TXT_FA); T_F8 = T_F9 + len(TXT_F9)
+tabs[T_TXT] = TXT_FA + TXT_F9 + TXT_F8
+flp = [0]*128; fll = b''
+for m, fl in FLAGS.items():
+    if not fl: continue
+    flp[m] = (T_FLL + len(fll)) & 0xFFFF
+    fll += bytes([len(fl)]) + b''.join(bytes(w(f>>3)+[1<<(f&7)]) for f in fl)
+tabs[T_FLP] = b''.join(v.to_bytes(2,'little') for v in flp)
+tabs[T_FLL] = fll
+ordn = sorted(tabs)
+for a, b in zip(ordn, ordn[1:]): assert a + len(tabs[a]) <= b, hex(a)
+assert all(a + len(tabs[a]) <= TAB + 0x1000 for a in ordn if a < TAB + 0x8000) and T_TSKR + len(tabs[T_TSKR]) <= TAB + 0x8040
+def skp(a): p = (((a>>16) - 0x93) << 15) | (a & 0x7FFF); assert a & 0x8000; return p
+
+# ---- Assembler-Helfer (16 Bit, lange Adressen)
+def lda(a): return [0xAF]+L(a)
+def sta(a): return [0x8F]+L(a)
+def cmpl(a): return [0xCF]+L(a)
+def andl(a): return [0x2F]+L(a)
+def oral(a): return [0x0F]+L(a)
+def adcl(a): return [0x6F]+L(a)
+def ldax(a): return [0xBF]+L(a)
+def stax(a): return [0x9F]+L(a)
+def li(v): return [0xA9]+w(v)
+def ci(v): return [0xC9]+w(v)
+def ai(v): return [0x29]+w(v)
+def oi(v): return [0x09]+w(v)
+def lxi(v): return [0xA2]+w(v)
+def lyi(v): return [0xA0]+w(v)
+def jsl(a): return [0x22]+L(a)
+def z(a): return li(0)+sta(a)
+def absw(op, a): return [op, a&0xFF, (a>>8)&0xFF]          # absolut (DB muss passen)
+SEP, REP = [0xE2,0x20], [0xC2,0x20]
+NOP8 = [0xEA]*8
+def mod(n): return [0x8F,0x04,0x42,0x00]+SEP+[0xA9,n, 0x8F,0x06,0x42,0x00]+REP+NOP8+[0xAF,0x16,0x42,0x00]   # A = A mod n (n<256)
+def B(op, l): return ('bra8', op, l)
+BEQ, BNE, BCC, BCS, BPL, BMI, BRA = 0xF0, 0xD0, 0x90, 0xB0, 0x10, 0x30, 0x80
+DB7E = [0x8B, 0xF4,0x7E,0x7E, 0xAB,0xAB]          # PHB ; PEA 7E7E ; PLB ; PLB
+DB30 = [0x8B, 0xF4,0x30,0x30, 0xAB,0xAB]
+
+o0 = at(0xF04000); assert r[o0] == 0x22; VORHER = list(r[o0+1:o0+4])
+o1 = at(0x8CD0F6); assert r[o1] == 0x5C; ALT = list(r[o1+1:o1+4])          # bisher JML F1:8700 (soe_vigor TEXT)
+o2 = at(0x8CE0C4); assert bytes(r[o2:o2+4]) == bytes([0xA7,0x82,0xE6,0x82]), bytes(r[o2:o2+4]).hex()
+o3 = at(0x8CE0DA); assert bytes(r[o3:o3+4]) == bytes([0xA7,0x82,0xE6,0x82]), bytes(r[o3:o3+4]).hex()   # BA bleibt original
+o4 = at(0x8FDE7C); assert bytes(r[o4:o4+4]) == bytes([0xAF,0x33,0x24,0x7E]), bytes(r[o4:o4+4]).hex()   # LDA 2433 -> Spawn-Anzahl
+
+def landx(): return [0x0A,0x0A, 0xAA]+li(0x5E)+sta(KTK)+ldax(T_LAND)+sta(KTX)+ldax(T_LAND+2)+sta(KTY)
+
+t = [
+  # ================= Vektoren (werden unten eingesetzt)
+  [0x5C,0,0,0]*8,
+  # ================= 1. C2-Weiche (keine Monster auf 5E, v143)
+  'c2:', [0x08, 0xC2,0x20], lda(AKT)+ai(0xFF), B(BEQ,'c2_o'),
+  lda(0x7E0ADB)+ai(0xFF)+ci(0x5E), B(BNE,'c2_o'),
+  [0xA5,0x84]+ai(0xFF)+ci(0x7E), B(BEQ,'c2_o'),
+  [0x28, 0xE6,0x82, 0xE6,0x82, 0xE6,0x82, 0x5C,0x2C,0xE1,0x8C],
+  'c2_o:', [0x28, 0xA7,0x82, 0xE6,0x82, 0x5C,0xC8,0xE0,0x8C],
+  # ================= 2. Text-ID -> Zeiger ($22/$24), A = ID, X bleibt
+  'text:', ci(0xFFA), B(BEQ,'tx_fa'), ci(0xFF9), B(BEQ,'tx_f9'), ci(0xFFB), B(BEQ,'tx_fb'), ci(0xFF8), B(BEQ,'tx_f8'),
+  [0x5C]+ALT,
+  'tx_fa:', li(T_FA&0xFFFF), B(BRA,'tx_rom'),
+  'tx_f8:', li(T_F8&0xFFFF), B(BRA,'tx_rom'),
+  'tx_f9:', li(T_F9&0xFFFF),
+  'tx_rom:', [0x85,0x22]+li(TAB>>16)+[0x85,0x24, 0x6B],
+  'tx_fb:', li(MTXT&0xFFFF)+[0x85,0x22]+li(MTXT>>16)+[0x85,0x24, 0x6B],
+
+  # ================= 3. Tuer (aus soe_hoehle 'tuer', 238F schon 0): KTK/KTX/KTY = Original-Ziel -> neues Ziel
+  'kt:', [0x08, 0xC2,0x30]+DB7E,
+  li(QABST+40)+sta(QCOOL)+li(1)+sta(INOBEN)+z(BEAM)+z(BEAMRT),
+  lda(SIEGR), B(BEQ,'kt_s0'), ('jsr','bsrest'), z(SIEGR), 'kt_s0:',
+  lda(BOSSAKT), B(BEQ,'kt_nb'),
+  ('jsr','bflag'), B(BEQ,'kt_flucht'), ('jsr','sieg'), B(BRA,'kt_b4'),     # Tuer nach dem Sieg (Flag schon gesetzt) = Sieg
+  'kt_flucht:', ('jsr','bsrest'), z(BOSSAKT),
+  'kt_b4:', li(4)+sta(TUERM), ('jmp','land'),
+  'kt_nb:', lda(0x7E0ADB)+ai(0xFF)+ci(0x5E), B(BEQ,'kt_5e'),
+  # aus einem Pool-Raum (oder sonst einer Hoehlen-Karte) -> 5E vor den benutzten Zugang
+  ('jsr','flrest'), z(RAUMAKT)+z(CLRW),
+  lda(TUERM)+ai(7), ('jmp','land'),
+  'kt_5e:', lda(OBENREQ), B(BEQ,'kt_1'), z(OBENREQ), li(4), ('jmp','zug'),
+  'kt_1:', lda(KTK)+ai(0xFF)+ci(0x60), B(BNE,'kt_2'), ('jmp','treppe'),
+  'kt_2:', ci(0x5D), B(BNE,'kt_3'), li(3), B(BRA,'zug'),
+  'kt_3:', ci(0x5F), B(BEQ,'kt_4'), ('jmp','land0'),
+  'kt_4:', lda(KTX)+ci(400)+li(1), B(BCC,'zug'), li(2),
+  'zug:', sta(TMP1)+[0x0A, 0xAA]+ldax(T_BIT)+andl(SIEGEL), B(BEQ,'zg_offen'),
+  li(0xFF8), ('jsr','qp'), lda(TMP1), ('jmp','land'),                 # versiegelt -> bleibt vor dem Zugang
+  'zg_offen:', lda(TMP1)+sta(TUERM)+ci(4), B(BNE,'pool'),
+  ('jsr','stock5'), B(BCS,'pool'), ('jmp','boss'),
+  'pool:', lda(FEST)+ai(0xFF), B(BEQ,'p_zuf'), ci(0xFF), B(BNE,'p_fest'),
+  lda(0x307030)+sta(KTK)+lda(0x307032)+sta(KTX)+lda(0x307034)+sta(KTY), B(BRA,'p_ein'),   # Testmodus FEST=FF
+  'p_fest:', [0x3A], B(BRA,'p_idx'),                                                          # Testmodus FEST = Pool-Index+1
+  'p_zuf:', ('jsr','rnd'), mod(NPOOL),
+  'p_idx:', [0x0A]+sta(TMP2)+[0x0A, 0x18]+adcl(TMP2)+[0xAA]+ldax(T_POOL)+sta(KTK)+ldax(T_POOL+2)+sta(KTX)+ldax(T_POOL+4)+sta(KTY),
+  'p_ein:', lda(KTK)+ai(0xFF), ('jsr','flsave'),
+  li(1)+sta(RAUMAKT)+z(RZEIT)+z(SEEN)+z(CLRW)+z(LIVE)+z(PEND), ('jmp','kt_ende'),
+  'treppe:', lda(SIEGEL)+ai(0x1E)+ci(0x1E), B(BEQ,'tr_frei'), li(0xFFA), ('jsr','qp'), ('jmp','land0'),
+  'tr_frei:', li(220)+sta(MELDZ)+lda(FLOOR)+ai(0xFF)+[0x1A]+ci(100), B(BCC,'tr_f'), li(99), 'tr_f:', sta(FLOOR),
+  ('jsr','nstock'),
+  'land0:', li(0),
+  'land:', landx(),
+  'kt_ende:', [0xAB, 0x28, 0x6B],
+  # ---- Bossraum betreten (TUERM = 4, Stockwerk mod 5 = 0, Boss noch offen)
+  'boss:', lda(BOSSFEST)+ai(0xFF), B(BEQ,'bs_z'), [0x3A], B(BRA,'bs_i'),
+  'bs_z:', ('jsr','rnd'), mod(len(BOSSE)),
+  'bs_i:', [0x0A,0x0A,0x0A,0x0A]+sta(BOSSI),
+  lxi(0x2258)+lyi(BSNAP&0xFFFF)+li(0xEF)+[0x54,0x30,0x7E],                          # MVN 7E:2258-2347 -> 30:7400 (DB jetzt 30)
+  ('jsr','bfl_lade'), [0x49,0xFF,0xFF]+sta(TMP2), SEP, ldax(0x7E2258)+andl(TMP2)+stax(0x7E2258), REP,   # Sieg-Flag loeschen
+  lda(BOSSI)+[0xAA]+ldax(T_BOSS)+sta(KTK)+ldax(T_BOSS+2)+sta(KTX)+ldax(T_BOSS+4)+sta(KTY)+ldax(T_BOSS+10)+sta(BOSSV),
+  li(1)+sta(BOSSAKT)+z(BOSSW)+z(RAUMAKT), ('jmp','kt_ende'),
+  # bfl_lade: X = Flag-Byte (ab 2258), A = Maske
+  'bfl_lade:', lda(BOSSI)+[0xAA]+ldax(T_BOSS+8)+sta(TMP3)+ldax(T_BOSS+6)+[0xAA]+lda(TMP3)+[0x60],
+  # bflag: Z = 0 wenn das Sieg-Flag gesetzt ist
+  'bflag:', ('jsr','bfl_lade'), ldax(0x7E2258)+andl(TMP3)+ai(0xFF)+[0x60],
+  # sieg: Flags zurueck, Boss erledigt (SIEGEL Bit 4), Waffen-Orb + Meldung
+  'sieg:', ('jsr','bsrest'), li(1)+sta(SIEGR)+z(BOSSAKT)+lda(SIEGEL)+oi(0x10)+sta(SIEGEL)+li(4)+sta(TUERM),
+  lda(0x7E0ABA)+ai(0xFF)+jsl(WINC)+[0xC2,0x30]+li(0xFFE), ('jsr','qp'), [0x60],
+  # bsrest: BSNAP -> 7E (ohne Formeln/Talismane/Waffe+N/Waffenbesitz)
+  'bsrest:', [0x8B]+sum(([0xA2]+w((BSNAP&0xFFFF)+a-0x2258)+[0xA0]+w(a)+[0xA9]+w(n-1)+[0x54,0x7E,0x30] for a,n in BREST), [])+[0xAB, 0x60],
+  # stock5: C = 0 wenn Stockwerk mod 5 == 0 (Boss-Ebene)
+  'stock5:', lda(FLOOR)+ai(0xFF), 's5_m:', ci(5), B(BCC,'s5_r'), [0xE9,0x05,0x00], B(BRA,'s5_m'), 's5_r:', ci(1), [0x60],
+  # nstock: neues Stockwerk -> Siegel/Boss zuruecksetzen
+  'nstock:', z(SIEGEL)+z(TUERM)+z(RAUMAKT)+z(CLRW)+z(OBENREQ)+z(BOSSAKT)+[0x60],
+  # rnd: A = Zufall 0..7FFF (DB = 7E)
+  'rnd:', [0x22,0x9B,0x85,0x80, 0x4F,0x00,0x01,0x7E, 0x4F,0xA3,0x4E,0x7E]+ai(0x7FFF)+[0x60],
+  # ---- Fund-Merker des Pool-Raums sichern + loeschen (A = Karte)
+  'flsave:', sta(FLMAP)+li(1)+sta(FLAKT)+[0x8B]+lxi(0x2258)+lyi(RSNAP&0xFFFF)+li(0xA7)+[0x54,0x30,0x7E, 0xAB],   # 2258-22FF -> RSNAP
+  lda(FLMAP)+[0x0A, 0xAA]+ldax(T_FLP), B(BNE,'fs_1'), [0x60],
+  'fs_1:', DB30, [0xAA]+SEP+ldax(TAB)+REP+ai(0xFF)+sta(TMP3)+[0xE8], lyi(0),
+  'fs_l:', ldax(TAB)+sta(TMP4)+ldax(TAB+2)+ai(0xFF)+sta(TMP5)+[0xDA]+lda(TMP4)+[0xAA],
+  SEP, ldax(0x7E2258)+andl(TMP5)+absw(0x99,FLSAVE), lda(TMP5)+[0x49,0xFF, 0x3F]+L(0x7E2258)+stax(0x7E2258), REP,
+  [0xFA, 0xE8,0xE8,0xE8, 0xC8], lda(TMP3)+[0x3A]+sta(TMP3), B(BNE,'fs_l'),
+  [0xAB, 0x60],
+  # ---- Flags des Pool-Raums zurueck (RSNAP, ohne Formeln/Talismane/Waffe+N/Waffenbesitz) -> auch Fund-Merker und Besuchs-Flags
+  'flrest:', lda(FLAKT), B(BNE,'fr_0'), [0x60],
+  'fr_0:', z(FLAKT)+[0x8B]+sum(([0xA2]+w((RSNAP&0xFFFF)+a-0x2258)+[0xA0]+w(a)+[0xA9]+w(n-1)+[0x54,0x7E,0x30] for a,n in BREST), [])+[0xAB, 0x60],
+  # ---- Warteschlange: qp (JSR, A = Text-ID >= 0F00 oder Beute-Item)
+  'qp:', [0xDA, 0x48]+lda(QT)+[0x1A,0x1A]+ai(0x1E)+cmpl(QH), B(BEQ,'qp_voll'),
+  lda(QT)+[0xAA, 0x68]+stax(QBUF)+[0x8A, 0x1A,0x1A]+ai(0x1E)+sta(QT)+[0xFA, 0x60],
+  'qp_voll:', [0x68, 0xFA, 0x60],
+  'qpl:', [0x08, 0xC2,0x30], ('jsr','qp'), [0x28, 0x6B],
+  # ---- qtick (jedes Bild in der Hoehle): naechste Meldung zeigen
+  'qtick:', lda(QCOOL), B(BEQ,'qt_1'), [0x3A]+sta(QCOOL)+[0x60],
+  'qt_1:', lda(QH)+cmpl(QT), B(BNE,'qt_2'), [0x60],
+  'qt_2:', lda(MSGP), B(BEQ,'qt_3'), [0x60],
+  'qt_3:', lda(WARPT)+oral(BEAM)+oral(BEAMRT), B(BEQ,'qt_4'), [0x60],
+  'qt_4:', lda(QH)+[0xAA]+ldax(QBUF)+ci(0x0F00), B(BCS,'qt_5'),
+  # Beute erst, wenn der Junge frei ist (keine Sperre 4E99 & 0020 wie nach bc, kein laufendes Skript 4E89+3E)
+  lda(0x7E4E99)+ai(0x0020), B(BEQ,'qt_5'), [0x60],
+  'qt_5:', ldax(QBUF)+[0x48, 0x8A, 0x1A,0x1A]+ai(0x1E)+sta(QH)+li(QABST)+sta(QCOOL)+[0x68]+ci(0x0F00), B(BCC,'qt_item'),
+  sta(MSGP)+[0x60],
+  'qt_item:', sta(0x7E2391)+li(skp(T_SKR)&0xFFFF),
+  # faden: Skript (kodierter Zeiger A, Bank F7) als Faden mit dem Jungen als Besitzer wie ein Ausloeser (8C:D257: PHY, 8C:D2FD,
+  #        +0D = Besitzer, Besitzer +3E hochzaehlen, in 7E:2F28 eintragen). Mesen v145: ohne Besitzer (+0D = 0) Absturz nach a3 3f.
+  'faden:', [0x85,0x26]+li(skp(T_SKR)>>16)+[0x85,0x28]+lyi(0x4E89)+[0x22,0x57,0xD2,0x8C, 0xC2,0x30, 0x60],
+  # ---- zurueck nach 5E bzw. Ausloeser oben: Tuer-Skript als Faden (geht durch den Tuer-Hook; ein Warp ohne a3-Vorskript
+  #      landet falsch: Mesen v145 Karte 05 328,760 statt 696,616)
+  #      warp5e merkt den Wunsch nur vor (BEAMRT); gestartet wird in kbild, sobald der Junge frei ist (Mesen v145: gleichzeitig mit
+  #      einem Beute-Faden lief das Tuer-Skript nicht) - und nach Zeitablauf (300 Bilder ohne Tuer) erneut.
+  'warp5e:', li(1)+sta(BEAMRT)+[0x60],
+  'beamst:', li(300)+sta(BEAM)+li(skp(T_TSKR)&0xFFFF), ('jmp','faden'),
+
+  # ================= 4. Bildkette
+  'kbild:', [0x22]+VORHER+[0x08, 0xC2,0x30, 0x48, 0xDA, 0x5A]+DB7E,
+  lda(AKT)+ai(0xFF), B(BNE,'kb_a'), z(QH)+z(QT), ('jmp','kb_r'),
+  'kb_a:', ('jsr','qtick'),
+  lda(BEAM), B(BEQ,'kb_a1'), [0x3A]+sta(BEAM), ('jmp','kb_r'),                          # Rueckweg laeuft
+  'kb_a1:', lda(BEAMRT), B(BEQ,'kb_a2'), lda(WARPT), B(BNE,'kb_a3'), lda(0x7E4E99)+ai(0x0020), B(BEQ,'kb_a4'),
+  lda(BRTW)+[0x1A]+sta(BRTW)+ci(900), B(BCC,'kb_a3'),
+  'kb_a4:', z(BRTW), ('jsr','beamst'), 'kb_a3:', ('jmp','kb_r'),
+  'kb_a2:',
+  lda(TOD), B(BEQ,'kb_b'), ('jmp','kb_r'),
+  'kb_b:', lda(0x7E0ADB)+ai(0xFF)+ci(0x5E), B(BEQ,'kb_5e'), ('jmp','kb_n5e'),
+  # ---- 5E: Ausloeser oben
+  'kb_5e:', lda(WARPT), B(BEQ,'o_1'), ('jmp','kb_r'),
+  'o_1:', lda(0x7E4EA3)+ci(OBEN[0]), B(BCC,'o_aus'), ci(OBEN[1]), B(BCS,'o_aus'),
+  lda(0x7E4EA5)+ci(OBEN[2]), B(BCC,'o_aus'), ci(OBEN[3]), B(BCS,'o_aus'),
+  lda(INOBEN), B(BEQ,'o_2'), ('jmp','kb_r'),
+  'o_2:', li(1)+sta(INOBEN)+lda(SIEGEL)+ai(0x10), B(BEQ,'o_3'), li(0xFF8), ('jsr','qp'), ('jmp','kb_r'),
+  'o_3:', li(1)+sta(OBENREQ), ('jsr','warp5e'), ('jmp','kb_r'),
+  'o_aus:', z(INOBEN), ('jmp','kb_r'),
+  # ---- Bossraum: Sieg erkennen
+  'kb_n5e:', lda(BOSSAKT), B(BEQ,'kb_pool'),
+  lda(0x7E0ADB)+ai(0xFF)+ci(0x18), B(BNE,'kb_b1'), li(1)+sta(0x307FD4),          # Vulgors Rache (Raptoren) im Bossraum aus
+  'kb_b1:', lda(WARPT), B(BEQ,'kb_b2'), ('jmp','kb_r'),
+  'kb_b2:', ('jsr','bflag'), B(BNE,'kb_b3'), ('jmp','kb_r'),
+  'kb_b3:', lda(BOSSW)+[0x1A]+sta(BOSSW)+ci(240), B(BCS,'kb_b4'), ('jmp','kb_r'),
+  'kb_b4:', ('jsr','sieg'), ('jsr','warp5e'), ('jmp','kb_r'),
+  # ---- Pool-Raum: Saeuberung
+  'kb_pool:', lda(RAUMAKT)+ci(1), B(BEQ,'kp_1'), ('jmp','kb_r'),
+  'kp_1:', lda(WARPT), B(BEQ,'kp_2'), ('jmp','kb_r'),
+  'kp_2:', lda(CLRW), B(BEQ,'kp_z'), [0x1A]+sta(CLRW)+ci(150), B(BCS,'kp_beam'), ('jmp','kb_r'),
+  'kp_beam:', li(2)+sta(RAUMAKT), ('jsr','warp5e'), ('jmp','kb_r'),
+  'kp_z:', lda(RZEIT)+ci(0x7000), B(BCS,'kp_z1'), [0x1A]+sta(RZEIT), 'kp_z1:', ai(7), B(BEQ,'kp_z2'), ('jmp','kb_r'),
+  'kp_z2:', ('jsr','cnt'),
+  lda(LIVE), B(BEQ,'kp_3'), li(1)+sta(SEEN), ('jmp','kb_r'),
+  'kp_3:', lda(RZEIT)+ci(120), B(BCS,'kp_4'), ('jmp','kb_r'),
+  'kp_4:', lda(PEND), B(BEQ,'kp_5'), ('jmp','kb_r'),
+  'kp_5:', lda(SEEN), B(BNE,'kp_clr'), lda(RZEIT)+ci(300), B(BCS,'kp_clr'), ('jmp','kb_r'),
+  'kp_clr:', lda(TUERM)+ai(7)+[0x0A, 0xAA]+ldax(T_BIT)+oral(SIEGEL)+sta(SIEGEL), li(0xFF9), ('jsr','qp'), li(1)+sta(CLRW),
+  'kb_r:', [0xAB, 0x7A, 0xFA, 0x68, 0x28, 0x6B],
+  # ---- cnt: LIVE = lebende Gegner (Platz nicht in der Freiliste $3DE3/+5E, Vorlage C536-DF3A (n>=51), KP > 0),
+  #           PEND = Spawn-Eintraege (7E:5DC3 bis $0EC2, je 16 Byte) mit Rest-Anzahl +0C > 0
+  'cnt:', DB30, lyi(0)+li(0),
+  'cn_c:', absw(0x99,FREIM)+[0xC8,0xC8, 0xC0,32,0x00], B(BCC,'cn_c'),
+  lyi(40)+lda(0x7E3DE3),
+  'cn_w:', ci(0), B(BEQ,'cn_wd'), [0xAA, 0x38, 0xE9,0xE5,0x3D], B(BCC,'cn_wn'),
+  [0x8F,0x04,0x42,0x00]+SEP+[0xA9,0x8E, 0x8F,0x06,0x42,0x00]+REP+NOP8+[0xAF,0x14,0x42,0x00]+ci(30), B(BCS,'cn_wn'),
+  [0xDA, 0xAA]+SEP+[0xA9,0x01]+absw(0x9D,FREIM)+REP+[0xFA],
+  'cn_wn:', ldax(0x7E005E)+[0x88], B(BNE,'cn_w'),
+  'cn_wd:', z(LIVE)+z(PEND)+lyi(0)+lxi(0x3DE5),
+  'cn_l:', absw(0xB9,FREIM)+ai(0xFF), B(BNE,'cn_s'),
+  ldax(0x7E0060)+ci(0xC536), B(BCC,'cn_s'), ci(0xDF3B), B(BCS,'cn_s'), ldax(0x7E002A), B(BEQ,'cn_s'),
+  absw(0xEE,LIVE),
+  'cn_s:', [0x8A, 0x18, 0x69,0x8E,0x00, 0xAA, 0xC8, 0xC0,30,0x00], B(BCC,'cn_l'),
+  lxi(0x5DC3),
+  'cn_p:', [0x8A]+cmpl(0x7E0EC2), B(BCS,'cn_pd'), ldax(0x7E000C), B(BEQ,'cn_ps'), absw(0xEE,PEND),
+  'cn_ps:', [0x8A, 0x18, 0x69,0x10,0x00, 0xAA], B(BRA,'cn_p'),
+  'cn_pd:', [0xAB, 0x60],
+
+  # ================= 5. kverl (soe_hoehle 'verlassen', vor dem Stash-Rueckschrieb): Boss-Flags + Fund-Merker zurueck
+  'kverl:', [0x08, 0xC2,0x30, 0x48, 0xDA, 0x5A]+DB7E,
+  lda(BOSSAKT)+oral(SIEGR), B(BEQ,'kv_1'), ('jsr','bsrest'), z(BOSSAKT)+z(SIEGR),
+  'kv_1:', ('jsr','flrest'), z(RAUMAKT)+z(CLRW)+z(OBENREQ)+z(QH)+z(QT)+z(BEAM)+z(BEAMRT),
+  [0xAB, 0x7A, 0xFA, 0x68, 0x28, 0x6B],
+  'kns:', [0x08, 0xC2,0x30, 0x48], ('jsr','nstock'), z(QH)+z(QT)+z(FLAKT)+z(BEAM)+z(BEAMRT), [0x68, 0x28, 0x6B],
+
+  # ================= 6. kdrop (soe_hoehle FUND, jeder Sieg in der Hoehle)
+  'kdrop:', [0x08, 0xC2,0x30, 0x48, 0xDA, 0x5A]+DB7E,
+  lda(DROPTEST)+ai(0xFF), B(BEQ,'kd_z'), ci(5), B(BCS,'kd_n'), [0x3A]+sta(TMP1), B(BRA,'kd_s'),
+  'kd_z:', ('jsr','rnd'), mod(100), B(BNE,'kd_n'),
+  ('jsr','rnd'), mod(4), sta(TMP1),
+  'kd_s:', lda(TMP1)+[0x0A, 0xAA, 0xFC,0x00,0x00],      # JSR (seltab,X) - Adresse wird unten eingesetzt
+  B(BCC,'kd_r'),
+  lda(0x7E0ABA)+ai(0xFF)+jsl(WINC)+[0xC2,0x30]+li(0xFFE), ('jsr','qp'), B(BRA,'kd_r'),
+  'kd_n:', ('jsr','rnd'), mod(32), [0x0A, 0xAA]+ldax(T_LOOT), ('jsr','qp'),
+  'kd_r:', [0xAB, 0x7A, 0xFA, 0x68, 0x28, 0x6B],
+  'seltab:', [0]*8,
+  # --- Formel (nicht gelernt, ohne Telekinese 21 / Zauberbruecke 28): Bit + Alchemie-Ring (91:CB6F), "<Name> gelernt!"
+  'gformel:', ('jsr','rnd'), mod(35), sta(TMP2)+li(35)+sta(TMP3),
+  'gf_l:', lda(TMP2)+ci(21), B(BEQ,'gf_n'), ci(28), B(BEQ,'gf_n'),
+  [0x0A, 0xAA]+ldax(0xC502E7)+ai(0xFF)+sta(TMP5)+ldax(0xC502A1)+sta(TMP4)+[0xAA]+ldax(0x7E0000)+andl(TMP5)+ai(0xFF), B(BEQ,'gf_ja'),
+  'gf_n:', lda(TMP2)+[0x1A]+ci(35), B(BCC,'gf_s'), li(0), 'gf_s:', sta(TMP2)+lda(TMP3)+[0x3A]+sta(TMP3), B(BNE,'gf_l'), [0x38, 0x60],
+  'gf_ja:', lda(TMP4)+[0xAA]+SEP+ldax(0x7E0000)+oral(TMP5)+stax(0x7E0000)+REP,
+  [0xA5,0x12, 0x48]+lda(TMP2)+[0x0A, 0xAA, 0x22,0x6F,0xCB,0x91, 0xC2,0x30, 0x68, 0x85,0x12],
+  lda(TMP2)+[0x0A, 0xAA]+ldax(0xC5036F)+[0xAA]+lyi(sufadr['gelernt']), ('jsr','txt'), [0x18, 0x60],
+  # --- Waffe (nicht im Besitz, ohne Bazooka/Klasse 6): Besitz-Bit, "<Name> gefunden!"
+  'gwaffe:', ('jsr','rnd'), mod(13), sta(TMP2)+li(13)+sta(TMP3),
+  'gw_l:', lda(TMP2)+[0x0A, 0x1A,0x1A]+sta(TMP6)+[0xAA]+ldax(0xC50042)+ai(0xFF)+ci(6), B(BEQ,'gw_n'),
+  ldax(0xC50026)+ai(0xFF)+sta(TMP5)+ldax(0xC5000A)+sta(TMP4), B(BEQ,'gw_n'), [0xAA]+ldax(0x7E0000)+andl(TMP5)+ai(0xFF), B(BEQ,'gw_ja'),
+  'gw_n:', lda(TMP2)+[0x1A]+ci(13), B(BCC,'gw_s'), li(0), 'gw_s:', sta(TMP2)+lda(TMP3)+[0x3A]+sta(TMP3), B(BNE,'gw_l'), [0x38, 0x60],
+  'gw_ja:', lda(TMP4)+[0xAA]+SEP+ldax(0x7E0000)+oral(TMP5)+stax(0x7E0000)+REP,
+  lda(TMP6)+[0xAA]+ldax(0xC43EB4)+[0xAA]+ldax(0xC40002)+[0xAA]+lyi(sufadr['gefunden']), ('jsr','txt'), [0x18, 0x60],
+  # --- Talisman (nicht im Besitz): 7E:243D = 2k (Spiel setzt Bit + Werte), "<Name> erhalten!"
+  'gtalis:', ('jsr','rnd'), mod(14), sta(TMP2)+li(14)+sta(TMP3),
+  'gt_l:', lda(TMP2)+[0x0A, 0xAA]+ldax(0x8CBFB9)+ai(0xFF)+sta(TMP5)+ldax(0x8CBF91)+[0xAA]+ldax(0x7E0000)+andl(TMP5)+ai(0xFF), B(BEQ,'gt_ja'),
+  lda(TMP2)+[0x1A]+ci(14), B(BCC,'gt_s'), li(0), 'gt_s:', sta(TMP2)+lda(TMP3)+[0x3A]+sta(TMP3), B(BNE,'gt_l'), [0x38, 0x60],
+  'gt_ja:', lda(TMP2)+[0x0A]+sta(0x7E243D)+[0xAA]+ldax(0x8CBFFB)+[0xAA]+lyi(sufadr['erhalten']), ('jsr','txt'), [0x18, 0x60],
+  # --- Ruestung (Anzahl 7E:231D+Nr = 0): Anzahl 1, "<Name> gefunden!"
+  'gruest:', ('jsr','rnd'), mod(40), sta(TMP2)+li(40)+sta(TMP3),
+  'gr_l:', lda(TMP2)+[0xAA]+ldax(0x7E231D)+ai(0xFF), B(BEQ,'gr_ja'),
+  lda(TMP2)+[0x1A]+ci(40), B(BCC,'gr_s'), li(0), 'gr_s:', sta(TMP2)+lda(TMP3)+[0x3A]+sta(TMP3), B(BNE,'gr_l'), [0x38, 0x60],
+  'gr_ja:', lda(TMP2)+[0xAA]+SEP+[0xA9,0x01]+stax(0x7E231D)+REP,
+  lda(TMP2)+[0x0A]+sta(TMP4)+[0x0A,0x0A, 0x18]+adcl(TMP4)+[0xAA]+ldax(0xC44146)+[0xAA]+lyi(sufadr['gefunden']), ('jsr','txt'), [0x18, 0x60],
+  # --- txt: X = Name (Bank C5), Y = Endung (Bank F7) -> MTXT (0x97, Name, Endung, 00), Meldung FFB in die Warteschlange
+  'txt:', DB30, [0x5A], SEP+[0xA9,0x97]+absw(0x8D,MTXT), lyi(1),
+  'tx_n:', ldax(0xC50000), B(BEQ,'tx_nd'), absw(0x99,MTXT)+[0xE8, 0xC8, 0xC0,26,0x00], B(BCC,'tx_n'),
+  'tx_nd:', [0xFA],
+  'tx_s:', ldax(TAB), absw(0x99,MTXT), B(BEQ,'tx_sd'), [0xE8, 0xC8], B(BRA,'tx_s'),
+  'tx_sd:', REP+[0xAB]+li(0xFFB), ('jmp','qp'),
+
+  # ================= 7. Boss-Werte (soe_hoehle stat, nach SKAL): A = Wert, X = Vorlage
+  'kbkp:', [0x08, 0xC2,0x30, 0x48]+lda(BOSSAKT), B(BEQ,'bk_o'), [0x8A]+cmpl(BOSSV), B(BNE,'bk_o'),
+  [0x68]+ci(3750), B(BCC,'bk_m'), li(30000)+[0x28, 0x6B], 'bk_m:', [0x0A,0x0A,0x0A, 0x28, 0x6B],
+  'bk_o:', [0x68, 0x28, 0x6B],
+  'kbatk:', [0x08, 0xC2,0x30, 0x48]+lda(BOSSAKT), B(BEQ,'bk_o'), [0x8A]+cmpl(BOSSV), B(BNE,'bk_o'),
+  [0x68]+ci(20000), B(BCC,'ba_m'), li(30000)+[0x28, 0x6B], 'ba_m:', sta(TMP6)+[0x4A, 0x18]+adcl(TMP6)+[0x28, 0x6B],
+  # ================= 8. Spawn-Anzahl (8F:DE7C, ersetzt LDA 7E:2433): in Hoehlen-Raeumen hoechstens 1 -> kein Respawn
+  'kcap:', [0xAF,0x33,0x24,0x7E, 0x48]+lda(AKT)+ai(0xFF), B(BEQ,'kc_o'), lda(0x7E0ADB)+ai(0xFF)+ci(0x5E), B(BEQ,'kc_o'),
+  lda(BOSSAKT), B(BNE,'kc_o'), [0x68]+ci(2), B(BCC,'kc_r'), li(1), 'kc_r:', [0x6B],
+  'kc_o:', [0x68, 0x6B],
+]
+code, lab = assemble(CODE, t)
+code = bytearray(code)
+for i, l in enumerate(['kt','kverl','kns','qpl','kdrop','kbkp','kbatk','kcap']):
+    a = lab[l]; code[4*i:4*i+4] = bytes([0x5C, a&0xFF, (a>>8)&0xFF, a>>16])
+o = lab['seltab'] - CODE
+for i, l in enumerate(['gformel','gwaffe','gtalis','gruest']): code[o+2*i:o+2*i+2] = bytes(w(lab[l] & 0xFFFF))
+o = lab['kd_s'] - CODE + 6; assert code[o] == 0xFC; code[o+1:o+3] = bytes(w(lab['seltab'] & 0xFFFF))
+assert len(code) <= 0x2F00, hex(len(code))
+o = at(CODE); assert all(b == 0xFF for b in r[o:o+len(code)]), 'F3 belegt'; r[o:o+len(code)] = code
+for a, b in tabs.items():
+    o = at(a); assert all(x == 0xFF for x in r[o:o+len(b)]), hex(a); r[o:o+len(b)] = b
+def jml(l): a = lab[l]; return bytes([0x5C, a&0xFF, (a>>8)&0xFF, a>>16])
+r[o2:o2+4] = jml('c2')
+r[o1:o1+4] = jml('text')
+a = lab['kcap']; r[o4:o4+4] = bytes([0x22, a&0xFF, (a>>8)&0xFF, a>>16])
+a = lab['kbild']; r[o0:o0+4] = bytes([0x22, a&0xFF, (a>>8)&0xFF, a>>16])
+h = 0xFFC0
+for _ in range(2):
+    s = sum(r) & 0xFFFF; r[h+0x1E:h+0x20] = s.to_bytes(2,'little'); r[h+0x1C:h+0x1E] = (s^0xFFFF).to_bytes(2,'little')
+open(pfad,'wb').write(d)
+print("Knoten v145 eingebaut (%d Bytes Code, Pool %d, Fund-Merker %d auf %d Karten, gesperrt %s)" % (len(code), NPOOL,
+      sum(len(v) for v in FLAGS.values()), sum(1 for v in FLAGS.values() if v), ' '.join('%02X:%03X' % x for x in GESPERRT)))

@@ -32,6 +32,10 @@ NUR_RAUS = [89, 90, 108, 109]
 for i in TOPF + NUR_RAUS:
     kand = [j for j in TOPF if hp[i]/2 <= hp[j] <= hp[i]*2] or sorted(TOPF, key=lambda j: abs(hp[j]-hp[i]))[:4]
     ptr[i] = liste(kand)
+# v125 (Max): Piraten (93) stehen auf dem Schiff als freundliche NPCs mit derselben Vorlage -> nie ersetzen (wurden zu Monstern).
+# Als eingesetzter Zufallsgegner bleibt der Pirat im Topf.
+NIE_ERSETZEN = []   # v126: wieder frei – stattdessen Schiffs-Karten 0x30/0x68 gesperrt (Max: Monster-Piraten sollen sich aendern)
+for i in NIE_ERSETZEN: ptr.pop(i, None)
 TAB = DATEN + len(blob) + (len(blob) & 1)
 tab = b''.join((ptr.get(i, 0) & 0xFFFF).to_bytes(2,'little') for i in range(142))
 GZ = 0xF01A00
@@ -43,6 +47,7 @@ code,_ = assemble(GZ, [
   [0xAF,0xDB,0x0A,0x7E, 0x29,0xFF,0x00, 0xC9,0x18,0x00], ('bra8',0xF0,'gesperrt'),
   [0xC9,0x1D,0x00], ('bra8',0xF0,'gesperrt'),                               # v99: Vigor-Arena (Verstaerkung aus soe_vigor nicht tauschen)
   [0xC9,0x3F,0x00], ('bra8',0xF0,'gesperrt'),                               # v121: Magmar (Vulkan, Verstaerkung aus soe_vigor)
+  [0xC9,0x30,0x00], ('bra8',0xF0,'gesperrt'), [0xC9,0x68,0x00], ('bra8',0xF0,'gesperrt'),   # v126: Piratenschiff (Deck, Ausguck): NPC-Piraten nie tauschen
   [0xC9,0x5C,0x00], ('bra8',0xD0,'kein_vulgor'),
   'gesperrt:', ('jmp','raus'),
   'kein_vulgor:', [0xA5,0x02, 0x38, 0xE9,0x78,0xB6], ('bra8',0xB0,'ok1'), ('jmp','raus'),
