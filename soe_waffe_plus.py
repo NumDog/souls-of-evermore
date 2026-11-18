@@ -24,22 +24,7 @@ g, gl = assemble(GRANT, [
   [0x39,0x00,0x00],             # AND $0000,Y     schon im Besitz?
   ('bra8',0xF0,'ende'),         # BEQ ende        nein -> normal
   [0xDA,0x5A,0x08],             # PHX PHY PHP
-  [0x8A], NIB,                  # TXA ; Nibble-Position
-  [0xE2,0x20],                  # SEP #$20
-  [0xBF,0x50,0x22,0x7E],        # LDA $7E2250,X
-  [0xC0,0x00,0x00],             # CPY #0
-  ('bra8',0xD0,'oben'),         # BNE oben
-  [0x48,0x29,0x0F,0xC9,0x0F],   # PHA AND #$0F CMP #$0F
-  [0x68],                       # PLA
-  ('bra8',0xF0,'voll'),         # BEQ voll
-  [0x1A],                       # INC A
-  ('bra8',0x80,'schreib'),
-  'oben:',
-  [0xC9,0xF0],                  # CMP #$F0
-  ('bra8',0xB0,'voll'),         # BCS voll (>= $F0)
-  [0x18,0x69,0x10],             # CLC ADC #$10
-  'schreib:',
-  [0x9F,0x50,0x22,0x7E],        # STA $7E2250,X
+  [0xC2,0x30, 0x8A, 0x22,0x80,0xB0,0xF1],   # v122: REP #30 ; TXA ; JSL WINC (soe_waffe99, bis +99)
   'voll:',
   [0x28,0x7A,0xFA],             # PLP PLY PLX
   'ende:',
@@ -51,13 +36,7 @@ ATK = 0xF00280
 a, al = assemble(ATK, [
   [0xBF,0x00,0x00,0xC4],        # LDA $C40000,X   Angriffskraft
   [0xDA,0x5A,0x48],             # PHX PHY PHA     1,S = Kraft
-  [0xA5,0x12], NIB,             # LDA $12 ; Nibble-Position
-  [0xBF,0x50,0x22,0x7E],        # LDA $7E2250,X  (16 bit, nur Low-Byte zaehlt)
-  [0xC0,0x00,0x00],             # CPY #0
-  ('bra8',0xF0,'unten'),
-  [0x4A,0x4A,0x4A,0x4A],        # LSR x4
-  'unten:',
-  [0x29,0x0F,0x00],             # AND #$000F
+  [0xA5,0x12, 0x22,0x00,0xB0,0xF1],   # v122: LDA $12 ; JSL WGET (Plus-Zahl bis 99)
   ('bra8',0xF0,'fertig'),       # kein Bonus
   [0xAA],                       # TAX  = Plus-Zahl
   [0xA3,0x01,0x4A,0x48],        # LDA 1,S ; LSR ; PHA      1,S = Kraft/2, 3,S = Kraft

@@ -41,6 +41,8 @@ code,_ = assemble(GZ, [
   'an:', [0x8F,0x8A,0x7E,0x30],                                              # Modus merken
   # Sperr-Karten (Bossraeume mit eigenem Verhaltensmuster): 0x18 Vulgor, 0x5C erster Boss (versteckt sich in Bueschen)
   [0xAF,0xDB,0x0A,0x7E, 0x29,0xFF,0x00, 0xC9,0x18,0x00], ('bra8',0xF0,'gesperrt'),
+  [0xC9,0x1D,0x00], ('bra8',0xF0,'gesperrt'),                               # v99: Vigor-Arena (Verstaerkung aus soe_vigor nicht tauschen)
+  [0xC9,0x3F,0x00], ('bra8',0xF0,'gesperrt'),                               # v121: Magmar (Vulkan, Verstaerkung aus soe_vigor)
   [0xC9,0x5C,0x00], ('bra8',0xD0,'kein_vulgor'),
   'gesperrt:', ('jmp','raus'),
   'kein_vulgor:', [0xA5,0x02, 0x38, 0xE9,0x78,0xB6], ('bra8',0xB0,'ok1'), ('jmp','raus'),
