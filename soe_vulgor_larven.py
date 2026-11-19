@@ -1,3 +1,4 @@
+# v146f: Verdopplung AUS (nur noch Position merken fuer Vulgors Rache).
 # Vulgor-Kampf (Karte 0x18): Jeder Lavawurm (Vorlage $8E:D6D8) bekommt einen zweiten dazu (16 Pixel versetzt).
 # (v52 hatte das abgeschwaecht, Max wollte es dann doch wie vorher.)
 # (Ein Raptor ginge technisch, waere aber unsichtbar: seine Grafik ist in diesem Raum nicht geladen.)
@@ -7,12 +8,68 @@ pfad = sys.argv[1]
 d = bytearray(open(pfad,'rb').read()); H = len(d) % 1024; r = memoryview(d)[H:]
 def at(x): return x & 0x3FFFFF if (x>>16) >= 0xC0 else (((x>>16)&0x3F)<<16)|(x&0xFFFF)
 SPAWN, WURM = 0xF01800, 0xD6D8
+ETAB = 0xF017F0                   # Tabelle (frei, direkt vor SPAWN)
+import os
+ERSATZ = [int(x,16) for x in os.environ["SOE_ERSATZ"].split(",")] if os.environ.get("SOE_ERSATZ") else [0xD110, 0xD15A, 0xD3AA, 0xD3F4]   # v146l (Max): Echsenbrut 92, Pirat 93, Sandkrabbler 101, Witwenbeine 102 (keine Flieger/Roboter; Ureus/Sachmet machen Aerger); stumm ueber soe_ton_fremd   # v146h: Tausch AUS - fremde Monster (Raptor/Echsenbrut/Pirat) toeten im Vulgor-Raum den Ton (Max). Vorher: [0xD032, 0xD110, 0xD15A]   # v146f (Max): statt Larven zufaellig Raptor (89), Echsenbrut (92), Pirat (93) - im Emulator sichtbar
+STADT_KARTE, STADT_MAX = 0x7B, 0xFF   # v146v (Max): alle Menschen werden Monster (keine Grenze)
+NPCS = [0xBEDA, 0xBF24, 0xBF6E, 0xC002, 0xC04C,           # Nobilia-Menschen (Mesen 0x7B/7C)
+        0xB70C, 0xB756, 0xB7A0, 0xB7EA, 0xB834, 0xB87E, 0xB8C8, 0xB912,   # v146y Dschungeldorf 0x25 (Mesen)
+        0xBA84, 0xBACE, 0xBB18, 0xBB62, 0xBBAC, 0xBBF6, 0xBDFC, 0xC12A, 0xC330]   # C330 Ausrufer (Max, Karte 62)   # v146y Ivor Tower 08/09/0A/0B/1C (Mesen)
+# v146y (Max: alle Staedte, Haustueren intern): Stadtgruppen - Karte -> Gruppe (1-4). In der Cave: Menschen dort -> Monster,
+# Tueren innerhalb derselben Gruppe bleiben normale Tueren (soe_knoten kt liest GRP).
+STADTGRP = {1: [0x7B, 0x7C, 0x7D, 0x62, 0x74], 2: [0x25, 0x26, 0x51], 3: [0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x1B, 0x1C, 0x4D], 4: [0x30, 0x68]}
+GRP = 0xF8D500   # 128 Byte: Gruppe je Karte
+HAEUSER = {0x7D, 0x51, 0x0C, 0x26, 0x68, 0x1B, 0x74, 0x4D}   # 1B = Haupteingang Ivor (Durchgang ohne Menschen)   # v146z6: Innenraeume (Bit 0x80 fehlt -> soe_knoten: keine Saeuberung/kein Rausbeamen)
+STADT_MON = [0xD3AA, 0xD3F4, 0xD360, 0xC8F8, 0xD15A]     # Sandkrabbler, Witwenbeine, Gifttarantel, Satyr, Pirat
+NTAB = 0xF8D380
+PTAB = 0xF8D3A0   # v146x (Max: Monster stecken in den Staenden): 32 freie Plaetze unten im Markt (16x16-Raster, 3x3 frei)
+STADT_PL = [(184, 584), (824, 632), (1512, 584), (1480, 616), (264, 520), (1528, 552), (1320, 664), (184, 568), (936, 648), (1096, 664), (1480, 600), (1528, 536), (232, 552), (376, 600), (296, 600), (184, 616), (296, 504), (216, 584), (584, 648), (984, 648), (264, 552), (1496, 552), (1048, 664), (552, 648), (1416, 632), (1016, 648), (1336, 664), (296, 568), (328, 552), (952, 648), (1528, 568), (1384, 632)]
+ERS = 0xF8D000                    # v146f: Ersatz-Routine (Aufruf aus der Kette F0:1980 in soe_gegner_zufall, vor F0:1800)
+ers,_ = assemble(ERS, [
+  # Lavawurm in 0x18 -> zufaellige Ersatz-Vorlage (vor dem Original-Erscheinen)
+  [0x08, 0xC2,0x30, 0x48, 0xDA],
+] + [
+  # v146u (Max): verwandelnde Stadt - Nobilia-Markt 0x7B in der Cave: hoechstens STADT_MAX Menschen (NPC-Vorlagen) werden
+  # beim Erscheinen zu Monstern (50 %), $08 = 0 (kein Gespraech), stumm (fremd). Waffe: C2-Zusatzgegner in soe_eigene_karten.
+  # Zaehler 30:7FB4 (soe_eigene_karten setzt ihn je Raumbesuch auf 0).
+  [0xAF,0xDB,0x0A,0x7E, 0x29,0x7F,0x00, 0xAA, 0xBF,GRP&0xFF,(GRP>>8)&0xFF,GRP>>16, 0x29,0xFF,0x00], ('bra8',0xF0,'e_nn_j'),
+  [0xAF,0x02,0x70,0x30, 0x29,0xFF,0x00], ('bra8',0xF0,'e_nn_j'),
+  [0xA5,0x02]] + sum([[ [0xC9, v&0xFF, v>>8], ('bra8',0xF0,'e_npc') ] for v in NPCS], []) + [('bra8',0x80,'e_nn_j'),
+  'e_npc_x:', 'e_nn_j:', ('jmp','e_nn'), 'e_npc:', [0xAF,0xB4,0x7F,0x30, 0x29,0xFF,0x00, 0xC9,STADT_MAX,0x00], ('bra8',0xB0,'e_nn'),
+  'e_nw:', [0x22,0x9B,0x85,0x80, 0x4F,0x00,0x01,0x7E, 0x29,0x07,0x00, 0xC9,len(STADT_MON),0x00], ('bra8',0xB0,'e_nw'),
+  [0x0A, 0xAA, 0xBF, NTAB&0xFF, (NTAB>>8)&0xFF, NTAB>>16, 0x85,0x02, 0x64,0x08,
+   0xAF,0xDB,0x0A,0x7E, 0x29,0xFF,0x00, 0xC9,0x7B,0x00, 0xD0,0x1A,
+   0x22,0x9B,0x85,0x80, 0x4F,0x00,0x01,0x7E, 0x29,0x1F,0x00, 0x0A,0x0A, 0xAA, 0xBF,PTAB&0xFF,(PTAB>>8)&0xFF,PTAB>>16, 0x85,0x46, 0xBF,(PTAB+2)&0xFF,(PTAB>>8)&0xFF,PTAB>>16, 0x85,0x48],   # Platz frei waehlen; $08 = 0: kein Gespraechsskript mehr (bei 3C ist $08 der Skriptzeiger)
+  [0xAF,0xB4,0x7F,0x30, 0x1A, 0x8F,0xB4,0x7F,0x30], ('jmp','e_raus'),
+  'e_nn:',
+] + [
+  # v146t (Max): Feuerdrache-Raum 0x37 auch im normalen Cave-Pool -> dort (AKT, kein Bosskampf BOSSAKT 30:703A) Feuerdrache -> Glutdrache
+  [0xA5,0x02, 0xC9,0xBA,0xCC], ('bra8',0xD0,'e_lw'),
+  [0xAF,0xDB,0x0A,0x7E, 0x29,0xFF,0x00, 0xC9,0x37,0x00], ('bra8',0xD0,'e_raus'),
+  [0xAF,0x02,0x70,0x30, 0x29,0xFF,0x00], ('bra8',0xF0,'e_raus'), [0xAF,0x3A,0x70,0x30], ('bra8',0xD0,'e_raus'),
+  [0xA9,0x9A,0xDA, 0x85,0x02], ('bra8',0x80,'e_raus'),
+  'e_lw:',
+  [0xA5,0x02, 0xC9,WURM&0xFF,WURM>>8], ('bra8',0xD0,'e_raus'),
+  [0xAF,0xDB,0x0A,0x7E, 0x29,0xFF,0x00, 0xC9,0x18,0x00], ('bra8',0xF0,'e_ok'),
+  [0xC9,0x62,0x00], ('bra8',0xF0,'e_ak'), [0xC9,0x7B,0x00], ('bra8',0xD0,'e_raus'), 'e_ak:',   # v146r/u: eigene Stadt 62 und Nobilia 7B (Platzhalter-Larven aus soe_eigene_karten)
+  [0xAF,0x02,0x70,0x30, 0x29,0xFF,0x00], ('bra8',0xF0,'e_raus'),
+  'e_ok:',
+  # v146h (Max): EIN Typ je Kampf - beim ersten Lavawurm wuerfeln und merken (30:7FB2 = Typ+1; soe_boss_neu setzt es je Raumbesuch auf 0)
+  # v146l (Max: "je schwerer desto besser"): wieder JEDE Larve einzeln wuerfeln (gemischt); stumm ueber soe_ton_fremd
+  'e_w:', [0x22,0x9B,0x85,0x80, 0x4F,0x00,0x01,0x7E, 0x4F,0xA3,0x4E,0x7E, 0x4F,0xA5,0x4E,0x7E, 0x29,0x03,0x00,   # v146k: + Bildzaehler/Position (Max: immer Raptoren - gleicher Save-State = gleicher Zufall)
+    0xC9,0x04,0x00], ('bra8',0xF0,'e_w'), [0x1A, 0x8F,0xB2,0x7F,0x30, 0x3A],
+  'e_t:',
+  [0x0A, 0xAA, 0xBF, ETAB&0xFF, (ETAB>>8)&0xFF, ETAB>>16, 0x85,0x02],
+  'e_raus:', [0xFA, 0x68, 0x28, 0x6B],
+])
+assert len(ers) < 0x400
 code,_ = assemble(SPAWN, [
   [0x8B, 0xF4,0x7E,0x7E, 0xAB,0xAB, 0x22,0x6F,0xB2,0x8F, 0x22,0x55,0xB0,0x8F, 0xAB],   # Original 8F:B045..B053
   [0x08, 0xC2,0x30, 0x48,0xDA,0x5A],
   [0xA5,0x02, 0xC9,WURM&0xFF,WURM>>8], ('bra8',0xD0,'fertig'),
   [0xAF,0xDB,0x0A,0x7E, 0x29,0xFF,0x00, 0xC9,0x18,0x00], ('bra8',0xD0,'fertig'),          # nur Vulgor-Raum
   [0xA5,0x46, 0x8F,0xCC,0x7F,0x30, 0xA5,0x48, 0x8F,0xCE,0x7F,0x30],                     # Larven-Position merken (fuer Vulgors Rache)
+  ('bra8',0x80,'fertig'),   # v146f (Max: zu viele Larven, man kann voll leveln): KEIN zweiter Lavawurm mehr (Rest bleibt fuer spaeter)
   [0xAF,0x88,0x7E,0x30], ('bra8',0xD0,'fertig'),                                         # Sperre aktiv?
   [0xA9,0x01,0x00, 0x8F,0x88,0x7E,0x30],                                                 # Sperre setzen
   [0xA5,0x02,0x48, 0xA5,0x46,0x48, 0xA5,0x48,0x48, 0xA5,0x08,0x48, 0xA5,0x4C,0x48],
@@ -23,6 +80,14 @@ code,_ = assemble(SPAWN, [
   'fertig:', [0x7A,0xFA,0x68,0x28, 0x6B],
 ])
 o=at(SPAWN); assert all(b==0xFF for b in r[o:o+len(code)]); r[o:o+len(code)]=code
+o=at(ERS); assert all(b==0xFF for b in r[o:o+len(ers)]); r[o:o+len(ers)]=ers
+t2=b''.join(v.to_bytes(2,'little') for v in STADT_MON); assert ERS+len(ers) <= NTAB; o=at(NTAB); assert all(b==0xFF for b in r[o:o+len(t2)]); r[o:o+len(t2)]=t2
+t3=b''.join(a.to_bytes(2,'little')+b.to_bytes(2,'little') for a,b in STADT_PL); assert NTAB+len(t2)<=PTAB; o=at(PTAB); assert all(b==0xFF for b in r[o:o+len(t3)]); r[o:o+len(t3)]=t3
+g=bytearray(128)
+for gi,ks in STADTGRP.items():
+    for k in ks: g[k]=gi | (0 if k in HAEUSER else 0x80)
+o=at(GRP); assert all(b==0xFF for b in r[o:o+128]); r[o:o+128]=g
+t=b''.join(v.to_bytes(2,'little') for v in ERSATZ); o=at(ETAB); assert all(b==0xFF for b in r[o:o+len(t)]); r[o:o+len(t)]=t
 o=at(0x8FB045); assert bytes(r[o:o+4])==bytes([0x8B,0xF4,0x7E,0x7E]); r[o:o+4]=bytes([0x5C,SPAWN&0xFF,(SPAWN>>8)&0xFF,SPAWN>>16])
 h=0xFFC0
 for _ in range(2):

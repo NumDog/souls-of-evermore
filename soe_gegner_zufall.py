@@ -110,8 +110,8 @@ for adr,c in ((GZ,code),(DATEN,bytes(blob)),(TAB,tab)):
 # In den Spawn-Hook (F0:1800) vorne einhaengen: dort steht die Original-Routine (8B F4 7E 7E ...) -> davor JSL GZ
 o=at(0xF01800); assert bytes(r[o:o+4])==bytes([0x8B,0xF4,0x7E,0x7E]), "erst soe_vulgor_larven.py"
 o2=at(0x8FB045); assert bytes(r[o2:o2+4])==bytes([0x5C,0x00,0x18,0xF0])
-VOR=0xF01980; o3=at(VOR); assert all(b==0xFF for b in r[o3:o3+8])
-r[o3:o3+8]=bytes([0x22,GZ&0xFF,(GZ>>8)&0xFF,GZ>>16, 0x5C,0x00,0x18,0xF0])            # JSL GZ ; JML F0:1800
+VOR=0xF01980; o3=at(VOR); assert all(b==0xFF for b in r[o3:o3+12])
+r[o3:o3+12]=bytes([0x22,GZ&0xFF,(GZ>>8)&0xFF,GZ>>16, 0x22,0x00,0xD0,0xF8, 0x5C,0x00,0x18,0xF0])   # JSL GZ ; JSL F0:1780 (v146f Larven-Ersatz) ; JML F0:1800
 r[o2:o2+4]=bytes([0x5C,VOR&0xFF,(VOR>>8)&0xFF,VOR>>16])
 h=0xFFC0
 for _ in range(2):

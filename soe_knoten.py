@@ -1,3 +1,4 @@
+import os
 # DarkSoulCave v145 (Max: "erst mit den fertig geprueften Karten"), Bank F3:0000-2FFF (Code) + F7:0000-0FFF (Tabellen).
 # Ersetzt v143/v144 (Kisten/Schalter/SCHALTG/STAIROK sind weg, soe_funde ist nicht mehr im Bau).
 #  - Schachbrett 5E = Knoten mit vier Zugaengen: links (Tuer nach 5F, x<400), rechts (5F, x>=400), unten (5D), OBEN = Positions-
@@ -42,6 +43,8 @@ TMP1, TMP2, TMP3, TMP4, TMP5, TMP6, LIVE, PEND = [0x3070E0+2*i for i in range(8)
 BEAM = 0x3070F0                                  # Rueckweg-Skript laeuft (Bilder bis Zeitablauf)
 BEAMRT = 0x3070F2                                # Rueckweg gewuenscht (bis der Tuer-Hook ihn ausfuehrt; Wiederholung nach Zeitablauf)
 SIEGR = 0x3070F6                                 # nach dem Sieg beim Rueckweg BSNAP nochmal zurueck (Boss-Skript gibt Story-Dinge erst nach der Sieg-Erkennung)
+BSEEN = 0x3070FA                                 # v146o: Boss (ohne Sieg-Flag) war schon zu sehen
+BMUS = 0x3070F8                                  # v146c: Boss-Musik schon gestartet (Vulgor)
 BRTW = 0x3070F4                                  # Bilder, die der Rueckweg schon auf den freien Jungen wartet (ab 900 trotzdem)
 BOSSFEST, DROPTEST = 0x3070BC, 0x3070BE          # Testhilfen: Boss-Index+1 / seltene Beute erzwingen (1-4 = Art, 5 = normal)
 BSNAP, MTXT = 0x307400, 0x307500                 # Boss-Flag-Sicherung 7E:2258-2347 / Text-Puffer FFB
@@ -57,14 +60,30 @@ OBEN = (160, 192, 200, 232)                      # Ausloeser oben (x von/bis, y 
 LANDE = [(176,440), (64,448), (288,448), (176,760), (176,296)]   # 0 Mitte, 1 links, 2 rechts, 3 unten, 4 oben (unter dem Ausloeser)
 
 # ---- GEPRUEFTER POOL (Karte, x, y px; Ankunft mit 238F=0 geprueft, Max v145)
-POOL = [[64,88,72],[64,216,608],[65,56,576],[79,56,600],[79,168,264],[79,464,600],[84,880,184],[84,664,680],[87,976,744],[89,72,168],
-        [89,864,272],[91,72,440],[91,144,104],[91,816,280],[91,816,424],[5,696,616],[5,360,48],[5,32,376],[6,1240,904],[7,48,488],
-        [7,504,544],[15,888,328],[15,96,320],[18,1208,128],[18,272,328],[22,416,128],[22,400,1312],[23,224,688],[23,232,80],[23,48,544],
-        [23,48,400],[23,48,256],[27,472,240],[14,328,344],[41,328,984],[40,1064,1240],[112,120,328],[33,72,200],[58,120,312],[76,176,480]]
+# v146g (Max): ohne Vulgors Hoehle (16 Brueckenhoehle, 17 Knochenhoehle) und Wueste (1B)
+# v146s (Max, Spielstaende): ohne 59 und 3A (keine Gegner / weg)
+# v146n (Max): ohne leere Raeume 0E Speisesaal, 4C Statuen, 70 Dach (54 bleibt: Haendler); neu 65 Wald, 3D Kanal (je 10+ Gegner)
+POOL = [[64,88,72],[64,216,608],[65,56,576],[79,56,600],[79,168,264],[79,464,600],[84,880,184],[84,664,680],[87,976,744],[91,72,440],
+        [91,144,104],[5,696,616],[5,360,48],[5,32,376],[6,1240,904],[7,48,488],[7,504,544],[15,888,328],
+        [15,96,320],[18,1208,128],[18,272,328],[41,328,984],[40,1064,1240],[101,1168,32],[61,728,1184],[98,672,560],[55,152,1928],[123,224,720],[37,408,408],[124,536,856],[27,584,1544]]   # v146y: Dschungeldorf 25, Nobilia 7C, Ivor Tower 0A/08 (Menschen -> Monster, Haustueren intern)   # v146u: 7B = Nobilia-Markt (Menschen -> Monster); v146t: 62 = eigene Stadt (Gegner per C2 -> Waffe geht); 37 = Feuerdrache-Raum ohne Boss (Max)
+if os.environ.get('SOE_NURSTADT'): POOL = [p for p in POOL if p[0] in (0x62, 0x7B, 0x25, 0x7C, 0x1B)]   # Testbau: nur Staedte
 NPOOL = len(POOL); assert NPOOL < 256
 # ---- Bosse (Bauplan 2.2, Sieg gemessen r_bossraeume): Karte, Ankunft (gemessene Stelle des Jungen), Sieg-Flag, Vorlage
 # 18 Vulgor-Herz raus (Mesen v145: nach dem Sieg bleibt der Junge in der Story-Szene gesperrt, kein Rueckweg)
-BOSSE = [(0x2A,504,616,0x407,0xCFE8), (0x2C,72,280,0x48E,0xD282), (0x45,464,624,0x477,0xDA50), (0x58,264,448,0x406,0xCEC0)]
+# v146c: + Baumdrache (20, Sieg 42A gemessen) + goldener Vulgor (18: Sieg-Flag 108 aus soe_vulgor_gold, vorher 044 = 1 setzen,
+#        damit der Rueckkampf ohne Story-Szene kommt). 6. Feld = Flag, das beim Betreten gesetzt wird (0 = keins).
+# v146o (Max: alle Bosse): Sieg-Flag None = Sieg, wenn die Boss-Vorlage (oder die 2. Vorlage) im Raum war und keine mehr lebt.
+# Felder: Karte, Ankunft x/y (Junge), Sieg-Flag oder None, Vorlage, Zusatz-Flag beim Betreten (0 = keins), 2. Vorlage (0 = keine),
+#   Musik (v146s: Byte-Versatz in 8C:87E0 fuer Skriptbefehl 33 - ueber die Cave startete die Raum-Musik nicht -> Ton weg, Max: Baumdrache)
+BOSSE = [(0x2A,504,616,0x407,0xCFE8,0,0,0x24), (0x2C,72,280,0x48E,0xD282,0,0,0x5A), (0x45,464,624,0x477,0xDA50,0,0,0x88), (0x58,264,448,0x406,0xCEC0,0,0,0x24),
+         (0x18,184,424,0x108,0xD894,0x044,0,0x04),
+         (0x20,216,328,0x42A,0xCC70,0,0,0x24),          # Baumdrache (v146c: Rueckbeamen hing -> jetzt rauslaufen)
+         (0x1D,256,56,None,0xCE2C,0,0,0x54),            # Vigor
+         (0x4A,144,248,None,0xDBC2,0,0xDC0C,0x24),      # Ventilatoren + Lautsprecher
+         (0x6D,208,536,None,0xCBDC,0,0,0x24),           # Monsterqualle
+         # Puppentheater (0x77) raus (Max v146r: Kampf startet nicht, nur Dialog)
+         (0x7E,120,312,None,0xDDC8,0,0,0x88),           # Raptor (8000 KP)
+         (0x37,152,1928,None,0xCCBA,0,0,0x68)]          # Feuerdrache (Ankunft weit weg vom Drachen)
 # BSNAP-Rueckschrieb: 2258-22FF ohne Formeln (2258-225C), Talismane/Hund (2261-2263), Waffe+N (22CE-22D0, 22D3-22D6), Waffenbesitz (22DA/DB)
 BREST = [(0x225D,4), (0x2264,0x22CE-0x2264), (0x22D1,2), (0x22D7,3), (0x22DC,0x2300-0x22DC)]
 # Beute: 21 Zutaten 0x200-0x215 ohne 0x205 + 11 Verbrauchsgueter (ohne 0x804 Fluegel, 0x807 Zauberperle), wie soe_funde v144
@@ -103,9 +122,10 @@ for m in sorted(set(p[0] for p in POOL)):
 T_POOL  = TAB + 0x0000           # je 6 Byte Karte, x, y
 T_LAND  = TAB + 0x0100           # je 4 Byte x, y (Index TUERM)
 T_BIT   = TAB + 0x0120           # Bit je Zugang (Wort)
-T_BOSS  = TAB + 0x0140           # je 16 Byte: Karte, x, y, Flag-Byte (ab 2258), Maske, Vorlage
+T_BOSS  = TAB + 0x0800           # v146o: je 32 Byte: Karte, x, y, Flag-Byte (ab 2258), Maske (0 = Sieg ueber Boss-tot), Vorlage, Zusatzflag Byte/Maske, 2. Vorlage, Vorlage
 T_LOOT  = TAB + 0x01A0           # 32 Woerter
 T_SKR   = TAB + 0x8000           # Beute-Skript (Skripte ab Adresse 8000: Fadenstart 8C:D257 kodiert Bank 93+p>>15, Adresse 8000|p)
+T_MSKR  = TAB + 0x8030           # v146c: Musik-Skript fuer Vulgor (33 04 00)
 T_TSKR  = TAB + 0x8020           # Tuer-Skript nach 5E (wie die linke Schachbrett-Treppe: a3 19 22 x y kk 00)
 T_SUF   = TAB + 0x0210           # Endungen der Meldungen
 T_TXT   = TAB + 0x0240           # Texte FFA/FF9/FF8
@@ -115,11 +135,13 @@ tabs = {}
 tabs[T_POOL] = b''.join(m.to_bytes(2,'little')+x.to_bytes(2,'little')+y.to_bytes(2,'little') for m,x,y in POOL)
 tabs[T_LAND] = b''.join(x.to_bytes(2,'little')+y.to_bytes(2,'little') for x,y in LANDE)
 tabs[T_BIT]  = b''.join((0 if i == 0 else 1<<i).to_bytes(2,'little') for i in range(5))
-tabs[T_BOSS] = b''.join(bytes(w(m)+w(x)+w(y)+w(f>>3)+w(1<<(f&7))+w(v)+[0]*4) for m,x,y,f,v in BOSSE)
+tabs[T_BOSS] = b''.join(bytes(w(m)+w(x)+w(y)+(w(f>>3)+w(1<<(f&7)) if f is not None else [0,0,0,0])+w(v)+w(g>>3)+w((1<<(g&7)) if g else 0)+w(v2)+[0]*14) for m,x,y,f,v,g,v2,mu in BOSSE)
+assert len(tabs[T_BOSS]) <= 0x400
 tabs[T_LOOT] = b''.join(v.to_bytes(2,'little') for v in BEUTE)
 # Beute-Skript: Junge anhalten (bc), buecken, Platz pruefen, geben + "X gefunden!" bzw. "Du hast genug X!", freigeben (bd).
 # Mesen v145: ohne bc/Buecken (nur a3 3e/3f) stuerzte das Spiel nach der Meldung ab (STP 00:885F), wenn der Junge gerade angriff.
 tabs[T_SKR]  = bytes.fromhex('bc78d01800b0a714a33e098590040500a33f040200a341bd0c9004b000')   # wie soe_funde v144 (GEPRUEFT): anhalten, buecken, geben, freigeben
+tabs[T_MSKR] = b''.join(bytes([0x33,mu,0x00,0x00]) for *_,mu in BOSSE)   # je Boss 4 Byte: Musik-Skript 33 <Versatz> 00
 tabs[T_TSKR] = bytes([0xA3,0x19, 0x22, 176//8, 440//8, 0x5E,0x00, 0x00])
 sufadr = {}; sb = b''
 for k,v in SUF.items(): sufadr[k] = (T_SUF + len(sb)) & 0xFFFF; sb += v
@@ -135,7 +157,7 @@ tabs[T_FLP] = b''.join(v.to_bytes(2,'little') for v in flp)
 tabs[T_FLL] = fll
 ordn = sorted(tabs)
 for a, b in zip(ordn, ordn[1:]): assert a + len(tabs[a]) <= b, hex(a)
-assert all(a + len(tabs[a]) <= TAB + 0x1000 for a in ordn if a < TAB + 0x8000) and T_TSKR + len(tabs[T_TSKR]) <= TAB + 0x8040
+assert all(a + len(tabs[a]) <= TAB + 0x1000 for a in ordn if a < TAB + 0x8000) and T_TSKR + len(tabs[T_TSKR]) <= TAB + 0x8030 and T_MSKR + len(tabs[T_MSKR]) <= TAB + 0x8080
 def skp(a): p = (((a>>16) - 0x93) << 15) | (a & 0x7FFF); assert a & 0x8000; return p
 
 # ---- Assembler-Helfer (16 Bit, lange Adressen)
@@ -182,23 +204,34 @@ t = [
   [0x28, 0xE6,0x82, 0xE6,0x82, 0xE6,0x82, 0x5C,0x2C,0xE1,0x8C],
   'c2_o:', [0x28, 0xA7,0x82, 0xE6,0x82, 0x5C,0xC8,0xE0,0x8C],
   # ================= 2. Text-ID -> Zeiger ($22/$24), A = ID, X bleibt
-  'text:', ci(0xFFA), B(BEQ,'tx_fa'), ci(0xFF9), B(BEQ,'tx_f9'), ci(0xFFB), B(BEQ,'tx_fb'), ci(0xFF8), B(BEQ,'tx_f8'),
+  'text:', ci(0xFF7), B(BEQ,'tx_f7'), ci(0xFFA), B(BEQ,'tx_fa'), ci(0xFF9), B(BEQ,'tx_f9'), ci(0xFFB), B(BEQ,'tx_fb'), ci(0xFF8), B(BEQ,'tx_f8'),
   [0x5C]+ALT,
   'tx_fa:', li(T_FA&0xFFFF), B(BRA,'tx_rom'),
   'tx_f8:', li(T_F8&0xFFFF), B(BRA,'tx_rom'),
   'tx_f9:', li(T_F9&0xFFFF),
   'tx_rom:', [0x85,0x22]+li(TAB>>16)+[0x85,0x24, 0x6B],
   'tx_fb:', li(MTXT&0xFFFF)+[0x85,0x22]+li(MTXT>>16)+[0x85,0x24, 0x6B],
+  'tx_f7:', li(0xEE00)+[0x85,0x22]+li(0x7E)+[0x85,0x24, 0x6B],      # v146g: Gegner-Info (soe_gegner_info, Puffer 7E:EE00)
 
   # ================= 3. Tuer (aus soe_hoehle 'tuer', 238F schon 0): KTK/KTX/KTY = Original-Ziel -> neues Ziel
   'kt:', [0x08, 0xC2,0x30]+DB7E,
   li(QABST+40)+sta(QCOOL)+li(1)+sta(INOBEN)+z(BEAM)+z(BEAMRT),
   lda(SIEGR), B(BEQ,'kt_s0'), ('jsr','bsrest'), z(SIEGR), 'kt_s0:',
   lda(BOSSAKT), B(BEQ,'kt_nb'),
-  ('jsr','bflag'), B(BEQ,'kt_flucht'), ('jsr','sieg'), B(BRA,'kt_b4'),     # Tuer nach dem Sieg (Flag schon gesetzt) = Sieg
+  # v146t (Max: Verlassen des Bossraums gab einen Waffen-Orb): Bosse ohne Sieg-Flag -> an der Tuer zaehlt nur ein im Kampf
+  # schon erkannter Sieg (BOSSW > 0); beim Raumwechsel ist das Boss-Objekt weg und sah wie "besiegt" aus.
+  ('jsr','bfl_lade'), lda(TMP3), B(BNE,'kt_mf'), lda(BOSSW), B(BEQ,'kt_flucht'), ('jsr','sieg'), B(BRA,'kt_b4'),
+  'kt_mf:', ('jsr','bflag'), B(BEQ,'kt_flucht'), ('jsr','sieg'), B(BRA,'kt_b4'),     # Tuer nach dem Sieg (Flag schon gesetzt) = Sieg
   'kt_flucht:', ('jsr','bsrest'), z(BOSSAKT),
   'kt_b4:', li(4)+sta(TUERM), ('jmp','land'),
-  'kt_nb:', lda(0x7E0ADB)+ai(0xFF)+ci(0x5E), B(BEQ,'kt_5e'),
+  'kt_nb:', lda(0x7E0ADB)+ai(0xFF)+ci(0x5E), B(BNE,'kt_nb2'), ('jmp','kt_5e'), 'kt_nb2:',
+  # v146y (Max: Haustueren in der Stadt duerfen nicht rausfuehren): Tuer innerhalb derselben Stadtgruppe (GRP F8:D500,
+  # soe_vulgor_larven) bleibt die Original-Tuer; Raumzaehler neu, Flags bleiben gesichert (kein flsave).
+  ai(0x7F), [0xAA], ldax(0xF8D500)+ai(0x7F), B(BEQ,'kt_ng'), sta(TMP1),
+  lda(KTK)+ai(0x7F), [0xAA], ldax(0xF8D500)+ai(0x7F)+[0xCF]+L(TMP1), B(BNE,'kt_ng'),
+  li(1)+sta(0x7EEE92)+ldax(0xF8D500)+ai(0x80), B(BNE,'kt_draus'), li(3), B(BRA,'kt_rs'), 'kt_draus:', li(1),   # v146z6: Haus -> RAUMAKT 3 (keine Saeuberung)
+  'kt_rs:', sta(RAUMAKT)+z(RZEIT)+z(SEEN)+z(CLRW)+z(LIVE)+z(PEND), ('jmp','kt_ende'),   # EE92: soe_hoehle stellt 238F wieder her
+  'kt_ng:',
   # aus einem Pool-Raum (oder sonst einer Hoehlen-Karte) -> 5E vor den benutzten Zugang
   ('jsr','flrest'), z(RAUMAKT)+z(CLRW),
   lda(TUERM)+ai(7), ('jmp','land'),
@@ -211,13 +244,14 @@ t = [
   li(0xFF8), ('jsr','qp'), lda(TMP1), ('jmp','land'),                 # versiegelt -> bleibt vor dem Zugang
   'zg_offen:', lda(TMP1)+sta(TUERM)+ci(4), B(BNE,'pool'),
   ('jsr','stock5'), B(BCS,'pool'), ('jmp','boss'),
-  'pool:', lda(FEST)+ai(0xFF), B(BEQ,'p_zuf'), ci(0xFF), B(BNE,'p_fest'),
+  'pool:', ([0xA9,int(os.environ.get('SOE_TESTRAUM','0')),0x00]+sta(FEST) if os.environ.get('SOE_TESTRAUM') else []), lda(FEST)+ai(0xFF), B(BEQ,'p_zuf'), ci(0xFF), B(BNE,'p_fest'),
   lda(0x307030)+sta(KTK)+lda(0x307032)+sta(KTX)+lda(0x307034)+sta(KTY), B(BRA,'p_ein'),   # Testmodus FEST=FF
   'p_fest:', [0x3A], B(BRA,'p_idx'),                                                          # Testmodus FEST = Pool-Index+1
   'p_zuf:', ('jsr','rnd'), mod(NPOOL),
   'p_idx:', [0x0A]+sta(TMP2)+[0x0A, 0x18]+adcl(TMP2)+[0xAA]+ldax(T_POOL)+sta(KTK)+ldax(T_POOL+2)+sta(KTX)+ldax(T_POOL+4)+sta(KTY),
   'p_ein:', lda(KTK)+ai(0xFF), ('jsr','flsave'),
-  li(1)+sta(RAUMAKT)+z(RZEIT)+z(SEEN)+z(CLRW)+z(LIVE)+z(PEND), ('jmp','kt_ende'),
+  lda(KTK)+ai(0x7F)+[0xAA]+ldax(0xF8D500)+ai(0xFF), B(BEQ,'p_r1'), ai(0x80), B(BNE,'p_r1'), li(3), B(BRA,'p_r2'),   # v146z6: Durchgang/Haus -> keine Saeuberung
+  'p_r1:', li(1), 'p_r2:', sta(RAUMAKT)+z(RZEIT)+z(SEEN)+z(CLRW)+z(LIVE)+z(PEND), ('jmp','kt_ende'),
   'treppe:', lda(SIEGEL)+ai(0x1E)+ci(0x1E), B(BEQ,'tr_frei'), li(0xFFA), ('jsr','qp'), ('jmp','land0'),
   'tr_frei:', li(220)+sta(MELDZ)+lda(FLOOR)+ai(0xFF)+[0x1A]+ci(100), B(BCC,'tr_f'), li(99), 'tr_f:', sta(FLOOR),
   ('jsr','nstock'),
@@ -227,15 +261,28 @@ t = [
   # ---- Bossraum betreten (TUERM = 4, Stockwerk mod 5 = 0, Boss noch offen)
   'boss:', lda(BOSSFEST)+ai(0xFF), B(BEQ,'bs_z'), [0x3A], B(BRA,'bs_i'),
   'bs_z:', ('jsr','rnd'), mod(len(BOSSE)),
-  'bs_i:', [0x0A,0x0A,0x0A,0x0A]+sta(BOSSI),
+  'bs_i:', [0x0A,0x0A,0x0A,0x0A,0x0A]+sta(BOSSI)+z(BSEEN),
   lxi(0x2258)+lyi(BSNAP&0xFFFF)+li(0xEF)+[0x54,0x30,0x7E],                          # MVN 7E:2258-2347 -> 30:7400 (DB jetzt 30)
   ('jsr','bfl_lade'), [0x49,0xFF,0xFF]+sta(TMP2), SEP, ldax(0x7E2258)+andl(TMP2)+stax(0x7E2258), REP,   # Sieg-Flag loeschen
+  lda(BOSSI)+[0xAA]+ldax(T_BOSS+14)+sta(TMP3)+ldax(T_BOSS+12)+[0xAA]+lda(TMP3), B(BEQ,'bs_ns'),   # v146c: Zusatz-Flag setzen (goldener Vulgor: 044)
+  SEP, ldax(0x7E2258)+[0x0F]+L(TMP3)+stax(0x7E2258), REP, 'bs_ns:',
   lda(BOSSI)+[0xAA]+ldax(T_BOSS)+sta(KTK)+ldax(T_BOSS+2)+sta(KTX)+ldax(T_BOSS+4)+sta(KTY)+ldax(T_BOSS+10)+sta(BOSSV),
-  li(1)+sta(BOSSAKT)+z(BOSSW)+z(RAUMAKT), ('jmp','kt_ende'),
+  li(1)+sta(BOSSAKT)+z(BOSSW)+z(RAUMAKT)+z(BMUS), ('jmp','kt_ende'),
   # bfl_lade: X = Flag-Byte (ab 2258), A = Maske
   'bfl_lade:', lda(BOSSI)+[0xAA]+ldax(T_BOSS+8)+sta(TMP3)+ldax(T_BOSS+6)+[0xAA]+lda(TMP3)+[0x60],
   # bflag: Z = 0 wenn das Sieg-Flag gesetzt ist
-  'bflag:', ('jsr','bfl_lade'), ldax(0x7E2258)+andl(TMP3)+ai(0xFF)+[0x60],
+  'bflag:', ('jsr','bfl_lade'), lda(TMP3), B(BEQ,'bf_tot'), ldax(0x7E2258)+andl(TMP3)+ai(0xFF)+[0x60],
+  # v146o: kein Sieg-Flag -> Boss (Vorlage BOSSV oder 2. Vorlage) lebt? ja: BSEEN = 1, A = 0. nein: A = BSEEN (1 = Sieg)
+  'bf_tot:', lda(BOSSI)+[0xAA]+ldax(T_BOSS+16)+sta(TMP3)+lxi(0x3DE5),
+  # v146u (Max: Ventilatoren - Phase 2 kam nicht mehr): JEDES lebende Monster (Vorlage C536..DF3A) zaehlt als "Kampf laeuft"
+  'bf_l:', ldax(0x7E0060), ci(0xC536), B(BCC,'bf_n'), ci(0xDF3B), B(BCS,'bf_n'),
+  'bf_v:', ldax(0x7E002A), B(BEQ,'bf_n'),
+  # v146z2 (Max: Endboss-Raum 4A = mehrere Wellen, nach den Raptoren kam der Sieg): BSEEN nur, wenn der ECHTE Boss
+  # (Vorlage BOSSV oder 2. Vorlage TMP3) lebt; andere Monster halten den Kampf nur offen (A = 0).
+  ldax(0x7E0060)+[0xCF]+L(BOSSV), B(BEQ,'bf_echt'), ldax(0x7E0060)+[0xCF]+L(TMP3), B(BEQ,'bf_echt'), li(0)+[0x60],
+  'bf_echt:', li(1)+sta(BSEEN)+li(0)+[0x60],
+  'bf_n:', [0x8A, 0x18, 0x69,0x8E,0x00, 0xAA, 0xE0,0x89,0x4E], B(BCC,'bf_l'),
+  lda(BSEEN)+[0x60],
   # sieg: Flags zurueck, Boss erledigt (SIEGEL Bit 4), Waffen-Orb + Meldung
   'sieg:', ('jsr','bsrest'), li(1)+sta(SIEGR)+z(BOSSAKT)+lda(SIEGEL)+oi(0x10)+sta(SIEGEL)+li(4)+sta(TUERM),
   lda(0x7E0ABA)+ai(0xFF)+jsl(WINC)+[0xC2,0x30]+li(0xFFE), ('jsr','qp'), [0x60],
@@ -270,7 +317,10 @@ t = [
   'qt_3:', lda(WARPT)+oral(BEAM)+oral(BEAMRT), B(BEQ,'qt_4'), [0x60],
   'qt_4:', lda(QH)+[0xAA]+ldax(QBUF)+ci(0x0F00), B(BCS,'qt_5'),
   # Beute erst, wenn der Junge frei ist (keine Sperre 4E99 & 0020 wie nach bc, kein laufendes Skript 4E89+3E)
-  lda(0x7E4E99)+ai(0x0020), B(BEQ,'qt_5'), [0x60],
+  # v146s (Max: Aufheben unterbrach Aufladen/Spezialschlag): auch warten, solange er schlaegt (4E99 & 0040)
+  # oder eine Aktionstaste gehalten wird (Aufladen: B/Y/A/X in $00:4218)
+  lda(0x7E4E99)+ai(0x0060), B(BEQ,'qt_4b'), [0x60],
+  'qt_4b:', lda(0x004218)+ai(0xC0C0), B(BEQ,'qt_5'), [0x60],
   'qt_5:', ldax(QBUF)+[0x48, 0x8A, 0x1A,0x1A]+ai(0x1E)+sta(QH)+li(QABST)+sta(QCOOL)+[0x68]+ci(0x0F00), B(BCC,'qt_item'),
   sta(MSGP)+[0x60],
   'qt_item:', sta(0x7E2391)+li(skp(T_SKR)&0xFFFF),
@@ -304,12 +354,24 @@ t = [
   'o_3:', li(1)+sta(OBENREQ), ('jsr','warp5e'), ('jmp','kb_r'),
   'o_aus:', z(INOBEN), ('jmp','kb_r'),
   # ---- Bossraum: Sieg erkennen
-  'kb_n5e:', lda(BOSSAKT), B(BEQ,'kb_pool'),
-  lda(0x7E0ADB)+ai(0xFF)+ci(0x18), B(BNE,'kb_b1'), li(1)+sta(0x307FD4),          # Vulgors Rache (Raptoren) im Bossraum aus
+  'kb_n5e:', lda(BOSSAKT), B(BNE,'kb_bo'), ('jmp','kb_pool'), 'kb_bo:',
+  lda(0x7E0ADB)+ai(0xFF)+ci(0x18), B(BNE,'kb_b0'), li(1)+sta(0x307FD4), 'kb_b0:',          # Vulgors Rache (Raptoren) im Bossraum aus
+  # v146c: ueber die Cave startet in 18 keine Musik -> Schachbrett-Geraeuschsatz bleibt, Vulgors Geraeusche toeten den Soundchip
+  # (Max: Ton weg). Einmal Song 0x01 wie beim normalen Betreten: Skript-Faden 33 04 (Befehl 33 = Musik, Wort bei 8C:87E0+4 = Song 1).
+  # (Direkter JSL 8C:85E7 aus dem Bild-Hook stoerte das Sample-Hochladen -> Soundchip sofort tot, Mesen v146d.)
+  lda(BMUS), B(BNE,'kb_m1'), li(1)+sta(BMUS)+lda(BOSSI)+[0x4A,0x4A,0x4A, 0x18, 0x69]+w(skp(T_MSKR)&0xFFFF), ('jsr','faden'), 'kb_m1:',   # v146s: Musik JEDES Bosses (Index*4)
   'kb_b1:', lda(WARPT), B(BEQ,'kb_b2'), ('jmp','kb_r'),
-  'kb_b2:', ('jsr','bflag'), B(BNE,'kb_b3'), ('jmp','kb_r'),
-  'kb_b3:', lda(BOSSW)+[0x1A]+sta(BOSSW)+ci(240), B(BCS,'kb_b4'), ('jmp','kb_r'),
-  'kb_b4:', ('jsr','sieg'), ('jsr','warp5e'), ('jmp','kb_r'),
+  'kb_b2:', ('jsr','bflag'), B(BNE,'kb_b3'), z(BOSSW), ('jmp','kb_r'),          # v146u: Sieg muss am Stueck halten
+  'kb_b3:', lda(BOSSW)+[0x1A]+sta(BOSSW)+ci(240), B(BCC,'kb_b3r'), ('jsr','bfl_lade'), lda(TMP3), B(BNE,'kb_b4j'),
+  lda(0x7E0ADB)+ai(0xFF)+ci(0x4A), B(BNE,'kb_k6'), lda(BOSSW)+ci(1800), B(BCS,'kb_b4j'), B(BRA,'kb_b3r'),   # v146z2: Endboss-Raum 4A (Wellen) 30 s
+  'kb_k6:', lda(BOSSW)+ci(600), B(BCS,'kb_b4j'),                                          # v146u: ohne Sieg-Flag 600 Bilder (Phase 2 abwarten)
+  'kb_b3r:', ('jmp','kb_r'),
+  'kb_b4j:',
+  'kb_b4:', ('jsr','sieg'), ('jsr','warp5e'),
+  # v146c goldener Vulgor (18): Rache/Ausgangssperre aus und den Jungen auf den Ausgang stellen -> das Spiel nimmt die Tuer
+  # selbst (der Tuer-Faden kam dort erst nach ~2700 Bildern durch, Mesen v146c). Jede Tuer nach dem Sieg fuehrt nach 5E.
+  lda(0x7E0ADB)+ai(0xFF)+ci(0x18), B(BNE,'kb_b5'), li(1)+sta(0x307FD4)+li(184)+sta(0x7E4EA3)+li(510)+sta(0x7E4EA5),
+  'kb_b5:', ('jmp','kb_r'),
   # ---- Pool-Raum: Saeuberung
   'kb_pool:', lda(RAUMAKT)+ci(1), B(BEQ,'kp_1'), ('jmp','kb_r'),
   'kp_1:', lda(WARPT), B(BEQ,'kp_2'), ('jmp','kb_r'),
@@ -351,8 +413,10 @@ t = [
 
   # ================= 6. kdrop (soe_hoehle FUND, jeder Sieg in der Hoehle)
   'kdrop:', [0x08, 0xC2,0x30, 0x48, 0xDA, 0x5A]+DB7E,
-  lda(DROPTEST)+ai(0xFF), B(BEQ,'kd_z'), ci(5), B(BCS,'kd_n'), [0x3A]+sta(TMP1), B(BRA,'kd_s'),
-  'kd_z:', ('jsr','rnd'), mod(100), B(BNE,'kd_n'),
+  lda(BOSSAKT), B(BEQ,'kd_nb'), ('jmp','kd_r'), 'kd_nb:',   # v146z2 (Max: Orb nach jedem Gegner im Endboss-Raum): keine Funde im Bossraum
+  lda(DROPTEST)+ai(0xFF), B(BEQ,'kd_z'), ci(5), B(BCC,'kd_d1'), ('jmp','kd_n'), 'kd_d1:', [0x3A]+sta(TMP1), B(BRA,'kd_s'),
+  'kd_z:', ('jsr','rnd'), mod(2), B(BEQ,'kd_ja'), ('jmp','kd_r'),        # v146s (Max): nur noch jeder 2. Gegner laesst etwas fallen
+  'kd_ja:', ('jsr','rnd'), mod(100), B(BEQ,'kd_sel'), ('jmp','kd_n'), 'kd_sel:',
   ('jsr','rnd'), mod(4), sta(TMP1),
   'kd_s:', lda(TMP1)+[0x0A, 0xAA, 0xFC,0x00,0x00],      # JSR (seltab,X) - Adresse wird unten eingesetzt
   B(BCC,'kd_r'),

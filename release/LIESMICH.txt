@@ -1,4 +1,4 @@
-Souls of Evermore – Mod für Secret of Evermore (deutsch)  (Beta, Stand v145)
+Souls of Evermore – Mod für Secret of Evermore (deutsch)  (Beta, Stand v146)
 =====================================================================
 
 Ein Patch für die DEUTSCHE Version von Secret of Evermore (SNES).
@@ -14,14 +14,14 @@ Passende ROM
 Patch anwenden
 --------------
 1. ROM Patcher JS im Browser öffnen (oder Floating IPS / "Flips").
-2. Deine ROM und die Datei Souls-of-Evermore-v145-beta.bps auswählen.
+2. Deine ROM und die Datei Souls-of-Evermore-v146-beta.bps auswählen.
 3. "Apply patch" – fertig. Ergebnis: 4 MB ROM, läuft z. B. in OpenEmu, snes9x, bsnes, Mesen.
 
 Was ist neu?
 ------------
 Einstellungsmenü nach "Neues Spiel":
 - Gegner: Original / Ähnlich / Gebiet / Chaos, jeweils fest oder "je Raum neu"
-- Schwierigkeit: Normal (Original) / Schwer x1,5 / Sehr schwer x2 / Extrem x3 / Wahnsinn x5 / Albtraum x10
+- Schwierigkeit: Leicht x0,5 (Start mit Laserschwert, Atomaxt, Laserlanze, Bazooka + Munition) / Normal (Original) / Schwer x1,5 / Sehr schwer x2 / Extrem x3 / Wahnsinn x5 / Albtraum x10
   (Lebenspunkte und Angriff der Gegner; Erfahrung und Geld wachsen im selben Maß mit)
 - Fundsachen: Original oder Zufall (fest pro Durchgang / immer neu)
 - Händler: Original oder Zufall mit Original-Preisen, ohne doppelte Waren
@@ -42,6 +42,12 @@ Zufall:
   Ähnlich 5 %, Original auf Schwer 5 %; ab Extrem (x3) in allen Modi 100 % -> -5 % pro Fund
 - Waffen aus dem Zufall gibt es pro Durchgang nur einmal, mit Meldung "<Waffe> erhalten!"
 - Zauberperlen- und Matschpfeffer-Fundstellen bleiben original (Story)
+
+Souls Cave (Eingang am Brunnen, neu in v146):
+- Alle Bosse im Zufall (11 Kämpfe) mit Boss-Musik; schwache Boss-Gegner mindestens 2000 KP
+- Verwandelnde Städte: Dschungeldorf, Nobilia, Ivor Tower, eigene Stadt - alle Menschen werden Monster, Häuser betretbar
+- Goldener Vulgor immer da, +100 % je Sieg, Gift/Heilung nach Säureregen, Verwirrung nach Wegschubsen
+- Gegner-Info (Name, KP, EP, Geld, Anzahl) bei jedem Treffer; Speichern in der Cave gesperrt
 
 Sonstiges:
 - Kein Game Over mehr (alle Einstellungen). Der Junge wacht mit vollen LP am Eingang des Raums wieder auf (in Bossräumen an Ort und Stelle),

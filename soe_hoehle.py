@@ -9,7 +9,7 @@
 #  - Gegner in der Hoehle: KP/Angriff/Abwehr nach Stockwerk (statt Vorlage), Erfahrung/Geld nach Stockwerk (soe_belohnung 'hoe').
 #  - Speichern in der Hoehle gesperrt, Laden loescht den Hoehlen-Merker (soe_speicher), NG+ greift nicht (soe_ngplus_ende).
 # Tueren: Hook am Skript-Kartenwechsel 8C:DF82 (vor F0:0700): A = Zielkarte, Stapel 4,S = y px, 6,S = x px.
-import sys; sys.path.insert(0, __file__.rsplit('/',1)[0]); from asm import assemble
+import sys, os; sys.path.insert(0, __file__.rsplit('/',1)[0]); from asm import assemble
 pfad = sys.argv[1]
 d = bytearray(open(pfad,'rb').read()); H = len(d) % 1024; r = memoryview(d)[H:]
 def at(x): return x & 0x3FFFFF if (x>>16) >= 0xC0 else (((x>>16)&0x3F)<<16)|(x&0xFFFF)
@@ -18,6 +18,7 @@ def w(v): return [v&0xFF,(v>>8)&0xFF]
 CODE = 0xF1E800   # v137: vergroessert (vorher F1:C000, zu klein)
 AKT, FLOOR, SKIP, TOD, TASTE, FEST = 0x307002, 0x307004, 0x307006, 0x307008, 0x30700A, 0x30700C   # FEST: Test (Pool-Eintrag+1)
 HUNDZ = 0x30700E
+TESTRAUM = int(os.environ.get('SOE_TESTRAUM', '0'))   # v146s: 32 = eigene Stadt immer (nur Testbau)
 HELLZ = 0x307022
 HUNDB = 0x307036   # v139: Story-Bit 'Hund nicht dabei' (7E:2261 Bit0) beim Betreten; in der Hoehle ist der Hund immer dabei
 GHZ, GHF, MSGP, MSKR2 = 0x7EE390, 0x307024, 0x307026, 0x7EE7B0   # v136: Gotteshand-Anzahl, -Benutzt, Meldung offen, Meldungs-Skript
@@ -119,6 +120,7 @@ t = [
   [0xAB],
   # --- erstes Stockwerk
   [0xA9,0x01,0x00, 0x8F]+L(AKT)+[0x8F]+L(FLOOR)+[0x8F]+L(SKIP)+[0xA9,0x00,0x00, 0x8F]+L(TOD)+[0x8F]+L(ORBST)+[0x8F]+L(MSGV),
+  [0xA9,TESTRAUM,0x00, 0x8F]+L(FEST),                       # v146s VORUEBERGEHEND (Max): jeder Zugang = Testraum (Pool-Index+1, 0 = Zufall)
   # v143: Flag 428 (7E:22DD Bit0) = 1 -> kein Rattus auf 5E; Original merken (verlassen schreibt Bit0 zurueck)
   [0xAF,0xDD,0x22,0x7E, 0x29,0xFF,0x00, 0x8F]+L(S22DD)+[0xE2,0x20, 0x09,0x01, 0x8F,0xDD,0x22,0x7E, 0xC2,0x20],
   [0x22]+L(KNS),                                                    # v145: Siegel/Boss/Warteschlange neu (soe_knoten)
@@ -137,9 +139,10 @@ t = [
   't_noskip:', [0xAF]+L(GHF), ('bra8',0xF0,'t_kein_gh'), [0xA9,0x00,0x00, 0x8F]+L(GHF)+[0x8F]+L(TOD), ('jmp','t_raus_hoehle'),
   't_kein_gh:', [0xAF]+L(TOD), ('bra8',0xF0,'t_lebt'), ('jmp','t_raus_hoehle'),
   # v132: Hoehlen-Wechsel ohne Nachlaufen (Tuer-Vorskripte a3 19/1D/21/26 setzen Variable 0x137 = 7E:238F = Laufrichtung)
-  't_lebt:', [0xA9,0x00,0x00, 0x8F,0x8F,0x23,0x7E],                                  # v143: 238F = 0 -> kein Nachlaufen, Ankunft exakt (statt komp)
+  't_lebt:', [0xAF,0x8F,0x23,0x7E, 0x8F,0x90,0xEE,0x7E, 0xA9,0x00,0x00, 0x8F,0x92,0xEE,0x7E, 0x8F,0x8F,0x23,0x7E],   # v146z: 238F merken (7E:EE90), Stadt-Tuer-Merker EE92 = 0                                  # v143: 238F = 0 -> kein Nachlaufen, Ankunft exakt (statt komp)
   # v145: Ziel an soe_knoten kt (Zugaenge 5E, Pool, Boss, Treppe, Rueckweg) und zurueck auf den Stapel (1,S Karte, 9,S x, 7,S y)
   [0xA3,0x01, 0x29,0xFF,0x00, 0x8F]+L(KTK)+[0xA3,0x09, 0x8F]+L(KTX)+[0xA3,0x07, 0x8F]+L(KTY), [0x22]+L(KT),
+  [0xAF,0x92,0xEE,0x7E], ('bra8',0xF0,'t_np'), [0xAF,0x90,0xEE,0x7E, 0x8F,0x8F,0x23,0x7E], 't_np:',   # v146z (Max: Haustueren): Stadt-Tuer -> Laufrichtung zurueck (Junge laeuft aus der Tuer)
   [0xAF]+L(KTK)+[0x83,0x01, 0xAF]+L(KTX)+[0x83,0x09, 0xAF]+L(KTY)+[0x83,0x07], ('jmp','t_weiter'),
   't_raus_hoehle:', [0xA9,0x00,0x00, 0x8F,0x8F,0x23,0x7E], ('jsr','laufstop'), ('jsr','verlassen'),
   [0xA9]+w(ZURUECK[0])+[0x83,0x01, 0xA9]+w(ZURUECK[2])+[0x83,0x07, 0xA9]+w(ZURUECK[1])+[0x83,0x09],

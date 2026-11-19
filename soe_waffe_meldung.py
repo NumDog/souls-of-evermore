@@ -39,16 +39,34 @@ SPRUCH = (b"\x96Moment mal\x80=\x80 das ist ja ein LASERSCHWERT!\x86"
           b"Verdammt,\x80=\x80 wir haben SCHWER eingestellt!\x86"
           b"Na egal!\x80=\x80 Ab jetzt bin ich ein Jedi\x80=\x80 und Du bist mein haariger Kumpel!\x86"
           b"Los,\x80=\x80 wir schauen uns mal hier um!\x86\x00")
-CODE2, TXT2 = 0xF03800, 0xF03840
-code2,_ = assemble(CODE2, [
+CODE2, TXT2 = 0xF03800, 0xF03860
+SPRUCH2 = (b"\x96Moment mal\x80=\x80 ein LASERSCHWERT,\x80=\x80 eine ATOMAXT und eine LASERLANZE!\x86"
+           b"Oh mein Gott,\x80=\x80 wo hast du denn das gefunden?\x86"
+           b"Hast du das etwa in den Truemmern vom Raumschiff ausgebuddelt?\x86"
+           b"Wuff?\x80=\x80 Ich nehme das mal als Ja!\x86"
+           b"Los,\x80=\x80 wir schauen uns mal hier um!\x86\x00")   # v146z3 (Max): Leicht + Laserschwert/Atomaxt/Laserlanze
+TXT3 = 0xF8FA00   # frei (v146z3)
+TXT4, LEI = 0xF8FD00, 0xF8FC40   # v146z7 (Max): Leicht -> Text 0x63F (Bazooka ist weg) wird 'Bazooka ist noch da'
+SPRUCH4 = (b"\x96Hey!\x80=\x80 Cooler Trip!\x80=\x80 Und KRASS,\x80=\x80 die BAZOOKA ist ja noch da!\x86"
+           b"Mit voller Munition!\x80=\x80 Prehistorika,\x80=\x80 zieh dich warm an!\x86"
+           b"Hm...\x80=\x80 Aber...\x80=\x80 wo bin ich hier eigentlich?\x80=\x80 Und...\x80=\x80 wo steckt dieser Hund?\x86\x00")
+code2,lab2 = assemble(CODE2, [
+  [0xC9,0x3F,0x06], ('bra8',0xD0,'n1'), [0x5C,LEI&0xFF,(LEI>>8)&0xFF,LEI>>16], 'n1:',
   [0xC9,0x57,0x06], ('bra8',0xF0,'pruef'),
   'orig:', [0x85,0x26, 0xA9,0x92,0x00, 0x5C,0xBD,0xD0,0x8C],            # Original: STA $26 ; LDA #$0092 ; JML 8C:D0BD
   'pruef:', [0x48, 0xAF,0xBC,0x7E,0x30, 0x29,0xFF,0x00], ('bra8',0xD0,'spruch'), [0x68], ('bra8',0x80,'orig'),
-  'spruch:', [0xA9,0x00,0x00, 0x8F,0xBC,0x7E,0x30, 0x68],
+  'spruch:', [0xC9,0x02,0x00], ('bra8',0xF0,'sp2'), [0xA9,0x00,0x00, 0x8F,0xBC,0x7E,0x30, 0x68],
   [0xA9,TXT2&0xFF,(TXT2>>8)&0xFF, 0x85,0x22, 0xA9,TXT2>>16,0x00, 0x85,0x24, 0x6B],
+  'sp2:', [0xA9,0x00,0x00, 0x8F,0xBC,0x7E,0x30, 0x68],
+  [0xA9,TXT3&0xFF,(TXT3>>8)&0xFF, 0x85,0x22, 0xA9,TXT3>>16,0x00, 0x85,0x24, 0x6B],
 ])
 assert CODE2 + len(code2) <= TXT2 and TXT2 + len(SPRUCH) <= 0xF03A00
-for adr,c in ((CODE2,code2),(TXT2,SPRUCH)):
+ORIG = lab2['orig']
+lei,_ = assemble(LEI, [[0x48, 0xAF,0x90,0x7E,0x30, 0x29,0x01,0x00], ('bra8',0xF0,'no'),
+  [0xAF,0x90,0x7E,0x30, 0xEB, 0x29,0x07,0x00, 0xC9,0x01,0x00], ('bra8',0xD0,'no'),
+  [0x68, 0xA9,TXT4&0xFF,(TXT4>>8)&0xFF, 0x85,0x22, 0xA9,TXT4>>16,0x00, 0x85,0x24, 0x6B],
+  'no:', [0x68, 0x5C,ORIG&0xFF,(ORIG>>8)&0xFF,ORIG>>16]])
+for adr,c in ((CODE2,code2),(TXT2,SPRUCH),(TXT3,SPRUCH2),(LEI,lei),(TXT4,SPRUCH4)):
     o = at(adr); assert all(b == 0xFF for b in r[o:o+len(c)]), hex(adr); r[o:o+len(c)] = c
 o = at(0x8CD0B8); assert bytes(r[o:o+5]) == bytes([0x85,0x26,0xA9,0x92,0x00]), bytes(r[o:o+5]).hex()
 r[o:o+5] = bytes([0x5C, CODE2&0xFF, (CODE2>>8)&0xFF, CODE2>>16, 0xEA])
