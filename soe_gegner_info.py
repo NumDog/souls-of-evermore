@@ -4,7 +4,7 @@
 #  - Anzeige: Bild-Kette F0:4000 (vorne einhaengen). Text in 7E:EE00, Text-Nr 0xFF7 (soe_knoten 'text'), gezeigt ueber MSGP
 #    (30:7026, soe_hoehle startet damit den Meldungs-Faden `52 <Nr>`), nur wenn keine andere Meldung ansteht.
 #  - Erfahrung/Geld wie beim Besiegen (Schwierigkeit, Cave-Formel): soe_belohnung INFO F0:3FB8 / INFO_G F0:3FD3, Ergebnis 30:7EF8/7EFA.
-import sys; sys.path.insert(0, __file__.rsplit('/',1)[0]); from asm import assemble
+import os, sys; sys.path.insert(0, __file__.rsplit('/',1)[0]); from asm import assemble
 pfad = sys.argv[1]
 d = bytearray(open(pfad,'rb').read()); H = len(d) % 1024; r = memoryview(d)[H:]
 def at(x): return x & 0x3FFFFF if (x>>16) >= 0xC0 else (((x>>16)&0x3F)<<16)|(x&0xFFFF)
@@ -22,7 +22,7 @@ ZEILE = 1                                   # v146k (Max): Info oben statt mitte
 # (Max: vorhandene Bosse behalten ihre Namen - nur NEUE Bosse bekommen hier einen Eintrag; Karte 0xFF = Platzhalter)
 SOULS = [(0xFF, b'-')]
 NKART = 0xF1FA00; NZEIG = NKART + 2*len(SOULS)
-COOL = 60                                   # Bilder bis zur naechsten Meldung
+COOL = 90                                   # Bilder bis zur naechsten Meldung
 SEP, REP = [0xE2,0x20], [0xC2,0x20]
 def put(t):                                 # Zeichen an GTXT,Y anhaengen (M 16 -> 8 -> 16)
     out = list(SEP)                         # Kopie! (sonst haengt der Text-Code an der gemeinsamen SEP-Liste)
@@ -47,13 +47,16 @@ code, lab = assemble(CODE, [
   [0xAD]+w(GCOOL), ('bra8',0xF0,'b_c0'), [0x3A, 0x8D]+w(GCOOL), 'b_c0:',
   [0xAD]+w(GNEU), ('bra8',0xD0,'b_1'), ('jmp','raus'),
   'b_1:', [0xAD]+w(GCOOL), ('bra8',0xF0,'b_2'), ('jmp','raus'),
-  'b_2:', [0xAF]+L(MSGP), ('bra8',0xF0,'b_3'), ('jmp','raus'),
+  'b_2:', [0xAF]+L(MSGP)+([0xA9,0x01,0x00] if os.environ.get('SOE_OHNE_OBEN') else []), ('bra8',0xF0,'b_3'), ('jmp','raus'),   # Test SOE_OHNE_OBEN: A=1 -> nie Meldung oben
   'b_3:', [0x9C]+w(GNEU),
   [0xAE]+w(GOBJ)+[0xBD,0x60,0x00, 0xC9,0x78,0xB6], ('bra8',0xB0,'b_4'), ('jmp','raus'),
   'b_4:', [0xC9,0x3B,0xDF], ('bra8',0x90,'b_5'), ('jmp','raus'),
   'b_5:', [0x8D]+w(TPL), ('jsr','mk'),
   SEP, [0xA9,0x00, 0x99]+w(GTXT), REP,
-  [0xA9,0xF7,0x0F, 0x8F]+L(MSGP)+[0xA9,COOL,0x00, 0x8D]+w(GCOOL),
+  # v146z12 (Max: schwarzer Streifen): nicht mehr als Dialog-Skript (MSGP/FF7), sondern ueber die Statuszeilen-Warteschlange
+  # des Spiels (8C:C8E4 = Text [$22] einreihen; Oeffnen/Schliessen 8C:C920/C906 macht das Spiel selbst mit Zeitgeber)
+  [0xA5,0x22, 0x48, 0xA5,0x24, 0x48, 0xA9]+w(GTXT)+[0x85,0x22, 0xA9,0x7E,0x00, 0x85,0x24, 0x22,0xE4,0xC8,0x8C, 0x68, 0x85,0x24, 0x68, 0x85,0x22],
+  [0xA9,COOL,0x00, 0x8D]+w(GCOOL),
   'raus:', [0xAB, 0x7A, 0xFA, 0x68, 0x28, 0x6B],
   # ---- Zielbestimmung (8C:8D9B, statt Namenszeiger laden): X = Vorlage, Y = Zeiger in die Zielliste ($0000,Y = Objekt)
   #      -> $22/$24 auf unseren Text "Name nKP eEP gG [Anzahl lebender Gegner]"; X bleibt
@@ -91,7 +94,9 @@ code, lab = assemble(CODE, [
   [0x5A, 0xAE]+w(TPL)+[0x22]+L(INFO)+[0x7A, 0xAF]+L(V0)+[0x8D]+w(Q0)+[0xAF]+L(V1)+[0x8D]+w(Q1), ('jsr','dec'), put('EP '),
   [0x5A, 0xAE]+w(TPL)+[0x22]+L(INFO_G)+[0x7A, 0xAF]+L(V0)+[0x8D]+w(Q0)+[0xAF]+L(V1)+[0x8D]+w(Q1), ('jsr','dec'), put('G'), [0x60],
   # ---- Meldungs-Zeile (8C:C962 statt LDA #$0014 ; STA $0361): unsere Info (Text 7E:EE00) oben in Zeile ZEILE, sonst Zeile 20
-  'pos:', [0xA5,0x22, 0xC9]+w(GTXT), ('bra8',0xD0,'p_n'), [0xA5,0x24, 0x29,0xFF,0x00, 0xC9,0x7E,0x00], ('bra8',0xD0,'p_n'),
+  # v146z9 (Max: schwarzer Streifen ueber der Lebensleiste): ALLE einzeiligen Meldungen oben - sonst zeichnete das Spiel
+  # beim Neuzeichnen/Schliessen die leere Box in Zeile 20 (schwarzer Balken), wenn \$22 gerade nicht auf unseren Text zeigte.
+  'pos:',
   # (v146m-Versuch Goldrahmen ueber 8C:BA0E/B397 verworfen: 7F:C800 ist im Spiel nicht die Anzeigeebene, die Lebensleiste verschwand)
   [0xA9,ZEILE,0x00, 0x8D,0x61,0x03, 0x6B],
   'p_n:', [0xA9,0x14,0x00, 0x8D,0x61,0x03, 0x6B],
@@ -117,7 +122,9 @@ r[o0:o0+4] = jsl(lab['bild'])
 # Zielbestimmung: 8C:8D9B  LDA $8E0000,X ; STA $22 ; LDA $8E0001,X ; STA $23  (12 Byte) -> JSL ziel + 8x NOP
 o = at(0x8C8D9B); assert bytes(r[o:o+12]) == bytes.fromhex('bf00008e8522bf01008e8523'), bytes(r[o:o+12]).hex()
 r[o:o+12] = jsl(lab['ziel']) + b'\xEA'*8
-for adr in (0x8CC962, 0x8CC876):   # zwei gleich gebaute Zeichenroutinen der Meldung
+# v146z13 (Max: schwarzer Balken = Ueberbleibsel der Meldung an der alten Stelle): Text NICHT mehr nach oben verschieben -
+# der Box-Hintergrund blieb in Zeile 20 und war ohne Inhalt schwarz. Nur zum Testen: SOE_POS_OBEN=1.
+for adr in ((0x8CC962, 0x8CC876) if os.environ.get('SOE_POS_OBEN') else ()):   # zwei gleich gebaute Zeichenroutinen der Meldung
     o = at(adr); assert bytes(r[o:o+6]) == bytes.fromhex('a914008d6103'), (hex(adr), bytes(r[o:o+6]).hex())
     r[o:o+6] = jsl(lab['pos']) + b'\xEA\xEA'
 h = 0xFFC0

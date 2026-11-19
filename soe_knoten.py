@@ -65,7 +65,7 @@ LANDE = [(176,440), (64,448), (288,448), (176,760), (176,296)]   # 0 Mitte, 1 li
 # v146n (Max): ohne leere Raeume 0E Speisesaal, 4C Statuen, 70 Dach (54 bleibt: Haendler); neu 65 Wald, 3D Kanal (je 10+ Gegner)
 POOL = [[64,88,72],[64,216,608],[65,56,576],[79,56,600],[79,168,264],[79,464,600],[84,880,184],[84,664,680],[87,976,744],[91,72,440],
         [91,144,104],[5,696,616],[5,360,48],[5,32,376],[6,1240,904],[7,48,488],[7,504,544],[15,888,328],
-        [15,96,320],[18,1208,128],[18,272,328],[41,328,984],[40,1064,1240],[101,1168,32],[61,728,1184],[98,672,560],[55,152,1928],[123,224,720],[37,408,408],[124,536,856],[27,584,1544]]   # v146y: Dschungeldorf 25, Nobilia 7C, Ivor Tower 0A/08 (Menschen -> Monster, Haustueren intern)   # v146u: 7B = Nobilia-Markt (Menschen -> Monster); v146t: 62 = eigene Stadt (Gegner per C2 -> Waffe geht); 37 = Feuerdrache-Raum ohne Boss (Max)
+        [15,96,320],[18,1208,128],[18,272,328],[41,328,984],[40,1064,1240],[101,1168,32],[61,728,1184],[98,672,560],[55,152,1928],[123,224,720],[37,408,408],[124,536,856],[27,376,224]]   # v146y: Dschungeldorf 25, Nobilia 7C, Ivor Tower 0A/08 (Menschen -> Monster, Haustueren intern)   # v146u: 7B = Nobilia-Markt (Menschen -> Monster); v146t: 62 = eigene Stadt (Gegner per C2 -> Waffe geht); 37 = Feuerdrache-Raum ohne Boss (Max)
 if os.environ.get('SOE_NURSTADT'): POOL = [p for p in POOL if p[0] in (0x62, 0x7B, 0x25, 0x7C, 0x1B)]   # Testbau: nur Staedte
 NPOOL = len(POOL); assert NPOOL < 256
 # ---- Bosse (Bauplan 2.2, Sieg gemessen r_bossraeume): Karte, Ankunft (gemessene Stelle des Jungen), Sieg-Flag, Vorlage
