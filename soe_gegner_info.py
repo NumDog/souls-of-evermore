@@ -22,6 +22,8 @@ ZEILE = 1                                   # v146k (Max): Info oben statt mitte
 # (Max: vorhandene Bosse behalten ihre Namen - nur NEUE Bosse bekommen hier einen Eintrag; Karte 0xFF = Platzhalter)
 SOULS = [(0xFF, b'-')]
 NKART = 0xF1FA00; NZEIG = NKART + 2*len(SOULS)
+OBEN = bool(os.environ.get('SOE_POS_OBEN'))   # Test: Statuszeile oben (Balken durch geteilte Text-Ebene, s. KANBAN)
+OURM = 0xEE70                               # v146z14: eigene Statuszeile offen (frueher FRM, unbenutzt)
 COOL = 90                                   # Bilder bis zur naechsten Meldung
 SEP, REP = [0xE2,0x20], [0xC2,0x20]
 def put(t):                                 # Zeichen an GTXT,Y anhaengen (M 16 -> 8 -> 16)
@@ -45,9 +47,23 @@ code, lab = assemble(CODE, [
   [0xAD]+w(GHIT)+[0xC9,181,0x00], ('bra8',0x90,'b_hk'), [0x9C]+w(GHIT), 'b_hk:', [0xAD]+w(GHIT), ('bra8',0xF0,'b_h0'), [0x3A, 0x8D]+w(GHIT), 'b_h0:',
   [0xAD]+w(GCOOL)+[0xC9,COOL+1,0x00], ('bra8',0x90,'b_ck'), [0x9C]+w(GCOOL), 'b_ck:',
   [0xAD]+w(GCOOL), ('bra8',0xF0,'b_c0'), [0x3A, 0x8D]+w(GCOOL), 'b_c0:',
+  # v146z14 (Max: Info oben, ohne Balken): nach dem Schliessen unserer Statuszeile oben bleiben die Zeilen 0-3 der
+  # Text-Ebene (7F:C800) mit Kachel 03FF gefuellt (unten raeumt die Lebensleiste auf, oben niemand) -> selbst auf 0FFF
+  # zuruecksetzen und per DMA-Auftrag (80:8650: $26/$28 Quelle, $2E VRAM, X Bytes) hochladen. Nur einmal je eigener Meldung.
+] + ([
+  [0xAD,0x2B,0x0B, 0x29,0xFF,0x7F], ('bra8',0xF0,'b_ci'), [0xA9,0x01,0x00, 0x8D]+w(OURM), ('bra8',0x80,'b_cz'),   # irgendeine Statuszeile offen -> merken
+  'b_ci:', [0xAD]+w(OURM), ('bra8',0xF0,'b_cz'),
+  [0xAD,0x2F,0x0B, 0xCD,0x31,0x0B], ('bra8',0xD0,'b_cz'), [0x9C]+w(OURM), [0xA2,0x00,0x00],
+  'b_cl:', [0xBF,0x00,0xC8,0x7F, 0xC9,0xFF,0x03], ('bra8',0xD0,'b_cn'), [0xA9,0xFF,0x0F, 0x9F,0x00,0xC8,0x7F],
+  'b_cn:', [0xE8, 0xE8, 0xE0,0x00,0x01], ('bra8',0xD0,'b_cl'),
+  [0xA5,0x26, 0x48, 0xA5,0x28, 0x48, 0xA5,0x2E, 0x48, 0xA9,0x00,0xC8, 0x85,0x26, 0xA9,0x7F,0x00, 0x85,0x28, 0xA9,0x00,0x08, 0x85,0x2E,
+   0xA2,0x00,0x01, 0x22,0x50,0x86,0x80, 0x68, 0x85,0x2E, 0x68, 0x85,0x28, 0x68, 0x85,0x26],
+  'b_cz:',
+] if OBEN else []) + [
   [0xAD]+w(GNEU), ('bra8',0xD0,'b_1'), ('jmp','raus'),
   'b_1:', [0xAD]+w(GCOOL), ('bra8',0xF0,'b_2'), ('jmp','raus'),
-  'b_2:', [0xAF]+L(MSGP)+([0xA9,0x01,0x00] if os.environ.get('SOE_OHNE_OBEN') else []), ('bra8',0xF0,'b_3'), ('jmp','raus'),   # Test SOE_OHNE_OBEN: A=1 -> nie Meldung oben
+  'b_2:', [0xAF,0x90,0x7E,0x30, 0x29,0x00,0x08], ('bra8',0xF0,'b_2a'), ('jmp','raus'), 'b_2a:',   # v146z15: Treffer-Info im Menue aus
+  [0xAF]+L(MSGP)+([0xA9,0x01,0x00] if os.environ.get('SOE_OHNE_OBEN') else []), ('bra8',0xF0,'b_3'), ('jmp','raus'),   # Test SOE_OHNE_OBEN: A=1 -> nie Meldung oben
   'b_3:', [0x9C]+w(GNEU),
   [0xAE]+w(GOBJ)+[0xBD,0x60,0x00, 0xC9,0x78,0xB6], ('bra8',0xB0,'b_4'), ('jmp','raus'),
   'b_4:', [0xC9,0x3B,0xDF], ('bra8',0x90,'b_5'), ('jmp','raus'),
@@ -124,7 +140,7 @@ o = at(0x8C8D9B); assert bytes(r[o:o+12]) == bytes.fromhex('bf00008e8522bf01008e
 r[o:o+12] = jsl(lab['ziel']) + b'\xEA'*8
 # v146z13 (Max: schwarzer Balken = Ueberbleibsel der Meldung an der alten Stelle): Text NICHT mehr nach oben verschieben -
 # der Box-Hintergrund blieb in Zeile 20 und war ohne Inhalt schwarz. Nur zum Testen: SOE_POS_OBEN=1.
-for adr in ((0x8CC962, 0x8CC876) if os.environ.get('SOE_POS_OBEN') else ()):   # zwei gleich gebaute Zeichenroutinen der Meldung
+for adr in ((0x8CC962, 0x8CC876) if OBEN else ()):   # Max (v146z14): unten lassen - oben erzeugt die geteilte Text-Ebene einen Balken   # zwei gleich gebaute Zeichenroutinen der Meldung
     o = at(adr); assert bytes(r[o:o+6]) == bytes.fromhex('a914008d6103'), (hex(adr), bytes(r[o:o+6]).hex())
     r[o:o+6] = jsl(lab['pos']) + b'\xEA\xEA'
 h = 0xFFC0

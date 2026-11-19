@@ -21,7 +21,8 @@ ZEILEN = [(0x58, [(0x00,"Gegner: Original"), (0x08,"Gegner: Aehnlich, fest"), (0
                     (0x0300,"Schwierigkeit: Wahnsinn x5"), (0x0400,"Schwierigkeit: Albtraum x10")]),
           (0x82, [(0x00,"Fundsachen: Zufall, fest"), (0x80,"Fundsachen: Zufall, immer neu"), (0x02,"Fundsachen: Original")]),
           (0x24, [(0x00,"Haendler: Zufall, fest"), (0x20,"Haendler: Zufall, je Besuch"), (0x04,"Haendler: Original")]),
-          (0x00, [(0x00,"Start: Spielen   A: Info")])]
+          # v146z15 (Max): Treffer-Info (Statuszeile beim Treffer) an/aus - Bit 0x0800 ($30:7E91 Bit3) = aus. B schaltet, A = Infoseiten
+          (0x0800, [(0x0000,"Treffer-Info: an   A: Info"), (0x0800,"Treffer-Info: aus  A: Info")])]
 blob = bytearray(); ptr = []
 for k,(maske,stufen) in enumerate(ZEILEN):
     for c in (0,1):
@@ -39,7 +40,7 @@ EIN, CUR, PAD, BILD, TMP, ZL = 0x307E90, 0x307E92, 0x307E94, 0x307E96, 0x307E98,
 code,_ = assemble(MENU, [
   [0x08, 0xC2,0x30, 0x8B, 0xDA, 0x5A, 0x48],
   [0xA9,0x00,0x00, 0x8F]+lng(CUR), [0xA9,0xFF,0xFF, 0x8F]+lng(PAD),
-  [0xAF]+lng(EIN), [0x29,0x00,0xFF, 0xC9,0x00,0x05], ('bra8',0x90,'stufe_ok'), [0xAF]+lng(EIN), [0x29,0xFF,0x00, 0x8F]+lng(EIN), 'stufe_ok:',   # ungueltige Stufe (frische SRAM = FF) -> Schwer x1,5
+  [0xAF]+lng(EIN), [0x29,0x00,0x07, 0xC9,0x00,0x05], ('bra8',0x90,'stufe_ok'), [0xAF]+lng(EIN), [0x29,0xFF,0x00, 0x8F]+lng(EIN), 'stufe_ok:',   # v146z15: nur Stufen-Bits 8-10 pruefen (Bit 11 = Treffer-Info)   # ungueltige Stufe (frische SRAM = FF) -> Schwer x1,5
   ('jsr','alle'), ('jsr','rot'),
   'schleife:', [0xAF,0x00,0x01,0x7E, 0x8F]+lng(BILD),
   'warte:', [0xAF,0x00,0x01,0x7E, 0xCF]+lng(BILD), ('bra8',0xF0,'warte'),
@@ -51,6 +52,7 @@ code,_ = assemble(MENU, [
   [0xAF]+lng(CUR), [0xC9,0x04,0x00], ('bra8',0xF0,'kein_runter'), [0x1A, 0x8F]+lng(CUR), ('jsr','alle'),
   'kein_runter:', [0xA3,0x01, 0x89,0x80,0x80], ('bra8',0xD0,'taste'), ('jmp','weiter'),
   'taste:', [0xAF]+lng(CUR), [0xC9,0x04,0x00], ('bra8',0xD0,'umschalten'),
+  [0xA3,0x01, 0x89,0x80,0x00], ('bra8',0xF0,'umschalten'),   # v146z15: letzte Zeile: B schaltet Treffer-Info, A = Infoseiten
   [0x20, INFO&0xFF, (INFO>>8)&0xFF], ('jsr','alle'), ('jmp','weiter'),          # A auf letzter Zeile -> Infoseiten (F0:5000)
   # --- naechste Stufe: i = Stufe(k)+1 (Ueberlauf -> 0); EIN = (EIN & ~Maske) | Wert[i]
   'umschalten:', ('jsr','stufe'), [0x1A, 0xCF]+lng(TMP), ('bra8',0x90,'i_ok'), [0xA9,0x00,0x00],

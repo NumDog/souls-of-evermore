@@ -25,6 +25,7 @@ Einstellungsmenü nach "Neues Spiel":
   (Lebenspunkte und Angriff der Gegner; Erfahrung und Geld wachsen im selben Maß mit)
 - Fundsachen: Original oder Zufall (fest pro Durchgang / immer neu)
 - Händler: Original oder Zufall mit Original-Preisen, ohne doppelte Waren
+- Treffer-Info: an/aus (Name, KP, Erfahrung, Geld des getroffenen Gegners über der Lebensleiste; B schaltet, A zeigt die Infoseiten)
 
 New Game+:
 - Nach dem Abspann ("ENDE") geht es mit Level, Ausrüstung und Formeln weiter: "New Game +N"
