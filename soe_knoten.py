@@ -48,7 +48,11 @@ SIEGR = 0x3070F6                                 # nach dem Sieg beim Rueckweg B
 BSEEN = 0x3070FA                                 # v146o: Boss (ohne Sieg-Flag) war schon zu sehen
 BMUS = 0x3070F8                                  # v146c: Boss-Musik schon gestartet (Vulgor)
 BRTW = 0x3070F4                                  # Bilder, die der Rueckweg schon auf den freien Jungen wartet (ab 900 trotzdem)
+MTOD = 0x3070B4                                  # v149: Tod im Marathon -> Schachbrett (Geld zurueck an der naechsten Tuer)
+MKT = 0xF32FF0                                   # v149: fester Einsprung kmtod (soe_hoehle 'tod')
+MARA = 0x3070B0                                  # v148: Boss-Marathon (jedes 5. Untergeschoss): Bit je erledigtem Boss
 BOSSFEST, DROPTEST = 0x3070BC, 0x3070BE          # Testhilfen: Boss-Index+1 / seltene Beute erzwingen (1-4 = Art, 5 = normal)
+MTXT2 = 0x307540                                 # v147b: Text-Puffer FF6 (Beute-Meldung, erst beim Zeigen gebaut)
 BSNAP, MTXT = 0x307400, 0x307500                 # Boss-Flag-Sicherung 7E:2258-2347 / Text-Puffer FFB
 QBUF = 0x307580                                  # 16 Woerter
 FLSAVE = 0x3075A0                                # je Fund-Merker 1 Byte (max 32)
@@ -66,9 +70,10 @@ LANDE = [(176,440), (64,448), (288,448), (176,760), (176,296)]   # 0 Mitte, 1 li
 # v146s (Max, Spielstaende): ohne 59 und 3A (keine Gegner / weg)
 # v146n (Max): ohne leere Raeume 0E Speisesaal, 4C Statuen, 70 Dach (54 bleibt: Haendler); neu 65 Wald, 3D Kanal (je 10+ Gegner)
 POOL = [[64,88,72],[64,216,608],[65,56,576],[79,56,600],[79,168,264],[79,464,600],[91,72,440],
-        [91,144,104],[5,696,616],[5,360,48],[5,32,376],[6,1240,904],[7,48,488],[7,504,544],[15,888,328],
+        [91,144,104],[5,696,616],[5,360,48],[5,32,376],[7,48,488],[7,504,544],[15,888,328],
         [15,96,320],[18,1208,128],[18,272,328],[41,328,984],[40,1064,1240],[101,1168,32],[98,672,560],[55,152,1928],[123,224,720],[37,408,408],[124,536,856],[27,376,224]]   # v146y: Dschungeldorf 25, Nobilia 7C, Ivor Tower 0A/08 (Menschen -> Monster, Haustueren intern)   # v146u: 7B = Nobilia-Markt (Menschen -> Monster); v146t: 62 = eigene Stadt (Gegner per C2 -> Waffe geht); 37 = Feuerdrache-Raum ohne Boss (Max)
 if os.environ.get('SOE_NURSTADT'): POOL = [p for p in POOL if p[0] in (0x62, 0x7B, 0x25, 0x7C, 0x1B)]   # Testbau: nur Staedte
+# v152 (Max, Spielstand "diese karte raus 3"): Karte 06 raus
 NPOOL = len(POOL); assert NPOOL < 256
 # ---- Bosse (Bauplan 2.2, Sieg gemessen r_bossraeume): Karte, Ankunft (gemessene Stelle des Jungen), Sieg-Flag, Vorlage
 # 18 Vulgor-Herz raus (Mesen v145: nach dem Sieg bleibt der Junge in der Story-Szene gesperrt, kein Rueckweg)
@@ -94,7 +99,10 @@ assert len(BEUTE) == 32
 TXT_FA = b"\x97Die Treppe ist versperrt.\x00"
 TXT_F9 = b"\x97Der Raum ist ges\xe3ubert!\x00"
 TXT_F8 = b"\x97Dieser Zugang ist versiegelt.\x00"
-SUF = {'gelernt': b" gelernt!\x00", 'gefunden': b" gefunden!\x00", 'erhalten': b" erhalten!\x00"}
+TXT_F5 = b"\x97Marathon geschafft! Alles +1!\x00"
+TXT_F4 = b"\x97Fl\xf3gel: 100000 Schaden! BAM!\x00"
+TXT_F3 = b"\x97Waffen-Orb: alle Waffen +1!\x00"   # v151 (Max): Boss-Orb gibt allen Waffen +1   # v150 (Max): Fluegel in der Cave
+SUF = {'gelernt': b" gelernt!\x00", 'gefunden': b" gefunden!\x00", 'erhalten': b" erhalten!\x00", 'orb': b"-Orb: +1!\x00", 'plus': b" +1!\x00"}
 
 # ---- Fund-Merker je Pool-Karte aus dem ROM (B-/Lauf-Ausloeser, deren Skript mit "08 85 ff ff LL 00" beginnt und im
 #      bedingten Teil 18 39 01 (Item) und a3 39/3a/3b (Fund/Truhe) hat; r_kisten/r_schnueffeln)
@@ -131,6 +139,7 @@ T_RMUS  = TAB + 0x8100           # v146z30: je Karte 4 Byte Musik-Skript 33 <Lie
 T_MSKR  = TAB + 0x8030           # v146c: Musik-Skript fuer Vulgor (33 04 00)
 T_HSKR  = TAB + 0x8028           # v146z30: Teleporter-Skript zum Haendlerraum 0x54
 T_TSKR  = TAB + 0x8020           # Tuer-Skript nach 5E (wie die linke Schachbrett-Treppe: a3 19 22 x y kk 00)
+T_VNAME = TAB + 0x01E0           # v147b: 8 Zeiger (Bank C5) auf die Namen der Verbrauchsgueter
 T_SUF   = TAB + 0x0210           # Endungen der Meldungen
 T_TXT   = TAB + 0x0240           # Texte FFA/FF9/FF8
 T_FLP   = TAB + 0x0400           # 128 Zeiger (Bank F7) auf Fund-Merker-Listen
@@ -160,9 +169,14 @@ tabs[T_TSKR] = bytes([0xA3,0x19, 0x22, 176//8, 440//8, 0x5E,0x00, 0x00])
 tabs[T_HSKR] = bytes([0xA3,0x19, 0x22, 320//8, 144//8, 0x54,0x00, 0x00])
 sufadr = {}; sb = b''
 for k,v in SUF.items(): sufadr[k] = (T_SUF + len(sb)) & 0xFFFF; sb += v
+assert len(sb) <= 0x30, len(sb)
 tabs[T_SUF] = sb
-T_FA = T_TXT; T_F9 = T_FA + len(TXT_FA); T_F8 = T_F9 + len(TXT_F9)
-tabs[T_TXT] = TXT_FA + TXT_F9 + TXT_F8
+_vn = []; _o = at(0xC519E8)
+for _i in range(8):
+    _vn.append(0x19E8 + (_o - at(0xC519E8))); _o = bytes(r).index(b'\x00', _o) + 1
+tabs[T_VNAME] = b''.join(v.to_bytes(2,'little') for v in _vn)
+T_FA = T_TXT; T_F9 = T_FA + len(TXT_FA); T_F8 = T_F9 + len(TXT_F9); T_F5 = T_F8 + len(TXT_F8); T_F4 = T_F5 + len(TXT_F5); T_F3 = T_F4 + len(TXT_F4)
+tabs[T_TXT] = TXT_FA + TXT_F9 + TXT_F8 + TXT_F5 + TXT_F4 + TXT_F3
 flp = [0]*128; fll = b''
 for m, fl in FLAGS.items():
     if not fl: continue
@@ -220,26 +234,33 @@ t = [
   [0x28, 0xE6,0x82, 0xE6,0x82, 0xE6,0x82, 0x5C,0x2C,0xE1,0x8C],
   'c2_o:', [0x28, 0xA7,0x82, 0xE6,0x82, 0x5C,0xC8,0xE0,0x8C],
   # ================= 2. Text-ID -> Zeiger ($22/$24), A = ID, X bleibt
-  'text:', ci(0xFF7), B(BEQ,'tx_f7'), ci(0xFFA), B(BEQ,'tx_fa'), ci(0xFF9), B(BEQ,'tx_f9'), ci(0xFFB), B(BEQ,'tx_fb'), ci(0xFF8), B(BEQ,'tx_f8'),
+  'text:', ci(0xFF6), B(BEQ,'tx_f6'), ci(0xFF7), B(BEQ,'tx_f7'), ci(0xFFA), B(BEQ,'tx_fa'), ci(0xFF9), B(BEQ,'tx_f9'), ci(0xFFB), B(BEQ,'tx_fb'), ci(0xFF8), B(BEQ,'tx_f8'), ci(0xFF5), B(BEQ,'tx_f5'), ci(0xFF4), B(BEQ,'tx_f4'), ci(0xFF3), B(BEQ,'tx_f3'),
   [0x5C]+ALT,
   'tx_fa:', li(T_FA&0xFFFF), B(BRA,'tx_rom'),
   'tx_f8:', li(T_F8&0xFFFF), B(BRA,'tx_rom'),
+  'tx_f5:', li(T_F5&0xFFFF), B(BRA,'tx_rom'),
+  'tx_f4:', li(T_F4&0xFFFF), B(BRA,'tx_rom'),
+  'tx_f3:', li(T_F3&0xFFFF), B(BRA,'tx_rom'),
   'tx_f9:', li(T_F9&0xFFFF),
   'tx_rom:', [0x85,0x22]+li(TAB>>16)+[0x85,0x24, 0x6B],
   'tx_fb:', li(MTXT&0xFFFF)+[0x85,0x22]+li(MTXT>>16)+[0x85,0x24, 0x6B],
+  'tx_f6:', li(MTXT2&0xFFFF)+[0x85,0x22]+li(MTXT2>>16)+[0x85,0x24, 0x6B],
   'tx_f7:', li(0xEE00)+[0x85,0x22]+li(0x7E)+[0x85,0x24, 0x6B],      # v146g: Gegner-Info (soe_gegner_info, Puffer 7E:EE00)
 
   # ================= 3. Tuer (aus soe_hoehle 'tuer', 238F schon 0): KTK/KTX/KTY = Original-Ziel -> neues Ziel
   'kt:', [0x08, 0xC2,0x30]+DB7E,
   li(QABST+40)+sta(QCOOL)+li(1)+sta(INOBEN)+z(BEAM)+z(BEAMRT),
-  lda(SIEGR), B(BEQ,'kt_s0'), ('jsr','bsrest'), z(SIEGR), 'kt_s0:',
+  lda(MTOD), B(BEQ,'kt_mt0'), z(MTOD)+lxi(0), 'kt_mtl:', ldax(0x307EE0)+stax(0x7E0AC6)+[0xE8,0xE8, 0xE0,0x0C,0x00], B(BCC,'kt_mtl'),
+  SEP+[0xA9,0x00]+sta(0x307EED)+sta(0x307FEE)+sta(0x307E70)+REP, 'kt_mt0:',
+  lda(SIEGR), B(BEQ,'kt_s0'), ('jsr','bsrest'), z(SIEGR), lda(BOSSAKT), B(BNE,'kt_s0'), ('jsr','mara'), B(BCC,'kt_s0'), ('jmp','kt_mb'), 'kt_s0:',
   lda(BOSSAKT), B(BEQ,'kt_nb'),
   # v146t (Max: Verlassen des Bossraums gab einen Waffen-Orb): Bosse ohne Sieg-Flag -> an der Tuer zaehlt nur ein im Kampf
   # schon erkannter Sieg (BOSSW > 0); beim Raumwechsel ist das Boss-Objekt weg und sah wie "besiegt" aus.
   ('jsr','bfl_lade'), lda(TMP3), B(BNE,'kt_mf'), lda(BOSSW), B(BEQ,'kt_flucht'), ('jsr','sieg'), B(BRA,'kt_b4'),
   'kt_mf:', ('jsr','bflag'), B(BEQ,'kt_flucht'), ('jsr','sieg'), B(BRA,'kt_b4'),     # Tuer nach dem Sieg (Flag schon gesetzt) = Sieg
-  'kt_flucht:', ('jsr','bsrest'), z(BOSSAKT),
-  'kt_b4:', li(4)+sta(TUERM), ('jmp','land'),
+  'kt_flucht:', ('jsr','bsrest'), z(BOSSAKT), li(4)+sta(TUERM), ('jmp','land'),
+  'kt_b4:', li(4)+sta(TUERM), ('jsr','mara'), B(BCS,'kt_mb'), ('jmp','land'),
+  'kt_mb:', li(4)+sta(TUERM), ('jmp','boss'),
   'kt_nb:', lda(0x7E0ADB)+ai(0xFF)+ci(0x5E), B(BNE,'kt_nb2'), ('jmp','kt_5e'), 'kt_nb2:',
   # v146z34: aus dem Haendlerraum 0x54 zurueck -> Hundeform von vorher (das Schachbrett laedt Hund nach 7E:2363)
   # v146y (Max: Haustueren in der Stadt duerfen nicht rausfuehren): Tuer innerhalb derselben Stadtgruppe (GRP F8:D500,
@@ -292,7 +313,12 @@ t = [
   [0xAB, 0x28, 0x6B],
   # ---- Bossraum betreten (TUERM = 4, Stockwerk mod 5 = 0, Boss noch offen)
   'boss:', lda(BOSSFEST)+ai(0xFF), B(BEQ,'bs_z'), [0x3A], B(BRA,'bs_i'),
-  'bs_z:', ('jsr','rnd'), mod(len(BOSSE)),
+  'bs_z:', ('jsr','rnd'), mod(len(BOSSE)), sta(TMP4), ('jsr','stock5'), B(BCS,'bs_i0'),
+  # v148 (Max: Boss-Marathon, alle Bosse zufaellig): naechster noch offener Boss ab dem Zufallsindex
+  li(len(BOSSE))+sta(TMP5),
+  'bs_ml:', lda(TMP4), ('jsr','mbit'), andl(MARA), B(BEQ,'bs_i0'),
+  lda(TMP4)+[0x1A]+ci(len(BOSSE)), B(BCC,'bs_m2'), li(0), 'bs_m2:', sta(TMP4)+lda(TMP5)+[0x3A]+sta(TMP5), B(BNE,'bs_ml'),
+  'bs_i0:', lda(TMP4),
   'bs_i:', [0x0A,0x0A,0x0A,0x0A,0x0A]+sta(BOSSI)+z(BSEEN),
   lxi(0x2258)+lyi(BSNAP&0xFFFF)+li(0xEF)+[0x54,0x30,0x7E],                          # MVN 7E:2258-2347 -> 30:7400 (DB jetzt 30)
   ('jsr','bfl_lade'), [0x49,0xFF,0xFF]+sta(TMP2), SEP, ldax(0x7E2258)+andl(TMP2)+stax(0x7E2258), REP,   # Sieg-Flag loeschen
@@ -319,14 +345,41 @@ t = [
   'bf_n:', [0x8A, 0x18, 0x69,0x8E,0x00, 0xAA, 0xE0,0x89,0x4E], B(BCC,'bf_l'),
   lda(TMP6), B(BEQ,'bf_e'), li(0)+[0x60], 'bf_e:', lda(BSEEN)+[0x60],
   # sieg: Flags zurueck, Boss erledigt (SIEGEL Bit 4), Waffen-Orb + Meldung
-  'sieg:', ('jsr','bsrest'), li(1)+sta(SIEGR)+z(BOSSAKT)+lda(SIEGEL)+oi(0x30)+sta(SIEGEL)+li(4)+sta(TUERM),   # v146z30: 0x20 = Boss dieses Untergeschosses erledigt
-  lda(0x7E0ABA)+ai(0xFF)+jsl(WINC)+[0xC2,0x30]+li(0xFFE), ('jsr','qp'), [0x60],
+  'sieg:', ('jsr','bsrest'), li(1)+sta(SIEGR)+z(BOSSAKT)+lda(SIEGEL)+oi(0x10)+sta(SIEGEL)+li(4)+sta(TUERM),
+  lda(BOSSI)+[0x4A,0x4A,0x4A,0x4A,0x4A], ('jsr','mbit'), oral(MARA)+sta(MARA),
+  ('jsr','mara'), B(BCS,'sg_m'), lda(SIEGEL)+oi(0x20)+sta(SIEGEL),
+  ('jsr','stock5'), B(BCS,'sg_m'), ('jsr','malles'), 'sg_m:',   # v146z30: 0x20 = Boss dieses Untergeschosses erledigt
+  ('jsr','mwaff'), li(0xFF3), ('jsr','qp'), [0x60],   # v151 (Max): Boss-Orb = alle Waffen +1
   # bsrest: BSNAP -> 7E (ohne Formeln/Talismane/Waffe+N/Waffenbesitz)
   'bsrest:', [0x8B]+sum(([0xA2]+w((BSNAP&0xFFFF)+a-0x2258)+[0xA0]+w(a)+[0xA9]+w(n-1)+[0x54,0x7E,0x30] for a,n in BREST), [])+[0xAB, 0x60],
+  # malles (v149, Max: Marathon-Sieg = alle Waffen, Talismane und Formeln +1): nur was man besitzt
+  'malles:', ('jsr','mwaff'), ('jmp','ma_fo'),
+  'mwaff:', lxi(2),
+  'ma_w:', [0xDA]+ldax(0xC5000A)+sta(TMP4)+ldax(0xC50026)+ai(0xFF)+sta(TMP5)+lda(TMP4), B(BEQ,'ma_wn'),
+  [0xAA]+ldax(0x7E0000)+andl(TMP5)+ai(0xFF), B(BEQ,'ma_wn'), [0xA3,0x01]+jsl(WINC)+[0xC2,0x30],
+  'ma_wn:', [0xFA, 0xE8,0xE8, 0xE0,0x1B,0x00], B(BCC,'ma_w'), [0x60],
+  'ma_fo:', lxi(0),
+  'ma_f:', [0xDA]+ldax(0xC502E7)+ai(0xFF)+sta(TMP5)+ldax(0xC502A1)+[0xAA]+ldax(0x7E0000)+andl(TMP5)+ai(0xFF), B(BEQ,'ma_fn'),
+  [0xA3,0x01, 0xAA, 0x22,0x40,0x90,0xF0, 0xC2,0x30],
+  'ma_fn:', [0xFA, 0xE8,0xE8, 0xE0,70,0x00], B(BCC,'ma_f'),
+  lxi(0),
+  'ma_t:', [0xDA]+ldax(0x8CBFB9)+ai(0xFF)+sta(TMP5)+ldax(0x8CBF91)+[0xAA]+ldax(0x7E0000)+andl(TMP5)+ai(0xFF), B(BEQ,'ma_tn'),
+  [0xA3,0x01, 0x18, 0x69,72,0x00, 0xAA, 0x22,0x40,0x90,0xF0, 0xC2,0x30],
+  'ma_tn:', [0xFA, 0xE8,0xE8, 0xE0,28,0x00], B(BCC,'ma_t'),
+  li(0xFF5), ('jmp','qp'),
+  # kmtod (v149, Max: im Marathon nach mindestens einem Boss sterben -> Schachbrett, Marathon vorbei, nur weiter nach unten)
+  # C = 1: erledigt (soe_hoehle setzt dann keinen Cave-Tod)
+  'kmtod:', [0x08, 0xC2,0x30, 0x48, 0xDA, 0x5A]+DB7E,
+  lda(BOSSAKT), B(BEQ,'km_n'), ('jsr','stock5'), B(BCS,'km_n'), lda(MARA), B(BEQ,'km_n'),
+  ('jsr','bsrest'), z(BOSSAKT)+z(SIEGR)+lda(SIEGEL)+oi(0x30)+sta(SIEGEL)+li(4)+sta(TUERM)+li(1)+sta(MTOD),
+  [0xAB, 0x7A, 0xFA, 0x68, 0x28, 0x38, 0x6B],
+  'km_n:', [0xAB, 0x7A, 0xFA, 0x68, 0x28, 0x18, 0x6B],
+  'mbit:', [0xAA]+li(1)+[0xE0,0x00,0x00], 'mb_l:', B(BEQ,'mb_r'), [0x0A, 0xCA], B(BRA,'mb_l'), 'mb_r:', [0x60],
+  'mara:', ('jsr','stock5'), B(BCS,'ma_n'), lda(MARA)+ci((1<<len(BOSSE))-1), B(BEQ,'ma_n'), [0x38, 0x60], 'ma_n:', [0x18, 0x60],
   # stock5: C = 0 wenn Stockwerk mod 5 == 0 (Boss-Ebene)
   'stock5:', lda(FLOOR)+ai(0xFF), 's5_m:', ci(5), B(BCC,'s5_r'), [0xE9,0x05,0x00], B(BRA,'s5_m'), 's5_r:', ci(1), [0x60],
   # nstock: neues Stockwerk -> Siegel/Boss zuruecksetzen
-  'nstock:', z(SIEGEL)+z(TUERM)+z(RAUMAKT)+z(CLRW)+z(OBENREQ)+z(BOSSAKT)+[0x60],
+  'nstock:', z(MARA)+z(SIEGEL)+z(TUERM)+z(RAUMAKT)+z(CLRW)+z(OBENREQ)+z(BOSSAKT)+[0x60],
   # rnd: A = Zufall 0..7FFF (DB = 7E)
   'rnd:', [0x22,0x9B,0x85,0x80, 0x4F,0x00,0x01,0x7E, 0x4F,0xA3,0x4E,0x7E]+ai(0x7FFF)+[0x60],
   # ---- Fund-Merker des Pool-Raums sichern + loeschen (A = Karte)
@@ -354,11 +407,19 @@ t = [
   # Beute erst, wenn der Junge frei ist (keine Sperre 4E99 & 0020 wie nach bc, kein laufendes Skript 4E89+3E)
   # v146s (Max: Aufheben unterbrach Aufladen/Spezialschlag): auch warten, solange er schlaegt (4E99 & 0040)
   # oder eine Aktionstaste gehalten wird (Aufladen: B/Y/A/X in $00:4218)
-  lda(0x7E4E99)+ai(0x0060), B(BEQ,'qt_4b'), [0x60],
-  'qt_4b:', lda(0x004218)+ai(0xC0C0), B(BEQ,'qt_5'), [0x60],
+  # v147b (Max: Aufheben bricht Aufladen/Angriff ab): Beute ohne Skript -> kein Warten auf den freien Jungen mehr
   'qt_5:', ldax(QBUF)+[0x48, 0x8A, 0x1A,0x1A]+ai(0x1E)+sta(QH)+li(QABST)+sta(QCOOL)+[0x68]+ci(0x0F00), B(BCC,'qt_item'),
   sta(MSGP)+[0x60],
-  'qt_item:', sta(0x7E2391)+li(skp(T_SKR)&0xFFFF),
+  # v147b: Beute direkt ins Inventar (Zutat 0x200+i -> 22FF+i bis 99, Verbrauchsgut 0x800+i -> 2315+i bis 6), Meldung FF6
+  #        ohne Skript (kein Anhalten/Buecken). Voll -> nichts.
+  'qt_item:', ci(0x800), B(BCS,'qi_v'),
+  [0x38,0xE9,0x00,0x02, 0xAA]+ldax(0x7E22FF)+ai(0xFF)+ci(99), B(BCS,'qi_r'),
+  SEP+ldax(0x7E22FF)+[0x1A]+stax(0x7E22FF)+REP+[0x8A,0x0A,0xAA]+ldax(0xC50659), B(BRA,'qi_t'),
+  'qi_v:', [0x38,0xE9,0x00,0x08, 0xAA]+ldax(0x7E2315)+ai(0xFF)+ci(6), B(BCS,'qi_r'),
+  SEP+ldax(0x7E2315)+[0x1A]+stax(0x7E2315)+REP+[0x8A,0x0A,0xAA]+ldax(T_VNAME),
+  'qi_t:', [0xAA]+lyi(sufadr['gefunden']), ('jsr','txb2'), li(0xFF6)+sta(MSGP),
+  'qi_r:', [0x60],
+  'qt_alt:', li(skp(T_SKR)&0xFFFF),
   # faden: Skript (kodierter Zeiger A, Bank F7) als Faden mit dem Jungen als Besitzer wie ein Ausloeser (8C:D257: PHY, 8C:D2FD,
   #        +0D = Besitzer, Besitzer +3E hochzaehlen, in 7E:2F28 eintragen). Mesen v145: ohne Besitzer (+0D = 0) Absturz nach a3 3f.
   'faden:', [0x85,0x26]+li(skp(T_SKR)>>16)+[0x85,0x28]+lyi(0x4E89)+[0x22,0x57,0xD2,0x8C, 0xC2,0x30, 0x60],
@@ -456,8 +517,9 @@ t = [
   'kdrop:', [0x08, 0xC2,0x30, 0x48, 0xDA, 0x5A]+DB7E,
   lda(BOSSAKT), B(BEQ,'kd_nb'), ('jmp','kd_r'), 'kd_nb:',   # v146z2 (Max: Orb nach jedem Gegner im Endboss-Raum): keine Funde im Bossraum
   lda(DROPTEST)+ai(0xFF), B(BEQ,'kd_z'), ci(5), B(BCC,'kd_d1'), ('jmp','kd_n'), 'kd_d1:', [0x3A]+sta(TMP1), B(BRA,'kd_s'),
-  'kd_z:', ('jsr','rnd'), mod(2), B(BEQ,'kd_ja'), ('jmp','kd_r'),        # v146s (Max): nur noch jeder 2. Gegner laesst etwas fallen
-  'kd_ja:', ('jsr','rnd'), mod(100), B(BEQ,'kd_sel'), ('jmp','kd_n'), 'kd_sel:',
+  'kd_z:', ('jsr','rnd'), mod(4), B(BEQ,'kd_ja'),        # v147b (Max: Droprate kleiner): jeder 4.
+  ('jmp','kd_r'),        # v146s (Max): nur noch jeder 2. Gegner laesst etwas fallen
+  'kd_ja:', ('jsr','rnd'), mod(50), B(BEQ,'kd_sel'), ('jmp','kd_n'), 'kd_sel:',
   ('jsr','rnd'), mod(4), sta(TMP1),
   'kd_s:', lda(TMP1)+[0x0A, 0xAA, 0xFC,0x00,0x00],      # JSR (seltab,X) - Adresse wird unten eingesetzt
   B(BCC,'kd_r'),
@@ -471,6 +533,8 @@ t = [
   'gformel:', ('jsr','rnd'), mod(35), sta(TMP2)+li(35)+sta(TMP3),
   'gf_l:', lda(TMP2)+ci(21), B(BEQ,'gf_n'), ci(28), B(BEQ,'gf_n'),
   [0x0A, 0xAA]+ldax(0xC502E7)+ai(0xFF)+sta(TMP5)+ldax(0xC502A1)+sta(TMP4)+[0xAA]+ldax(0x7E0000)+andl(TMP5)+ai(0xFF), B(BEQ,'gf_ja'),
+  # v147b (Max: Formeln auch finden): schon gelernt -> Formel +1
+  lda(TMP2)+[0x0A, 0xAA, 0x22,0x40,0x90,0xF0, 0xC2,0x30]+lda(TMP2)+[0x0A, 0xAA]+ldax(0xC5036F)+[0xAA]+lyi(sufadr['plus']), ('jsr','txt'), [0x18, 0x60],
   'gf_n:', lda(TMP2)+[0x1A]+ci(35), B(BCC,'gf_s'), li(0), 'gf_s:', sta(TMP2)+lda(TMP3)+[0x3A]+sta(TMP3), B(BNE,'gf_l'), [0x38, 0x60],
   'gf_ja:', lda(TMP4)+[0xAA]+SEP+ldax(0x7E0000)+oral(TMP5)+stax(0x7E0000)+REP,
   [0xA5,0x12, 0x48]+lda(TMP2)+[0x0A, 0xAA, 0x22,0x6F,0xCB,0x91, 0xC2,0x30, 0x68, 0x85,0x12],
@@ -479,13 +543,17 @@ t = [
   'gwaffe:', ('jsr','rnd'), mod(13), sta(TMP2)+li(13)+sta(TMP3),
   'gw_l:', lda(TMP2)+[0x0A, 0x1A,0x1A]+sta(TMP6)+[0xAA]+ldax(0xC50042)+ai(0xFF)+ci(6), B(BEQ,'gw_n'),
   ldax(0xC50026)+ai(0xFF)+sta(TMP5)+ldax(0xC5000A)+sta(TMP4), B(BEQ,'gw_n'), [0xAA]+ldax(0x7E0000)+andl(TMP5)+ai(0xFF), B(BEQ,'gw_ja'),
+  # v151 (Max: Waffen auch einzeln aufmotzen): schon im Besitz -> "<Waffe> +1!"
+  lda(TMP6)+jsl(WINC)+[0xC2,0x30]+lda(TMP6)+[0xAA]+ldax(0xC43EB4)+[0xAA]+ldax(0xC40002)+[0xAA]+lyi(sufadr['plus']), ('jsr','txt'), [0x18, 0x60],
   'gw_n:', lda(TMP2)+[0x1A]+ci(13), B(BCC,'gw_s'), li(0), 'gw_s:', sta(TMP2)+lda(TMP3)+[0x3A]+sta(TMP3), B(BNE,'gw_l'), [0x38, 0x60],
   'gw_ja:', lda(TMP4)+[0xAA]+SEP+ldax(0x7E0000)+oral(TMP5)+stax(0x7E0000)+REP,
   lda(TMP6)+[0xAA]+ldax(0xC43EB4)+[0xAA]+ldax(0xC40002)+[0xAA]+lyi(sufadr['gefunden']), ('jsr','txt'), [0x18, 0x60],
   # --- Talisman (nicht im Besitz): 7E:243D = 2k (Spiel setzt Bit + Werte), "<Name> erhalten!"
   'gtalis:', ('jsr','rnd'), mod(14), sta(TMP2)+li(14)+sta(TMP3),
   'gt_l:', lda(TMP2)+[0x0A, 0xAA]+ldax(0x8CBFB9)+ai(0xFF)+sta(TMP5)+ldax(0x8CBF91)+[0xAA]+ldax(0x7E0000)+andl(TMP5)+ai(0xFF), B(BEQ,'gt_ja'),
-  lda(TMP2)+[0x1A]+ci(14), B(BCC,'gt_s'), li(0), 'gt_s:', sta(TMP2)+lda(TMP3)+[0x3A]+sta(TMP3), B(BNE,'gt_l'), [0x38, 0x60],
+  # v147b (Max: fuer jeden Talisman ein eigener Orb): schon im Besitz -> "<Talisman>-Orb: +1!" (Zaehler 36+k)
+  lda(TMP2)+[0x18, 0x69,36,0x00, 0x0A, 0xAA, 0x22,0x40,0x90,0xF0, 0xC2,0x30],
+  lda(TMP2)+[0x0A, 0xAA]+ldax(0x8CBFFB)+[0xAA]+lyi(sufadr['orb']), ('jsr','txt'), [0x18, 0x60],
   'gt_ja:', lda(TMP2)+[0x0A]+sta(0x7E243D)+[0xAA]+ldax(0x8CBFFB)+[0xAA]+lyi(sufadr['erhalten']), ('jsr','txt'), [0x18, 0x60],
   # --- Ruestung (Anzahl 7E:231D+Nr = 0): Anzahl 1, "<Name> gefunden!"
   'gruest:', ('jsr','rnd'), mod(40), sta(TMP2)+li(40)+sta(TMP3),
@@ -499,6 +567,11 @@ t = [
   'tx_nd:', [0xFA],
   'tx_s:', ldax(TAB), absw(0x99,MTXT), B(BEQ,'tx_sd'), [0xE8, 0xC8], B(BRA,'tx_s'),
   'tx_sd:', REP+[0xAB]+li(0xFFB), ('jmp','qp'),
+  'txb2:', DB30, [0x5A], SEP+[0xA9,0x97]+absw(0x8D,MTXT2), lyi(1),
+  't2_n:', ldax(0xC50000), B(BEQ,'t2_nd'), absw(0x99,MTXT2)+[0xE8, 0xC8, 0xC0,26,0x00], B(BCC,'t2_n'),
+  't2_nd:', [0xFA],
+  't2_s:', ldax(TAB), absw(0x99,MTXT2), B(BEQ,'t2_sd'), [0xE8, 0xC8], B(BRA,'t2_s'),
+  't2_sd:', REP+[0xAB, 0x60],
 
   # ================= 7. Boss-Werte (soe_hoehle stat, nach SKAL): A = Wert, X = Vorlage
   'kbkp:', [0x08, 0xC2,0x30, 0x48]+lda(BOSSAKT), B(BEQ,'bk_o'), [0x8A]+cmpl(BOSSV), B(BNE,'bk_o'),
@@ -520,6 +593,7 @@ for i, l in enumerate(['gformel','gwaffe','gtalis','gruest']): code[o+2*i:o+2*i+
 o = lab['kd_s'] - CODE + 6; assert code[o] == 0xFC; code[o+1:o+3] = bytes(w(lab['seltab'] & 0xFFFF))
 assert len(code) <= 0x2F00, hex(len(code))
 o = at(CODE); assert all(b == 0xFF for b in r[o:o+len(code)]), 'F3 belegt'; r[o:o+len(code)] = code
+o = at(MKT); assert all(b == 0xFF for b in r[o:o+4]), 'MKT belegt'; a = lab['kmtod']; r[o:o+4] = bytes([0x5C, a&0xFF, (a>>8)&0xFF, a>>16])
 for a, b in tabs.items():
     o = at(a); assert all(x == 0xFF for x in r[o:o+len(b)]), hex(a); r[o:o+len(b)] = b
 def jml(l): a = lab[l]; return bytes([0x5C, a&0xFF, (a>>8)&0xFF, a>>16])

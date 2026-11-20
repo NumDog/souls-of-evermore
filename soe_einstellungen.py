@@ -16,7 +16,8 @@ ZEILEN = [(0x58, [(0x00,"Gegner: Original"), (0x08,"Gegner: Aehnlich, fest"), (0
                   (0x18,"Gegner: Gebiet, fest"), (0x58,"Gegner: Gebiet, je Raum neu"),
                   (0x10,"Gegner: Chaos, fest"), (0x50,"Gegner: Chaos, je Raum neu")]),
           # Schwierigkeit: Bit0 = Normal, Bits 8-10 ($30:7E91) = Stufe ab Schwer (0 x1,5 / 1 x2 / 2 x3 / 3 x5 / 4 x10)
-          (0x0701, [(0x0101,"Schwierigkeit: Leicht x0,5"), (0x0001,"Schwierigkeit: Normal"), (0x0000,"Schwierigkeit: Schwer x1,5"),
+          (0x0701, [(0x0101,"Schwierigkeit: Sehr leicht x0,5"), (0x0201,"Schwierigkeit: Leicht x0,75"), (0x0001,"Schwierigkeit: Normal"),   # v150 (Max): Leicht 0,75, Sehr leicht 0,5 (= bisheriges Leicht mit Laserwaffen)
+                    (0x0000,"Schwierigkeit: Schwer x1,5"),
                     (0x0100,"Schwierigkeit: Sehr schwer x2"), (0x0200,"Schwierigkeit: Extrem x3"),
                     (0x0300,"Schwierigkeit: Wahnsinn x5"), (0x0400,"Schwierigkeit: Albtraum x10")]),
           (0x82, [(0x00,"Fundsachen: Zufall, fest"), (0x80,"Fundsachen: Zufall, immer neu"), (0x02,"Fundsachen: Original")]),
@@ -29,7 +30,8 @@ for k,(maske,stufen) in enumerate(ZEILEN):
         for i in range(8):
             t = (">" if c else " ") + (stufen[i][1] if i < len(stufen) else "")
             ptr.append(TXT + len(blob)); blob += t.encode('latin-1') + b'\x00'
-PTAB = TXT + len(blob) + (len(blob) & 1)
+PTAB = 0xF90800                                # v150: Tabellen nach F9 (mit 8 Schwierigkeiten passte es bei F0:2Dxx nicht mehr)
+assert TXT + len(blob) <= 0xF02DAE, hex(TXT+len(blob))
 ptab = b''.join((p & 0xFFFF).to_bytes(2,'little') for p in ptr)
 slottab = b''.join(s.to_bytes(2,'little') for s in SLOTS)
 STAB = PTAB + len(ptab)

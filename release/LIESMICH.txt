@@ -1,4 +1,4 @@
-Souls of Evermore – Mod für Secret of Evermore (deutsch)  (Beta, Stand v147)
+Souls of Evermore – Mod für Secret of Evermore (deutsch)  (Beta, Stand v154)
 =====================================================================
 
 Ein Patch für die DEUTSCHE Version von Secret of Evermore (SNES).
@@ -14,14 +14,14 @@ Passende ROM
 Patch anwenden
 --------------
 1. ROM Patcher JS im Browser öffnen (oder Floating IPS / "Flips").
-2. Deine ROM und die Datei Souls-of-Evermore-v147-beta.bps auswählen.
+2. Deine ROM und die Datei Souls-of-Evermore-v154-beta.bps auswählen.
 3. "Apply patch" – fertig. Ergebnis: 4 MB ROM, läuft z. B. in OpenEmu, snes9x, bsnes, Mesen.
 
 Was ist neu?
 ------------
 Einstellungsmenü nach "Neues Spiel":
 - Gegner: Original / Ähnlich / Gebiet / Chaos, jeweils fest oder "je Raum neu"
-- Schwierigkeit: Leicht x0,5 (Start mit Laserschwert, Atomaxt, Laserlanze, Bazooka + Munition) / Normal (Original) / Schwer x1,5 / Sehr schwer x2 / Extrem x3 / Wahnsinn x5 / Albtraum x10
+- Schwierigkeit: Sehr leicht x0,5 (Start mit Laserschwert, Atomaxt, Laserlanze, Bazooka + Munition) / Leicht x0,75 / Normal (Original) / Schwer x1,5 / Sehr schwer x2 / Extrem x3 / Wahnsinn x5 / Albtraum x10
   (Lebenspunkte und Angriff der Gegner; Erfahrung und Geld wachsen im selben Maß mit)
 - Fundsachen: Original oder Zufall (fest pro Durchgang / immer neu)
 - Händler: Original oder Zufall mit Original-Preisen, ohne doppelte Waren
@@ -49,6 +49,9 @@ Souls Cave (Eingang am Brunnen, neu in v146):
 - Verwandelnde Städte: Dschungeldorf, Nobilia, Ivor Tower, eigene Stadt - alle Menschen werden Monster, Häuser betretbar
 - Goldener Vulgor immer da, +100 % je Sieg, Gift/Heilung nach Säureregen, Verwirrung nach Wegschubsen
 - Gegner-Info (Name, KP, EP, Geld, Anzahl) bei jedem Treffer; Speichern in der Cave gesperrt
+- Neu in v154: Boss-Marathon auf U5/U10/... (alle Bosse zufällig, danach alle Waffen/Talismane/Formeln +1; Tod nach einem Boss -> Schachbrett)
+- Boss-Orb = alle Waffen +1; Beute ohne Bücken, jeder 4. Gegner; Talisman-/Formel-/Waffen-Funde geben +1, wenn schon vorhanden
+- Treppe optisch zu bis alle 4 Räume erledigt; Flügel = 100000 Schaden; Cave-Erfahrung x2 statt 50 x Level
 - Neu in v147: je Untergeschoss 4 Räume -> Treppe -> Boss; Raum erst nach dem Säubern verlassbar
 - Händler-Teleporter auf dem Schachbrett; Flügel in der Cave = Notausgang (Tod, raus am Brunnen)
 - Eigene Musik je Raum, Hund passend zur Epoche, stärkere Gegner (KP 20x Level), keine Moskitos/Ratten

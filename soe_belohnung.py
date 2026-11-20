@@ -21,7 +21,10 @@ code, lab = assemble(CODE, [
   [0xAF]+lng(V1), ('bra8',0xF0,'g_ok'), [0xA9,0xFF,0xFF, 0x6B], 'g_ok:', [0xAF]+lng(V0), [0x6B],
   # ---- skal: (V1:V0) *= Faktor. Normal -> unveraendert. Stufe 0: x3/2, 1: x2, 2: x3, 3: x5, 4: x10
   # v132 DarkSoulCave (Max): Erfahrung 50*L, Geld 2*L (L = Junge-Level), je Stockwerk +10 % (soe_hoehle SKAL F1:C780)
-  'hoe_x:', [0xA9,50,0x00], ('bra8',0x80,'hoe'),
+  # v153 (Max: XP-Bonus nur doppelt, sonst wird die Story zu leicht): in der Cave Erfahrung = Vorlage x2 (statt 50*L je Stockwerk)
+  'hoe_x:', [0xAF,0x02,0x70,0x30, 0x29,0xFF,0x00], ('bra8',0xF0,'hx_r'),
+  [0xAF]+lng(V0), [0x0A, 0x8F]+lng(V0), [0xAF]+lng(V1), [0x2A, 0x8F]+lng(V1),
+  'hx_r:', [0x60],
   'hoe_g:', [0xA9,2,0x00],
   # v146c (Max: 4000 EXP fuer eine Larve): im Cave-Bosskampf (BOSSAKT 30:703A) bekommt nur der Boss (Vorlage = BOSSV 30:70CE)
   # die Hoehlen-Werte; Helfer (Larven, Klauen ...) behalten die Original-Werte (danach Schwierigkeit wie ueblich).
