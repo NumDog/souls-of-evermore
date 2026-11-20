@@ -46,7 +46,7 @@ fertig = s.index(bytes([0x68,0x7A,0xFA,0x6B])); beq = s.index(bytes([0xF0,0x24])
 assert fertig - (beq+2) == 0x24, fertig-(beq+2)
 # --- Level-Bonus (nur NG+): A = K -> Ergebnis = skalierter Wert + K * Level * Zyklus (max $7FFF)
 sys.path.insert(0, __file__.rsplit('/',1)[0]); from asm import assemble
-BONUS = 0xF00180
+BONUS = 0xF05200   # v146z17: von F0:0180 verlegt (Mindeststaerke braucht Platz)
 bonus,_ = assemble(BONUS, [
   [0xDA,0x5A,0x48],                         # PHX PHY PHA      1,S=K 3,S=Y 5,S=X 7,S=Wert
   [0xAF,0x57,0x22,0x7E, 0x29,0xFF,0x00], ('bra8',0xF0,'keiner'),
@@ -56,7 +56,17 @@ bonus,_ = assemble(BONUS, [
   [0xA9,0x00,0x00], 'l2:', [0x18,0x63,0x01], ('bra8',0xB0,'deckel'), ('bra8',0x30,'deckel'), [0x88], ('bra8',0xD0,'l2'),            # A = K*Level*Zyklus (Ueberlauf -> Deckel)
   [0x18,0x63,0x07], ('bra8',0xB0,'deckel'), ('bra8',0x30,'deckel'), [0x83,0x07], ('bra8',0x80,'keiner'),
   'deckel:', [0xA9,0xFF,0x7F,0x83,0x07],
-  'keiner:', [0x68,0x7A,0xFA,0x68,0x6B],    # PLA(K) PLY PLX PLA(Wert) RTL
+  # v146z17 (Max: Story soll spannend bleiben): Mindeststaerke nach Junge-Level L ausserhalb der Cave (30:7002 = 0):
+  # KP (K=10) >= 5L, Angriff (K=1) >= L+5, Abwehr (K=3) >= L/2 (halbe Cave-Werte). Nur Werte >= 2 (Hilfsobjekte bleiben).
+  'keiner:', [0xA3,0x07, 0xC9,0x02,0x00], ('bra8',0x90,'mn_r'),
+  [0xAF,0x02,0x70,0x30, 0x29,0xFF,0x00], ('bra8',0xD0,'mn_r'),
+  [0xAF,0x50,0x0A,0x7E, 0x29,0xFF,0x03], ('bra8',0xF0,'mn_r'), [0x48],               # 1,S = L ; 3,S = K ; 9,S = Wert
+  [0xA3,0x03, 0xC9,10,0x00], ('bra8',0xD0,'mn_a'), [0xA3,0x01, 0x0A,0x0A, 0x18, 0x63,0x01], ('bra8',0x80,'mn_c'),   # 5L
+  'mn_a:', [0xC9,0x01,0x00], ('bra8',0xD0,'mn_d'), [0xA3,0x01, 0x18, 0x69,0x05,0x00], ('bra8',0x80,'mn_c'),          # L+5
+  'mn_d:', [0xC9,0x03,0x00], ('bra8',0xD0,'mn_x'), [0xA3,0x01, 0x4A],                                                  # L/2
+  'mn_c:', [0xC3,0x09], ('bra8',0x90,'mn_x'), [0x83,0x09],                                                             # Wert < Mindest -> Mindest
+  'mn_x:', [0x68],
+  'mn_r:', [0x68,0x7A,0xFA,0x68,0x6B],    # PLA(K) PLY PLX PLA(Wert) RTL
 ])
 code[BONUS] = bonus
 # --- ATKX: Angriff skalieren, im NG+ + (Verteidigung Junge)/4, dann Level-Bonus

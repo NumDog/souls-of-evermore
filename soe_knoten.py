@@ -420,6 +420,8 @@ t = [
   ('jsr','rnd'), mod(4), sta(TMP1),
   'kd_s:', lda(TMP1)+[0x0A, 0xAA, 0xFC,0x00,0x00],      # JSR (seltab,X) - Adresse wird unten eingesetzt
   B(BCC,'kd_r'),
+  # v146z17 (Max: Orb von normalen Gegnern 1/1000): Seltenes nicht mehr vorraetig -> nur 1:5 Orb (1/2*1/100*1/5), sonst normale Beute
+  ('jsr','rnd'), mod(5), B(BEQ,'kd_orb'), ('jmp','kd_n'), 'kd_orb:',
   lda(0x7E0ABA)+ai(0xFF)+jsl(WINC)+[0xC2,0x30]+li(0xFFE), ('jsr','qp'), B(BRA,'kd_r'),
   'kd_n:', ('jsr','rnd'), mod(32), [0x0A, 0xAA]+ldax(T_LOOT), ('jsr','qp'),
   'kd_r:', [0xAB, 0x7A, 0xFA, 0x68, 0x28, 0x6B],

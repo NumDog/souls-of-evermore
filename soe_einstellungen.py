@@ -211,6 +211,11 @@ assert INFO + len(icode) <= INFOTXT and IPTR + len(iptab) <= INFO + 0x800
 for adr,c in ((MENU,code),(TXT,bytes(blob)),(PTAB,ptab),(STAB,slottab),(LT,lt),(INFO,icode),(INFOTXT,bytes(iblob)),(IPTR,iptab),(QRDAT,qblob)):
     o=at(adr); assert all(b==0xFF for b in r[o:o+len(c)]), hex(adr); r[o:o+len(c)]=c
 o=at(0x8DCBC0); assert bytes(r[o:o+4])==bytes([0x22,0x3B,0xE5,0x8E]); r[o:o+4]=bytes([0x22,MENU&0xFF,(MENU>>8)&0xFF,MENU>>16])
+# v146z19 (Tester/Max: ohne Spielstand startet 'Neues Spiel' sofort ohne Einstellungen, Intro nicht ueberspringbar):
+# 80:8BF6 JMP 8C70 (direkt neues Spiel, wenn 7E:22EB Bit2) -> JMP 8C2A (Titel-/Lade-Menue 8D:CA9D -> 'Neues Spiel' -> Einstellungen)
+# + Intro mit Start uebersprungen (7E:22EA Bit2): 80:8C00 BEQ 8C2A -> BRA 8C2A (sonst direkt Namenseingabe; Idee von ChatGPT, Mesen-geprueft)
+o = at(0x808BF6); assert bytes(r[o:o+3]) == bytes([0x4C,0x70,0x8C]), bytes(r[o:o+3]).hex(); r[o:o+3] = bytes([0x4C,0x2A,0x8C])
+o = at(0x808C00); assert bytes(r[o:o+2]) == bytes([0xF0,0x28]), bytes(r[o:o+2]).hex(); r[o] = 0x80
 h=0xFFC0
 for _ in range(2):
     c=sum(r)&0xFFFF; r[h+0x1E:h+0x20]=c.to_bytes(2,'little'); r[h+0x1C:h+0x1E]=(c^0xFFFF).to_bytes(2,'little')
