@@ -30,7 +30,7 @@ Die ausführliche Liste steht in [`release/LIESMICH.txt`](release/LIESMICH.txt).
 
 1. ROM: *Secret of Evermore (Deutschland)*, ohne 512-Byte-Header, **CRC32 `27F60E77`**.
 2. Einen BPS-Patcher öffnen, z. B. [Rom Patcher JS](https://www.marcrobledo.com/RomPatcher.js/) (im Browser, entfernt einen Header automatisch) oder Floating IPS (Flips).
-3. ROM und [`release/Souls-of-Evermore-v146-beta.bps`](release/) auswählen und anwenden.
+3. ROM und [`Souls-of-Evermore-v146-beta.bps`](https://github.com/NumDog/souls-of-evermore/releases/download/v146-beta/Souls-of-Evermore-v146-beta.bps) (Releases-Seite) auswählen und anwenden.
 4. Die fertige 4-MB-ROM läuft z. B. in OpenEmu, snes9x, bsnes oder Mesen.
 
 ## Selbst bauen
