@@ -1,4 +1,4 @@
-Souls of Evermore – Mod für Secret of Evermore (deutsch)  (Beta, Stand v168)
+Souls of Evermore – Mod für Secret of Evermore (deutsch)  (Beta, Stand v169)
 =====================================================================
 
 Ein Patch für die DEUTSCHE Version von Secret of Evermore (SNES).
@@ -14,7 +14,7 @@ Passende ROM
 Patch anwenden
 --------------
 1. ROM Patcher JS im Browser öffnen (oder Floating IPS / "Flips").
-2. Deine ROM und die Datei Souls-of-Evermore-v168-beta.bps auswählen.
+2. Deine ROM und die Datei Souls-of-Evermore-v169-beta.bps auswählen.
 3. "Apply patch" – fertig. Ergebnis: 4 MB ROM, läuft z. B. in OpenEmu, snes9x, bsnes, Mesen.
 
 Was ist neu?
@@ -49,6 +49,8 @@ Souls Cave (Eingang am Brunnen, neu in v146):
 - Verwandelnde Städte: Dschungeldorf, Nobilia, Ivor Tower, eigene Stadt - alle Menschen werden Monster, Häuser betretbar
 - Goldener Vulgor immer da, +100 % je Sieg, Gift/Heilung nach Säureregen, Verwirrung nach Wegschubsen
 - Gegner-Info (Name, KP, EP, Geld, Anzahl) bei jedem Treffer; Speichern in der Cave gesperrt
+- Neu in v169: Die Katze aus dem Intro sitzt am Brunnen (Höhlendorf, Dschungeldorf) und miaut, der Hund springt ihr nach;
+  unten erzählt Feuerauge ihre Geschichte (Text unten wie im Intro); Untergeschoss 1: links Dschungeldorf, rechts Stadt, oben Nobilia-Markt
 - Neu in v168: Cave-Eingang neu - in den Brunnen hineinlaufen (B entfällt), Junge und Hund versinken, Wasserfall-Sturz,
   Aufprall auf dem Schachbrett; beim ersten Besuch springt zuerst der Hund in den Brunnen; Feuerauge erklärt die Cave
   (Geschichte vom Raumschiff in Untergeschoss 99); Fix: Dialogfenster schließen sauber
