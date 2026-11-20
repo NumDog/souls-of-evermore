@@ -194,7 +194,7 @@ TXM, TXO = ORB + 0x100, ORB + 0x140
 TXDI = ORB + 0x1C0   # v146z16 Dinotaurus-Text
 TXBA = ORB + 0x160   # v146z25 Baumdrache-Text
 tcode, _ = assemble(TEXT, [[0xC9,0xFF,0x0F], ('bra8',0xF0,'meins'), [0xC9,0xFE,0x0F], ('bra8',0xF0,'orbt'),
-                           [0xC9,0xFC,0x0F], ('bra8',0x90,'weiter'), [0x5C,0x00,0xDF,0xF1],   # v134/v136: Hoehlen-Texte FFC/FFD -> soe_hoehle F1:DF00
+                           [0xC9,0xFC,0x0F], ('bra8',0x90,'weiter'), [0xC9,0xFE,0x0F], ('bra8',0xB0,'weiter'), [0x5C,0x00,0xDF,0xF1],   # v159 (Max: 'Untergeschoss 0' statt Item-Meldung): nur FFC/FFD, Spiel-Texte ab 1000 normal   # v134/v136: Hoehlen-Texte FFC/FFD -> soe_hoehle F1:DF00
                            'weiter:', [0x5C]+WEITER,
                            'orbt:', [0xA9,TXO&0xFF,(TXO>>8)&0xFF], ('bra8',0x80,'setz'),
                            'meins:', [0xAF]+L(BT)+[0xC9,MAGT&0xFF,MAGT>>8], ('bra8',0xF0,'mag'), [0xC9,DINT&0xFF,DINT>>8], ('bra8',0xF0,'dino'), [0xC9,BAUT&0xFF,BAUT>>8], ('bra8',0xF0,'baum'), [0xA9,TXT&0xFF,(TXT>>8)&0xFF], ('bra8',0x80,'setz'),

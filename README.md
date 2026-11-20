@@ -3,7 +3,7 @@
 Eine Fan-Mod für die **deutsche SNES-Version von Secret of Evermore**.
 Im Spiel heißt sie noch „Souls of Evermore“. Mehr Herausforderung, mehr Zufall, ein New Game+ – und ein Tod wie in Dark Souls.
 
-> **Beta (Stand v158):** Noch nicht komplett durchgespielt. Fehler gern melden (am besten mit Screenshot und Spielstand).
+> **Beta (Stand v164):** Noch nicht komplett durchgespielt. Fehler gern melden (am besten mit Screenshot und Spielstand).
 
 ## Hauptfunktionen
 
@@ -30,7 +30,7 @@ Die ausführliche Liste steht in [`release/LIESMICH.txt`](release/LIESMICH.txt).
 
 1. ROM: *Secret of Evermore (Deutschland)*, ohne 512-Byte-Header, **CRC32 `27F60E77`**.
 2. Einen BPS-Patcher öffnen, z. B. [Rom Patcher JS](https://www.marcrobledo.com/RomPatcher.js/) (im Browser, entfernt einen Header automatisch) oder Floating IPS (Flips).
-3. ROM und [`Souls-of-Evermore-v158-beta.bps`](https://github.com/NumDog/souls-of-evermore/releases/download/v158-beta/Souls-of-Evermore-v158-beta.bps) (Releases-Seite) auswählen und anwenden.
+3. ROM und [`Souls-of-Evermore-v164-beta.bps`](https://github.com/NumDog/souls-of-evermore/releases/download/v164-beta/Souls-of-Evermore-v164-beta.bps) (Releases-Seite) auswählen und anwenden.
 4. Die fertige 4-MB-ROM läuft z. B. in OpenEmu, snes9x, bsnes oder Mesen.
 
 ## Selbst bauen

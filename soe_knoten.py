@@ -42,7 +42,7 @@ BOSSV, FLAKT, FLMAP, KTK, KTX, KTY, QCOOL, QH, QT = 0x3070CE, 0x3070D0, 0x3070D2
 TMP1, TMP2, TMP3, TMP4, TMP5, TMP6, LIVE, PEND = [0x3070E0+2*i for i in range(8)]
 BEAM = 0x3070F0                                  # Rueckweg-Skript laeuft (Bilder bis Zeitablauf)
 PK, PX, PY, TPB, RMUS, HFORM = 0x3070A2, 0x3070A4, 0x3070A6, 0x3070AA, 0x3070AC, 0x3070AE   # v146z30: gewaehlter Pool-Raum (Raumsperre) / B-Merker Teleporter
-TPZ = (158, 193, 466, 506)   # v146z30: Haendler-Teleporter auf 5E (x von/bis, y von/bis)
+TPZ = (144, 208, 462, 500)   # v160: Flaeche der roten Schleuse (Spalten 9-12, Zeilen 29-30); vorher 158-193 / 466-506   # v146z30: Haendler-Teleporter auf 5E (x von/bis, y von/bis)
 BEAMRT = 0x3070F2                                # Rueckweg gewuenscht (bis der Tuer-Hook ihn ausfuehrt; Wiederholung nach Zeitablauf)
 SIEGR = 0x3070F6                                 # nach dem Sieg beim Rueckweg BSNAP nochmal zurueck (Boss-Skript gibt Story-Dinge erst nach der Sieg-Erkennung)
 BSEEN = 0x3070FA                                 # v146o: Boss (ohne Sieg-Flag) war schon zu sehen
@@ -168,6 +168,11 @@ assert all(v in _arg for v in RAUM_MUSIK.values()), [hex(v) for v in RAUM_MUSIK.
 tabs[T_RMUS] = b''.join((bytes([0x33,_arg[RAUM_MUSIK[k]],0x00,0x00]) if k in RAUM_MUSIK else bytes(4)) for k in range(128))
 tabs[T_TSKR] = bytes([0xA3,0x19, 0x22, 176//8, 440//8, 0x5E,0x00, 0x00])
 tabs[T_HSKR] = bytes([0xA3,0x19, 0x22, 320//8, 144//8, 0x54,0x00, 0x00])
+if os.environ.get('SOE_PYRTEST'):   # Forschung (Max: Pyramiden-Teleporter): Abgangs-Skript der Pyramide (96:9F7B) mit Schleusen-Mitte und Laden als Ziel
+    _o = at(0x969F7B); _s = bytearray(r[_o:_o+0x73]); assert _s[1:5] == bytes([0x6E,0xD2,0x81,0x5D])
+    _s = bytearray(bytes(_s).replace(bytes([0x81,0x5D]), bytes([176//8, 466//8])))
+    T_HSKR = TAB + 0x8400
+    tabs[T_HSKR] = bytes(_s) + bytes([0x22, 320//8, 144//8, 0x54,0x00, 0x00])
 sufadr = {}; sb = b''
 for k,v in SUF.items(): sufadr[k] = (T_SUF + len(sb)) & 0xFFFF; sb += v
 assert len(sb) <= 0x30, len(sb)
@@ -446,9 +451,13 @@ t = [
   lda(TOD), B(BEQ,'kb_b'), ('jmp','kb_r'),
   'kb_b:', lda(0x7E0ADB)+ai(0xFF)+ci(0x5E), B(BEQ,'kb_5e'), ('jmp','kb_n5e'),
   # ---- 5E: Ausloeser oben
-  'kb_5e:', lda(0x7E4EA3)+ci(TPZ[0]), B(BCC,'tp_n'), ci(TPZ[1]), B(BCS,'tp_n'), lda(0x7E4EA5)+ci(TPZ[2]), B(BCC,'tp_n'), ci(TPZ[3]), B(BCS,'tp_n'),
+  'kb_5e:', lda(0x3070BA)+ai(0xFF)+ci(0xFF), B(BNE,'kb_5f'), lda(WARPT), B(BNE,'kb_5f'), ('jmp','tp_go'), 'kb_5f:',
+  lda(0x7E4EA3)+ci(TPZ[0]), B(BCC,'tp_n'), ci(TPZ[1]), B(BCS,'tp_n'), lda(0x7E4EA5)+ci(TPZ[2]), B(BCC,'tp_n'), ci(TPZ[3]), B(BCS,'tp_n'),
   lda(0x004218)+ai(0x8000), B(BEQ,'tp_up'), lda(TPB), B(BNE,'tp_n'), li(1)+sta(TPB), lda(WARPT), B(BNE,'tp_n'),
-  lda(0x7E2363)+ai(0xFF)+sta(HFORM),   # v146z34 (Max: Toaster-Hund nach dem Haendler): Hundeform merken
+  # v161 (Max: Animation der Schleuse): B startet nur die Animation (soe_schleuse, ANIM 30:70BA); offen (FF) -> Teleport (tp_go)
+  *([('jmp','tp_go')] if os.environ.get('SOE_PYRTEST') else []), 'tp_an:',
+  lda(0x3070BA)+ai(0xFF), B(BNE,'tp_n'), li(1)+sta(0x3070BA), ('jmp','kb_r'),
+  'tp_go:', z(0x3070BA)+lda(0x7E2363)+ai(0xFF)+sta(HFORM),   # v146z34 (Max: Toaster-Hund nach dem Haendler): Hundeform merken
   li(300)+sta(BEAM)+li(skp(T_HSKR)&0xFFFF), ('jsr','faden'), ('jmp','kb_r'),   # v146z30: B im Teleporter -> Haendlerraum
   'tp_up:', z(TPB), 'tp_n:',
   lda(WARPT), B(BEQ,'o_1'), ('jmp','kb_r'),

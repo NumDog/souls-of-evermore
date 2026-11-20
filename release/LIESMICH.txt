@@ -1,4 +1,4 @@
-Souls of Evermore – Mod für Secret of Evermore (deutsch)  (Beta, Stand v158)
+Souls of Evermore – Mod für Secret of Evermore (deutsch)  (Beta, Stand v164)
 =====================================================================
 
 Ein Patch für die DEUTSCHE Version von Secret of Evermore (SNES).
@@ -14,7 +14,7 @@ Passende ROM
 Patch anwenden
 --------------
 1. ROM Patcher JS im Browser öffnen (oder Floating IPS / "Flips").
-2. Deine ROM und die Datei Souls-of-Evermore-v158-beta.bps auswählen.
+2. Deine ROM und die Datei Souls-of-Evermore-v164-beta.bps auswählen.
 3. "Apply patch" – fertig. Ergebnis: 4 MB ROM, läuft z. B. in OpenEmu, snes9x, bsnes, Mesen.
 
 Was ist neu?
@@ -49,6 +49,8 @@ Souls Cave (Eingang am Brunnen, neu in v146):
 - Verwandelnde Städte: Dschungeldorf, Nobilia, Ivor Tower, eigene Stadt - alle Menschen werden Monster, Häuser betretbar
 - Goldener Vulgor immer da, +100 % je Sieg, Gift/Heilung nach Säureregen, Verwirrung nach Wegschubsen
 - Gegner-Info (Name, KP, EP, Geld, Anzahl) bei jedem Treffer; Speichern in der Cave gesperrt
+- Neu in v164: rote Schleuse (Omnitopia) als Händler-Teleporter mit Öffnen und Hineinsinken; Endbosskristall -> Station vor dem Endboss;
+  Fix Item-Meldungen außerhalb der Cave
 - Neu in v158: Endbosskristall nach dem Marathon (außerhalb der Cave: Warp zur Omnitopia-Station vor den Endboss);
   Rüstung +1 % je weiterem Exemplar (max. doppelt); Orakelknochen = Händler -5 % je Stufe (max 50 %); KP-Anzeige aktuell/max; Gotteshand 1/100
 - Neu in v154: Boss-Marathon auf U5/U10/... (alle Bosse zufällig, danach alle Waffen/Talismane/Formeln +1; Tod nach einem Boss -> Schachbrett)
