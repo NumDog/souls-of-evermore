@@ -101,7 +101,8 @@ TXT_F9 = b"\x97Der Raum ist ges\xe3ubert!\x00"
 TXT_F8 = b"\x97Dieser Zugang ist versiegelt.\x00"
 TXT_F5 = b"\x97Marathon geschafft! Alles +1!\x00"
 TXT_F4 = b"\x97Fl\xf3gel: 100000 Schaden! BAM!\x00"
-TXT_F3 = b"\x97Waffen-Orb: alle Waffen +1!\x00"   # v151 (Max): Boss-Orb gibt allen Waffen +1   # v150 (Max): Fluegel in der Cave
+TXT_F3 = b"\x97Waffen-Orb: alle Waffen +1!\x00"
+TXT_F2 = b"\x97Endbosskristall erhalten!\x00"   # v157   # v151 (Max): Boss-Orb gibt allen Waffen +1   # v150 (Max): Fluegel in der Cave
 SUF = {'gelernt': b" gelernt!\x00", 'gefunden': b" gefunden!\x00", 'erhalten': b" erhalten!\x00", 'orb': b"-Orb: +1!\x00", 'plus': b" +1!\x00"}
 
 # ---- Fund-Merker je Pool-Karte aus dem ROM (B-/Lauf-Ausloeser, deren Skript mit "08 85 ff ff LL 00" beginnt und im
@@ -175,8 +176,8 @@ _vn = []; _o = at(0xC519E8)
 for _i in range(8):
     _vn.append(0x19E8 + (_o - at(0xC519E8))); _o = bytes(r).index(b'\x00', _o) + 1
 tabs[T_VNAME] = b''.join(v.to_bytes(2,'little') for v in _vn)
-T_FA = T_TXT; T_F9 = T_FA + len(TXT_FA); T_F8 = T_F9 + len(TXT_F9); T_F5 = T_F8 + len(TXT_F8); T_F4 = T_F5 + len(TXT_F5); T_F3 = T_F4 + len(TXT_F4)
-tabs[T_TXT] = TXT_FA + TXT_F9 + TXT_F8 + TXT_F5 + TXT_F4 + TXT_F3
+T_FA = T_TXT; T_F9 = T_FA + len(TXT_FA); T_F8 = T_F9 + len(TXT_F9); T_F5 = T_F8 + len(TXT_F8); T_F4 = T_F5 + len(TXT_F5); T_F3 = T_F4 + len(TXT_F4); T_F2 = T_F3 + len(TXT_F3)
+tabs[T_TXT] = TXT_FA + TXT_F9 + TXT_F8 + TXT_F5 + TXT_F4 + TXT_F3 + TXT_F2
 flp = [0]*128; fll = b''
 for m, fl in FLAGS.items():
     if not fl: continue
@@ -234,13 +235,14 @@ t = [
   [0x28, 0xE6,0x82, 0xE6,0x82, 0xE6,0x82, 0x5C,0x2C,0xE1,0x8C],
   'c2_o:', [0x28, 0xA7,0x82, 0xE6,0x82, 0x5C,0xC8,0xE0,0x8C],
   # ================= 2. Text-ID -> Zeiger ($22/$24), A = ID, X bleibt
-  'text:', ci(0xFF6), B(BEQ,'tx_f6'), ci(0xFF7), B(BEQ,'tx_f7'), ci(0xFFA), B(BEQ,'tx_fa'), ci(0xFF9), B(BEQ,'tx_f9'), ci(0xFFB), B(BEQ,'tx_fb'), ci(0xFF8), B(BEQ,'tx_f8'), ci(0xFF5), B(BEQ,'tx_f5'), ci(0xFF4), B(BEQ,'tx_f4'), ci(0xFF3), B(BEQ,'tx_f3'),
+  'text:', ci(0xFF6), B(BEQ,'tx_f6'), ci(0xFF7), B(BEQ,'tx_f7'), ci(0xFFA), B(BEQ,'tx_fa'), ci(0xFF9), B(BEQ,'tx_f9'), ci(0xFFB), B(BEQ,'tx_fb'), ci(0xFF8), B(BEQ,'tx_f8'), ci(0xFF5), B(BEQ,'tx_f5'), ci(0xFF4), B(BEQ,'tx_f4'), ci(0xFF3), B(BEQ,'tx_f3'), ci(0xFF2), B(BEQ,'tx_f2'),
   [0x5C]+ALT,
   'tx_fa:', li(T_FA&0xFFFF), B(BRA,'tx_rom'),
   'tx_f8:', li(T_F8&0xFFFF), B(BRA,'tx_rom'),
   'tx_f5:', li(T_F5&0xFFFF), B(BRA,'tx_rom'),
   'tx_f4:', li(T_F4&0xFFFF), B(BRA,'tx_rom'),
   'tx_f3:', li(T_F3&0xFFFF), B(BRA,'tx_rom'),
+  'tx_f2:', li(T_F2&0xFFFF), B(BRA,'tx_rom'),
   'tx_f9:', li(T_F9&0xFFFF),
   'tx_rom:', [0x85,0x22]+li(TAB>>16)+[0x85,0x24, 0x6B],
   'tx_fb:', li(MTXT&0xFFFF)+[0x85,0x22]+li(MTXT>>16)+[0x85,0x24, 0x6B],
@@ -366,7 +368,9 @@ t = [
   'ma_t:', [0xDA]+ldax(0x8CBFB9)+ai(0xFF)+sta(TMP5)+ldax(0x8CBF91)+[0xAA]+ldax(0x7E0000)+andl(TMP5)+ai(0xFF), B(BEQ,'ma_tn'),
   [0xA3,0x01, 0x18, 0x69,72,0x00, 0xAA, 0x22,0x40,0x90,0xF0, 0xC2,0x30],
   'ma_tn:', [0xFA, 0xE8,0xE8, 0xE0,28,0x00], B(BCC,'ma_t'),
-  li(0xFF5), ('jmp','qp'),
+  li(0xFF5), ('jsr','qp'),
+  # v157 (Max): dazu ein Endbosskristall (hoechstens 9; 7E:20C9, im Ring nur ausserhalb der Cave)
+  SEP+lda(0x7E20C9)+[0xC9,9], B(BCS,'ma_kv'), [0x1A]+sta(0x7E20C9), 'ma_kv:', REP, li(0xFF2), ('jmp','qp'),
   # kmtod (v149, Max: im Marathon nach mindestens einem Boss sterben -> Schachbrett, Marathon vorbei, nur weiter nach unten)
   # C = 1: erledigt (soe_hoehle setzt dann keinen Cave-Tod)
   'kmtod:', [0x08, 0xC2,0x30, 0x48, 0xDA, 0x5A]+DB7E,
@@ -558,6 +562,10 @@ t = [
   # --- Ruestung (Anzahl 7E:231D+Nr = 0): Anzahl 1, "<Name> gefunden!"
   'gruest:', ('jsr','rnd'), mod(40), sta(TMP2)+li(40)+sta(TMP3),
   'gr_l:', lda(TMP2)+[0xAA]+ldax(0x7E231D)+ai(0xFF), B(BEQ,'gr_ja'),
+  # v158 (Max: Ruestung nochmal bekommen = +1 %): schon da -> Anzahl +1 (bis 99, soe_ruestung_plus rechnet +1 % je Exemplar)
+  ci(99), B(BCS,'gr_n'), SEP+ldax(0x7E231D)+[0x1A]+stax(0x7E231D)+REP,
+  lda(TMP2)+[0x0A]+sta(TMP4)+[0x0A,0x0A, 0x18]+adcl(TMP4)+[0xAA]+ldax(0xC44146)+[0xAA]+lyi(sufadr['plus']), ('jsr','txt'), [0x18, 0x60],
+  'gr_n:',
   lda(TMP2)+[0x1A]+ci(40), B(BCC,'gr_s'), li(0), 'gr_s:', sta(TMP2)+lda(TMP3)+[0x3A]+sta(TMP3), B(BNE,'gr_l'), [0x38, 0x60],
   'gr_ja:', lda(TMP2)+[0xAA]+SEP+[0xA9,0x01]+stax(0x7E231D)+REP,
   lda(TMP2)+[0x0A]+sta(TMP4)+[0x0A,0x0A, 0x18]+adcl(TMP4)+[0xAA]+ldax(0xC44146)+[0xAA]+lyi(sufadr['gefunden']), ('jsr','txt'), [0x18, 0x60],

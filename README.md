@@ -3,7 +3,7 @@
 Eine Fan-Mod für die **deutsche SNES-Version von Secret of Evermore**.
 Im Spiel heißt sie noch „Souls of Evermore“. Mehr Herausforderung, mehr Zufall, ein New Game+ – und ein Tod wie in Dark Souls.
 
-> **Beta (Stand v154):** Noch nicht komplett durchgespielt. Fehler gern melden (am besten mit Screenshot und Spielstand).
+> **Beta (Stand v158):** Noch nicht komplett durchgespielt. Fehler gern melden (am besten mit Screenshot und Spielstand).
 
 ## Hauptfunktionen
 
@@ -16,7 +16,7 @@ Im Spiel heißt sie noch „Souls of Evermore“. Mehr Herausforderung, mehr Zuf
 - **Schaden bis 9999** pro Schlag.
 - **Grenzen raus:** Level bis 999, KP bis 9999, New Game+ bis +99.
 - **Goldener Vulgor:** Einmal pro Durchgang ein goldener Rückkampf (x5). Sieg bringt einen **Waffen-Orb** (+1 auf die ausgerüstete Waffe) – danach rächen ihn 10 Raptoren.
-- **Souls Cave:** Zufalls-Dungeon mit 99 Untergeschossen (Eingang am Brunnen). Schachbrett als Knotenpunkt, vier Zugänge in zufällige Räume, Säubern versiegelt den Zugang, je Untergeschoss 4 Räume, Treppe und ein Boss, Boss-Marathon auf jedem 5. Untergeschoss (alle Bosse, danach alles +1), Händler-Teleporter auf dem Schachbrett, Flügel als Notausgang, Beute von jedem Monster, Tod nimmt die Beute – nur die Gotteshand bringt sie heraus.
+- **Souls Cave:** Zufalls-Dungeon mit 99 Untergeschossen (Eingang am Brunnen). Schachbrett als Knotenpunkt, vier Zugänge in zufällige Räume, Säubern versiegelt den Zugang, je Untergeschoss 4 Räume, Treppe und ein Boss, Boss-Marathon auf jedem 5. Untergeschoss (alle Bosse, danach alles +1 und ein Endbosskristall), Händler-Teleporter auf dem Schachbrett, Flügel als Notausgang, Beute von jedem Monster, Tod nimmt die Beute – nur die Gotteshand bringt sie heraus.
 - **Verwandelnde Städte (Souls Cave):** Dschungeldorf, Nobilia, Ivor Tower und eine eigene Stadt – alle Menschen werden zu Monstern, Häuser bleiben betretbar.
 - **Alle Bosse im Cave-Zufall** mit Boss-Musik; goldener Vulgor immer da, nach jedem Sieg +100 %.
 - **Gegner-Info:** Name, KP, EP, Geld und Anzahl der Gegner im Raum bei jedem Treffer.
@@ -30,7 +30,7 @@ Die ausführliche Liste steht in [`release/LIESMICH.txt`](release/LIESMICH.txt).
 
 1. ROM: *Secret of Evermore (Deutschland)*, ohne 512-Byte-Header, **CRC32 `27F60E77`**.
 2. Einen BPS-Patcher öffnen, z. B. [Rom Patcher JS](https://www.marcrobledo.com/RomPatcher.js/) (im Browser, entfernt einen Header automatisch) oder Floating IPS (Flips).
-3. ROM und [`Souls-of-Evermore-v154-beta.bps`](https://github.com/NumDog/souls-of-evermore/releases/download/v154-beta/Souls-of-Evermore-v154-beta.bps) (Releases-Seite) auswählen und anwenden.
+3. ROM und [`Souls-of-Evermore-v158-beta.bps`](https://github.com/NumDog/souls-of-evermore/releases/download/v158-beta/Souls-of-Evermore-v158-beta.bps) (Releases-Seite) auswählen und anwenden.
 4. Die fertige 4-MB-ROM läuft z. B. in OpenEmu, snes9x, bsnes oder Mesen.
 
 ## Selbst bauen

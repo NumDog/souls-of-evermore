@@ -108,7 +108,7 @@ TEXTE = [
   t("Mit dem Ring und A rennst Du wie ein Jaguar."),
   t("Erfahrung und Geld +10%."+J+"+10%."),
   t("Heilung +25%."+J+"+25%."),
-  t("Manche Leute erzählen Dir mehr."),
+  t("Händler 5% billiger."+J+"5% (max 50%)."),   # v156 (Max): Orakelknochen = Rabatt
   t("Schwere Treffer gegen Dich -10%."+J+"-10%."),
   t("Schwerter +10%."+J+"+10%."),
   t("Abwehr +5."+J+"+5."),
