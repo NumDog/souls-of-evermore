@@ -17,7 +17,9 @@ FADJ = 0xF18F20   # v120: Heilungen nach Schwierigkeit (Max): Normal 1, Schwer 2
 MAXK, FERTIG, VZ, BX, BY, SKR = 0x7EE350, 0x7EE352, 0x7EE340, 0x7EE354, 0x7EE356, 0x7EE700
 # v121 (Max): Vulkan-Boss Magmar (Karte 0x3F, Vorlage CF9E) bekommt dasselbe. BT = aktuelle Boss-Vorlage (0 = kein Boss-Raum)
 BT, ORBP, ORBF, MAGK, MAGT = 0x7EE37A, 0x7EE37C, 0x7EE37E, 0x3F, 0xCF9E
-DINK, DINT = 0x2A, 0xCFE8   # v146z16 (Max): Dinotaurus in der Cave schwerer - Heilung + Verwirrung + Gift, keine Zusatzgegner, kein 2. Orb
+DINK, DINT = 0x2A, 0xCFE8
+BAUK, BAUT = 0x20, 0xCC70   # v146z25 (Max: Baumdrache zu leicht): wie Dinotaurus, nur in der Cave
+# v146z16 (Max): Dinotaurus in der Cave schwerer - Heilung + Verwirrung + Gift, keine Zusatzgegner, kein 2. Orb
 ORB = 0xF1A000
 GIFT = 0xF1A200   # v124: starkes Gift (Code weiter unten)
 DAZU = [(0x2B,-5,2),(0x2B,5,2)]   # v119: nur 2 pro Heilung (Max: 4 zu schwer, selbst mit Level 99)
@@ -26,8 +28,10 @@ o0 = at(0xF04000); assert r[o0] == 0x22; VORHER = list(r[o0+1:o0+4])      # bish
 t = ['v:', [0x22]+VORHER+[0x08, 0xC2,0x30, 0xDA, 0x5A],
      [0xAF,0xDB,0x0A,0x7E, 0x29,0xFF,0x00, 0xC9,0x1D,0x00], ('bra8',0xD0,'k2'), [0xA9,0x2C,0xCE, 0x8F]+L(BT), ('jmp','arena'),
      'k2:', [0xC9,MAGK,0x00], ('bra8',0xD0,'k3'), [0xA9,MAGT&0xFF,MAGT>>8, 0x8F]+L(BT), ('jmp','s_ok'),   # Magmar: kein Szenen-Sprung
-     'k3:', [0xC9,DINK,0x00], ('bra8',0xD0,'kx_aus'), [0xAF,0x02,0x70,0x30, 0x29,0xFF,0x00], ('bra8',0xF0,'kx_aus'),   # Dinotaurus nur in der Cave
+     'k3:', [0xC9,DINK,0x00], ('bra8',0xD0,'k4'), [0xAF,0x02,0x70,0x30, 0x29,0xFF,0x00], ('bra8',0xF0,'kx_aus'),   # Dinotaurus nur in der Cave
      [0xA9,DINT&0xFF,DINT>>8, 0x8F]+L(BT), ('jmp','s_ok'),
+     'k4:', [0xC9,BAUK,0x00], ('bra8',0xD0,'kx_aus'), [0xAF,0x02,0x70,0x30, 0x29,0xFF,0x00], ('bra8',0xF0,'kx_aus'),   # Baumdrache nur in der Cave
+     [0xA9,BAUT&0xFF,BAUT>>8, 0x8F]+L(BT), ('jmp','s_ok'),
      'kx_aus:', [0x22]+L(ORB), [0xA9,0x00,0x00, 0x8F]+L(MAXK)+[0x8F]+L(FERTIG)+[0x8F,0x62,0xE3,0x7E, 0x8F,0x66,0xE3,0x7E, 0x8F,0x68,0xE3,0x7E, 0x8F,0x6C,0xE3,0x7E, 0x8F]+L(BT)+[0x8F]+L(ORBP)+[0x8F]+L(ORBF), ('jmp','raus'),
      # Piraten (D15A) bekommen in der Arena den Zauber-Slot 04 (jeder Zauber faerbt sie um). Ist Slot 06 frei ($127A-Tabelle):
      # ihre Farben dorthin laden (90:CF5D, A = Farbdaten, X = Slot), Objekte (+0C Bits 1-3) umstellen, Slot 04 freigeben.
@@ -72,14 +76,14 @@ t = ['v:', [0x22]+VORHER+[0x08, 0xC2,0x30, 0xDA, 0x5A],
      'h_ok:', [0xAF,0x68,0xE3,0x7E, 0x9F,0x2A,0x00,0x7E],          # voll (Vorlagen-KP); „50 % mehr“ = weniger Schaden (KAPP), v112
      'nach_heil:',
      # v124 (Max): Lavarex vergiftet den Jungen bei jeder Heilung (wie Gegner-Gift 8F:B7C7: X = 0x90, Y = Ziel, JSL 91:B514)
-     [0xAF]+L(BT)+[0xC9,MAGT&0xFF,MAGT>>8], ('bra8',0xF0,'g_ja'), [0xC9,DINT&0xFF,DINT>>8], ('bra8',0xD0,'g_n'), 'g_ja:',
+     [0xAF]+L(BT)+[0xC9,MAGT&0xFF,MAGT>>8], ('bra8',0xF0,'g_ja'), [0xC9,DINT&0xFF,DINT>>8], ('bra8',0xF0,'g_ja'), [0xC9,BAUT&0xFF,BAUT>>8], ('bra8',0xD0,'g_n'), 'g_ja:',
      [0xDA, 0x5A, 0xA0,0x89,0x4E, 0xA2,0x90,0x00, 0x22,0x14,0xB5,0x91, 0x7A, 0xFA], 'g_n:',
      # Krafthauch-Kreis (Effekt Typ 8) an Vigor. Geht seit v103, weil die Piraten vom Zauber-Slot 04 auf Slot 06 umziehen (s. 'arena').
      [0x8A, 0x8F,0x58,0xE3,0x7E, 0xDA, 0x8B, 0xF4,0x7E,0x7E, 0xAB,0xAB, 0x22,0x59,0x97,0x91, 0x98], ('bra8',0xF0,'k_aus'),
      [0xAF,0x58,0xE3,0x7E, 0x99,0x28,0x00, 0x99,0x2E,0x00, 0xA9,0x00,0x00, 0x99,0x30,0x00,
       0xA9,0x78,0x00, 0x99,0x2A,0x00, 0xA2,0x08,0x00, 0x22,0x3E,0x97,0x91],
      'k_aus:', [0xAB, 0xFA],
-     [0xA9,0x58,0x02, 0x8F]+L(VZ),                                                   # 600 Bilder verwirrt
+     [0xDA, 0x5A, 0xA0,0x89,0x4E, 0xA2,0x60,0x00, 0x22,0x14,0xB5,0x91, 0xC2,0x30, 0x7A, 0xFA],   # v146z29 (Max: wie Dinotaurus sichtbar): echter Spiel-Zustand 'Verwirrt!' (0x60) statt eigener Steuerungs-Umkehr
      [0xBF,0x1A,0x00,0x7E, 0x4A,0x4A,0x4A, 0x8F]+L(BX)+[0xBF,0x1C,0x00,0x7E, 0x4A,0x4A,0x4A, 0x8F]+L(BY),   # rund um Vigor (X = Vigor-Objekt)
      [0xAF]+L(BT)+[0xC9,MAGT&0xFF,MAGT>>8], ('bra8',0xD0,'b_ok'),   # Magmar steht in Lava -> Gegner neben den Jungen
      [0xAF,0xA3,0x4E,0x7E, 0x4A,0x4A,0x4A, 0x8F]+L(BX)+[0xAF,0xA5,0x4E,0x7E, 0x4A,0x4A,0x4A, 0x8F]+L(BY), 'b_ok:']
@@ -87,7 +91,8 @@ t = ['v:', [0x22]+VORHER+[0x08, 0xC2,0x30, 0xDA, 0x5A],
 # v111 (Max): Gegner bei JEDER Heilung – aber nur, wenn genug Objekt-Plaetze frei sind (Freiliste $3DE3 ueber +5E; leer = BRK 8F:B28E)
 t += [[0xA0,0x00,0x00, 0xAF,0xE3,0x3D,0x7E],
       'zf:', ('bra8',0xF0,'zf_e'), [0xC8, 0xAA, 0xBF,0x5E,0x00,0x7E], ('bra8',0x80,'zf'),
-      'zf_e:', [0xAF]+L(BT)+[0xC9,DINT&0xFF,DINT>>8], ('bra8',0xF0,'nur_meld'), [0xC0,len(DAZU)+3,0x00], ('bra8',0xB0,'mit_gegnern'),
+      'zf_e:', [0xAF]+L(BT)+[0xC9,BAUT&0xFF,BAUT>>8], ('bra8',0xF0,'nur_meld'),   # v146z28 (Max): Baumdrache ruft keine Gegner (2 Drachen reichen)
+      [0xC0,len(DAZU)+3,0x00], ('bra8',0xB0,'mit_gegnern'),   # v146z24: Dinotaurus ruft auch Gegner (Raum 0x2A: fremd = stumm)
       'nur_meld:', [0xE2,0x20, 0xA9,0x52, 0x8F]+L(SKR)+[0xA9,0xFF, 0x8F]+L(SKR+1)+[0xA9,0x0F, 0x8F]+L(SKR+2)+[0xA9,0x00, 0x8F]+L(SKR+3)+[0xC2,0x20], ('jmp','faden'),
       'mit_gegnern:', [0xE2,0x20]]
 # v116: 8 Arten (Max: immer nur Larve/Raptor/Pirat): Raptor 89, Pirat 93, Wurm 112, Raptor 110, 127, 70, 102, 64
@@ -117,7 +122,7 @@ vz = ['w:', [0x48, 0xAF]+L(VZ), ('bra8',0xF0,'w_aus'), [0x3A, 0x8F]+L(VZ), [0x68
        0x68, 0x29,0x00,0x05, 0x0A, 0x0F,0x5C,0xE3,0x7E], ('bra8',0x80,'w_st'),
       'w_aus:', [0x68], 'w_st:', [0x8D,0xC8,0x0E, 0x2D,0x04,0x01, 0x6B]]
 vcode, _ = assemble(VERW, vz)
-TEXT, TXT = 0xF18700, 0xF18740
+TEXT, TXT = 0xF18700, 0xF18770   # v146z25: Text-Hook wurde laenger
 # HUDAN: Leiste unten wieder an nach dem Szenen-Sprung (die Szene macht das bei 9A:DD1F: a3 00 / 33 7E / a3 01) -> Mini-Faden 7E:E780
 HUDAN = 0xF18D00
 # v117: Faden (E36C) im Kampf (9A:EC41..ED02)? -> wie beim Schliessen des Ringmenues (8C:E5EB): X = Junge ($0F40), JSL 8F:87D4 (Max-Idee)
@@ -187,11 +192,13 @@ pcode, _ = assemble(VPAL, [[0xBE,0x2E,0x00, 0x48, 0xAF,0x5A,0xE3,0x7E], ('bra8',
 o = at(0x8CD0F6); assert r[o] == 0x5C; WEITER = list(r[o+1:o+4])          # bisher: soe_waffe_meldung F0:3700
 TXM, TXO = ORB + 0x100, ORB + 0x140
 TXDI = ORB + 0x1C0   # v146z16 Dinotaurus-Text
+TXBA = ORB + 0x160   # v146z25 Baumdrache-Text
 tcode, _ = assemble(TEXT, [[0xC9,0xFF,0x0F], ('bra8',0xF0,'meins'), [0xC9,0xFE,0x0F], ('bra8',0xF0,'orbt'),
                            [0xC9,0xFC,0x0F], ('bra8',0x90,'weiter'), [0x5C,0x00,0xDF,0xF1],   # v134/v136: Hoehlen-Texte FFC/FFD -> soe_hoehle F1:DF00
                            'weiter:', [0x5C]+WEITER,
                            'orbt:', [0xA9,TXO&0xFF,(TXO>>8)&0xFF], ('bra8',0x80,'setz'),
-                           'meins:', [0xAF]+L(BT)+[0xC9,MAGT&0xFF,MAGT>>8], ('bra8',0xF0,'mag'), [0xC9,DINT&0xFF,DINT>>8], ('bra8',0xF0,'dino'), [0xA9,TXT&0xFF,(TXT>>8)&0xFF], ('bra8',0x80,'setz'),
+                           'meins:', [0xAF]+L(BT)+[0xC9,MAGT&0xFF,MAGT>>8], ('bra8',0xF0,'mag'), [0xC9,DINT&0xFF,DINT>>8], ('bra8',0xF0,'dino'), [0xC9,BAUT&0xFF,BAUT>>8], ('bra8',0xF0,'baum'), [0xA9,TXT&0xFF,(TXT>>8)&0xFF], ('bra8',0x80,'setz'),
+                           'baum:', [0xA9,TXBA&0xFF,(TXBA>>8)&0xFF], ('bra8',0x80,'setz'),
                            'dino:', [0xA9,TXDI&0xFF,(TXDI>>8)&0xFF], ('bra8',0x80,'setz'),
                            'mag:', [0xA9,TXM&0xFF,(TXM>>8)&0xFF],
                            'setz:', [0x85,0x22, 0xA9,TXT>>16,0x00, 0x85,0x24, 0x6B]])
@@ -239,7 +246,7 @@ fcode, _ = assemble(FADJ, [[0xAF,0x90,0x7E,0x30, 0x29,0x01,0x00], ('bra8',0xF0,'
 SKO = 0x7EE760
 # v122 (Max: Meldung unter 1 s, Siegszene ueberdeckt sie): Orb sofort, Meldung erst 90 Bilder nach dem naechsten Kartenwechsel
 ORBM, ORBK = 0x7EE380, 0x7EE382
-ocode, _ = assemble(ORB, [[0x08, 0xC2,0x30, 0xDA, 0x5A, 0xAF]+L(BT)+[0xC9,DINT&0xFF,DINT>>8], ('bra8',0xD0,'o_nd'), [0xA9,0x00,0x00, 0x8F]+L(ORBP), 'o_nd:',   # v146z16: Dinotaurus - Orb gibt die Cave
+ocode, _ = assemble(ORB, [[0x08, 0xC2,0x30, 0xDA, 0x5A, 0xAF]+L(BT)+[0xC9,DINT&0xFF,DINT>>8], ('bra8',0xF0,'o_dd'), [0xC9,BAUT&0xFF,BAUT>>8], ('bra8',0xD0,'o_nd'), 'o_dd:', [0xA9,0x00,0x00, 0x8F]+L(ORBP), 'o_nd:',   # v146z16: Dinotaurus - Orb gibt die Cave
   [0xAF]+L(ORBP), ('bra8',0xD0,'o_ja'),
   [0xAF]+L(ORBM), ('bra8',0xD0,'o_m'), ('jmp','o_r'),
   'o_m:', [0xAF,0xDB,0x0A,0x7E, 0x29,0xFF,0x00, 0xCF]+L(ORBK), ('bra8',0xD0,'o_m2'), ('jmp','o_r'),
@@ -259,7 +266,8 @@ ocode, _ = assemble(ORB, [[0x08, 0xC2,0x30, 0xDA, 0x5A, 0xAF]+L(BT)+[0xC9,DINT&0
   'o_r:', [0x7A, 0xFA, 0x28, 0x6B]])
 assert len(ocode) <= 0x100
 TXMD = b"\x97Lavarex heilt sich! Gift und Verwirrung!\x00"
-TXDID = b"\x97Dinotaurus tobt! Er heilt sich, Gift und Verwirrung!\x00"   # v146z16   # v123: deutscher Name von Magmar (Max)
+TXDID = b"\x97Dinotaurus tobt! Er heilt sich, Gift und Verwirrung!\x00"   # v146z16
+TXBAD = b"\x97Der Baumdrache schlaegt Wurzeln! Er heilt sich, Gift und Verwirrung!\x00"   # v146z25   # v123: deutscher Name von Magmar (Max)
 TXOD = b"\x97Waffen-Orb: Waffe +1!\x00"
 
 # GIFT (v124, Max: „starke Vergiftung“): im Lavarex-Raum, solange der Junge (7E:4E89) Gift-Status 0x90 hat (Plaetze +46/+4C/+52/+58):
@@ -279,7 +287,7 @@ gl += ['gi_l:', [0xBF,0xCF,0x4E,0x7E, 0x29,0xFF,0x00, 0xC9,0x90,0x00], ('bra8',0
   'gi_r:', [0x7A, 0xFA, 0x28, 0x6B]]
 gcode, _ = assemble(GIFT, gl)
 schreib_z = bytes(ZWAHL)
-for adr, c in ((ZTAB, schreib_z), (VIGOR, code), (VERW, vcode), (TEXT, tcode), (TXT, TEXTDATEN), (VDMG, dcode), (KAPP, kcode), (HCAP, hcode), (HUDAN, ucode), (PAL, pcode), (TLIST, tliste), (FADJ, fcode), (ORB, ocode), (TXM, TXMD), (TXO, TXOD), (TXDI, TXDID), (GIFT, gcode)):
+for adr, c in ((ZTAB, schreib_z), (VIGOR, code), (VERW, vcode), (TEXT, tcode), (TXT, TEXTDATEN), (VDMG, dcode), (KAPP, kcode), (HCAP, hcode), (HUDAN, ucode), (PAL, pcode), (TLIST, tliste), (FADJ, fcode), (ORB, ocode), (TXM, TXMD), (TXO, TXOD), (TXDI, TXDID), (TXBA, TXBAD), (GIFT, gcode)):
     o = at(adr); assert all(b == 0xFF for b in r[o:o+len(c)]), hex(adr); r[o:o+len(c)] = c
 assert VIGOR + len(code) <= ORB
 # Hauptschleife: soe_vulgor_rache F0:4000 beginnt mit JSL 91:C62E -> JSL VIGOR (das ruft 91:C62E selbst)

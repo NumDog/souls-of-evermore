@@ -41,6 +41,8 @@ SIEGEL, OBENREQ, INOBEN, RAUMAKT, RZEIT, SEEN, CLRW = 0x3070C0, 0x3070C2, 0x3070
 BOSSV, FLAKT, FLMAP, KTK, KTX, KTY, QCOOL, QH, QT = 0x3070CE, 0x3070D0, 0x3070D2, 0x3070D4, 0x3070D6, 0x3070D8, 0x3070DA, 0x3070DC, 0x3070DE
 TMP1, TMP2, TMP3, TMP4, TMP5, TMP6, LIVE, PEND = [0x3070E0+2*i for i in range(8)]
 BEAM = 0x3070F0                                  # Rueckweg-Skript laeuft (Bilder bis Zeitablauf)
+PK, PX, PY, TPB, RMUS, HFORM = 0x3070A2, 0x3070A4, 0x3070A6, 0x3070AA, 0x3070AC, 0x3070AE   # v146z30: gewaehlter Pool-Raum (Raumsperre) / B-Merker Teleporter
+TPZ = (158, 193, 466, 506)   # v146z30: Haendler-Teleporter auf 5E (x von/bis, y von/bis)
 BEAMRT = 0x3070F2                                # Rueckweg gewuenscht (bis der Tuer-Hook ihn ausfuehrt; Wiederholung nach Zeitablauf)
 SIEGR = 0x3070F6                                 # nach dem Sieg beim Rueckweg BSNAP nochmal zurueck (Boss-Skript gibt Story-Dinge erst nach der Sieg-Erkennung)
 BSEEN = 0x3070FA                                 # v146o: Boss (ohne Sieg-Flag) war schon zu sehen
@@ -63,9 +65,9 @@ LANDE = [(176,440), (64,448), (288,448), (176,760), (176,296)]   # 0 Mitte, 1 li
 # v146g (Max): ohne Vulgors Hoehle (16 Brueckenhoehle, 17 Knochenhoehle) und Wueste (1B)
 # v146s (Max, Spielstaende): ohne 59 und 3A (keine Gegner / weg)
 # v146n (Max): ohne leere Raeume 0E Speisesaal, 4C Statuen, 70 Dach (54 bleibt: Haendler); neu 65 Wald, 3D Kanal (je 10+ Gegner)
-POOL = [[64,88,72],[64,216,608],[65,56,576],[79,56,600],[79,168,264],[79,464,600],[84,880,184],[84,664,680],[87,976,744],[91,72,440],
+POOL = [[64,88,72],[64,216,608],[65,56,576],[79,56,600],[79,168,264],[79,464,600],[91,72,440],
         [91,144,104],[5,696,616],[5,360,48],[5,32,376],[6,1240,904],[7,48,488],[7,504,544],[15,888,328],
-        [15,96,320],[18,1208,128],[18,272,328],[41,328,984],[40,1064,1240],[101,1168,32],[61,728,1184],[98,672,560],[55,152,1928],[123,224,720],[37,408,408],[124,536,856],[27,376,224]]   # v146y: Dschungeldorf 25, Nobilia 7C, Ivor Tower 0A/08 (Menschen -> Monster, Haustueren intern)   # v146u: 7B = Nobilia-Markt (Menschen -> Monster); v146t: 62 = eigene Stadt (Gegner per C2 -> Waffe geht); 37 = Feuerdrache-Raum ohne Boss (Max)
+        [15,96,320],[18,1208,128],[18,272,328],[41,328,984],[40,1064,1240],[101,1168,32],[98,672,560],[55,152,1928],[123,224,720],[37,408,408],[124,536,856],[27,376,224]]   # v146y: Dschungeldorf 25, Nobilia 7C, Ivor Tower 0A/08 (Menschen -> Monster, Haustueren intern)   # v146u: 7B = Nobilia-Markt (Menschen -> Monster); v146t: 62 = eigene Stadt (Gegner per C2 -> Waffe geht); 37 = Feuerdrache-Raum ohne Boss (Max)
 if os.environ.get('SOE_NURSTADT'): POOL = [p for p in POOL if p[0] in (0x62, 0x7B, 0x25, 0x7C, 0x1B)]   # Testbau: nur Staedte
 NPOOL = len(POOL); assert NPOOL < 256
 # ---- Bosse (Bauplan 2.2, Sieg gemessen r_bossraeume): Karte, Ankunft (gemessene Stelle des Jungen), Sieg-Flag, Vorlage
@@ -125,7 +127,9 @@ T_BIT   = TAB + 0x0120           # Bit je Zugang (Wort)
 T_BOSS  = TAB + 0x0800           # v146o: je 32 Byte: Karte, x, y, Flag-Byte (ab 2258), Maske (0 = Sieg ueber Boss-tot), Vorlage, Zusatzflag Byte/Maske, 2. Vorlage, Vorlage
 T_LOOT  = TAB + 0x01A0           # 32 Woerter
 T_SKR   = TAB + 0x8000           # Beute-Skript (Skripte ab Adresse 8000: Fadenstart 8C:D257 kodiert Bank 93+p>>15, Adresse 8000|p)
+T_RMUS  = TAB + 0x8100           # v146z30: je Karte 4 Byte Musik-Skript 33 <Lied*4> 00 00 (Pool-Raeume starten ihre Original-Musik)
 T_MSKR  = TAB + 0x8030           # v146c: Musik-Skript fuer Vulgor (33 04 00)
+T_HSKR  = TAB + 0x8028           # v146z30: Teleporter-Skript zum Haendlerraum 0x54
 T_TSKR  = TAB + 0x8020           # Tuer-Skript nach 5E (wie die linke Schachbrett-Treppe: a3 19 22 x y kk 00)
 T_SUF   = TAB + 0x0210           # Endungen der Meldungen
 T_TXT   = TAB + 0x0240           # Texte FFA/FF9/FF8
@@ -142,7 +146,18 @@ tabs[T_LOOT] = b''.join(v.to_bytes(2,'little') for v in BEUTE)
 # Mesen v145: ohne bc/Buecken (nur a3 3e/3f) stuerzte das Spiel nach der Meldung ab (STP 00:885F), wenn der Junge gerade angriff.
 tabs[T_SKR]  = bytes.fromhex('bc78d01800b0a714a33e098590040500a33f040200a341bd0c9004b000')   # wie soe_funde v144 (GEPRUEFT): anhalten, buecken, geben, freigeben
 tabs[T_MSKR] = b''.join(bytes([0x33,mu,0x00,0x00]) for *_,mu in BOSSE)   # je Boss 4 Byte: Musik-Skript 33 <Versatz> 00
+# v146z34 (Max: Hund passend zur Epoche, kein Windhund im Sumpf): Hundeform je Karte aus editor/gebiete.json (Aeren)
+HUNDFORM = bytes.fromhex('0c02020206060606080808080808080808080202080002020208020808020802020202080802020208080808080802060600000202020206020608020202020c02020c0c0c0c0c0c0c0c0c0008080806060206020c0606060606060202060808080c060000020206060202060800080806080808000808080802020606000c00')   # 02 Wolf, 06 Windhund, 08 Pudel, 0C Toaster, 0 = lassen
+HUNDFORM = bytearray(HUNDFORM); HUNDFORM[0x1D] = 6; HUNDFORM = bytes(HUNDFORM)   # Vigor-Arena liegt in Antiqua (gebiete.json grob)
+HFT = 0xF8D700
+RAUM_MUSIK = {0x40:0x33, 0x41:0x3D, 0x4F:0x1B, 0x57:0x21, 0x5B:0x08, 0x05:0x1E, 0x06:0x1E, 0x07:0x1B, 0x0F:0x38, 0x12:0x12,
+              0x29:0x0E, 0x28:0x32, 0x65:0x07, 0x3D:0x43, 0x62:0x3B, 0x37:0x33, 0x7B:0x34, 0x25:0x05, 0x7C:0x34, 0x1B:0x0A}   # Karte -> Lied-Nr. (8C:85E7 A), Mesen-Warp v146z30
+_mt = at(0x8C87E0); _arg = {}
+for _i in range(0, 0x100, 2): _arg.setdefault(r[_mt+_i] | r[_mt+_i+1]<<8, _i)   # Lied -> Versatz in der Lied-Tabelle 8C:87E0 (Befehl 33 <Versatz>)
+assert all(v in _arg for v in RAUM_MUSIK.values()), [hex(v) for v in RAUM_MUSIK.values() if v not in _arg]
+tabs[T_RMUS] = b''.join((bytes([0x33,_arg[RAUM_MUSIK[k]],0x00,0x00]) if k in RAUM_MUSIK else bytes(4)) for k in range(128))
 tabs[T_TSKR] = bytes([0xA3,0x19, 0x22, 176//8, 440//8, 0x5E,0x00, 0x00])
+tabs[T_HSKR] = bytes([0xA3,0x19, 0x22, 320//8, 144//8, 0x54,0x00, 0x00])
 sufadr = {}; sb = b''
 for k,v in SUF.items(): sufadr[k] = (T_SUF + len(sb)) & 0xFFFF; sb += v
 tabs[T_SUF] = sb
@@ -158,6 +173,7 @@ tabs[T_FLL] = fll
 ordn = sorted(tabs)
 for a, b in zip(ordn, ordn[1:]): assert a + len(tabs[a]) <= b, hex(a)
 assert all(a + len(tabs[a]) <= TAB + 0x1000 for a in ordn if a < TAB + 0x8000) and T_TSKR + len(tabs[T_TSKR]) <= TAB + 0x8030 and T_MSKR + len(tabs[T_MSKR]) <= TAB + 0x8080
+o_ = at(HFT); assert all(b == 0xFF for b in r[o_:o_+128]), 'HFT belegt'; r[o_:o_+128] = HUNDFORM
 def skp(a): p = (((a>>16) - 0x93) << 15) | (a & 0x7FFF); assert a & 0x8000; return p
 
 # ---- Assembler-Helfer (16 Bit, lange Adressen)
@@ -225,6 +241,7 @@ t = [
   'kt_flucht:', ('jsr','bsrest'), z(BOSSAKT),
   'kt_b4:', li(4)+sta(TUERM), ('jmp','land'),
   'kt_nb:', lda(0x7E0ADB)+ai(0xFF)+ci(0x5E), B(BNE,'kt_nb2'), ('jmp','kt_5e'), 'kt_nb2:',
+  # v146z34: aus dem Haendlerraum 0x54 zurueck -> Hundeform von vorher (das Schachbrett laedt Hund nach 7E:2363)
   # v146y (Max: Haustueren in der Stadt duerfen nicht rausfuehren): Tuer innerhalb derselben Stadtgruppe (GRP F8:D500,
   # soe_vulgor_larven) bleibt die Original-Tuer; Raumzaehler neu, Flags bleiben gesichert (kein flsave).
   ai(0x7F), [0xAA], ldax(0xF8D500)+ai(0x7F), B(BEQ,'kt_ng'), sta(TMP1),
@@ -232,32 +249,47 @@ t = [
   li(1)+sta(0x7EEE92)+ldax(0xF8D500)+ai(0x80), B(BNE,'kt_draus'), li(3), B(BRA,'kt_rs'), 'kt_draus:', li(1),   # v146z6: Haus -> RAUMAKT 3 (keine Saeuberung)
   'kt_rs:', sta(RAUMAKT)+z(RZEIT)+z(SEEN)+z(CLRW)+z(LIVE)+z(PEND), ('jmp','kt_ende'),   # EE92: soe_hoehle stellt 238F wieder her
   'kt_ng:',
+  # v146z30 (Max: kein Raum-Wechseln bis einer passt): ungesaeuberter Pool-Raum (RAUMAKT 1, CLRW 0) -> Tuer fuehrt zurueck in denselben Raum
+  lda(RAUMAKT)+ci(1), B(BNE,'kt_ng0'), lda(CLRW), B(BNE,'kt_ng0'),
+  lda(PK)+sta(KTK)+lda(PX)+sta(KTX)+lda(PY)+sta(KTY), li(0xFF8), ('jsr','qp'),
+  li(1)+sta(RAUMAKT)+z(RZEIT)+z(SEEN)+z(CLRW)+z(LIVE)+z(PEND), ('jmp','kt_ende'),
+  'kt_ng0:',
   # aus einem Pool-Raum (oder sonst einer Hoehlen-Karte) -> 5E vor den benutzten Zugang
   ('jsr','flrest'), z(RAUMAKT)+z(CLRW),
   lda(TUERM)+ai(7), ('jmp','land'),
-  'kt_5e:', lda(OBENREQ), B(BEQ,'kt_1'), z(OBENREQ), li(4), ('jmp','zug'),
+  'kt_5e:', lda(KTK)+ai(0xFF)+ci(0x54), B(BNE,'kt_5e0'), li(3)+sta(RAUMAKT), ('jmp','kt_ende'),   # v146z30: Teleporter -> Haendlerraum (keine Saeuberung)
+  'kt_5e0:', lda(OBENREQ), B(BEQ,'kt_1'), z(OBENREQ), li(4), ('jmp','zug'),
   'kt_1:', lda(KTK)+ai(0xFF)+ci(0x60), B(BNE,'kt_2'), ('jmp','treppe'),
   'kt_2:', ci(0x5D), B(BNE,'kt_3'), li(3), B(BRA,'zug'),
   'kt_3:', ci(0x5F), B(BEQ,'kt_4'), ('jmp','land0'),
   'kt_4:', lda(KTX)+ci(400)+li(1), B(BCC,'zug'), li(2),
   'zug:', sta(TMP1)+[0x0A, 0xAA]+ldax(T_BIT)+andl(SIEGEL), B(BEQ,'zg_offen'),
   li(0xFF8), ('jsr','qp'), lda(TMP1), ('jmp','land'),                 # versiegelt -> bleibt vor dem Zugang
-  'zg_offen:', lda(TMP1)+sta(TUERM)+ci(4), B(BNE,'pool'),
-  ('jsr','stock5'), B(BCS,'pool'), ('jmp','boss'),
+  'zg_offen:', lda(TMP1)+sta(TUERM),   # v146z30: auch oben ein Pool-Raum (Boss kommt ueber die Treppe)
   'pool:', ([0xA9,int(os.environ.get('SOE_TESTRAUM','0')),0x00]+sta(FEST) if os.environ.get('SOE_TESTRAUM') else []), lda(FEST)+ai(0xFF), B(BEQ,'p_zuf'), ci(0xFF), B(BNE,'p_fest'),
   lda(0x307030)+sta(KTK)+lda(0x307032)+sta(KTX)+lda(0x307034)+sta(KTY), B(BRA,'p_ein'),   # Testmodus FEST=FF
   'p_fest:', [0x3A], B(BRA,'p_idx'),                                                          # Testmodus FEST = Pool-Index+1
   'p_zuf:', ('jsr','rnd'), mod(NPOOL),
   'p_idx:', [0x0A]+sta(TMP2)+[0x0A, 0x18]+adcl(TMP2)+[0xAA]+ldax(T_POOL)+sta(KTK)+ldax(T_POOL+2)+sta(KTX)+ldax(T_POOL+4)+sta(KTY),
-  'p_ein:', lda(KTK)+ai(0xFF), ('jsr','flsave'),
+  # v146z36 (Max: hier braucht man eine Axt): Karte 0x12 nur mit Axt (Besitz 22DA Bit 5-7 = 0A/0C/0E, 22DB Bit 0 = 10), sonst neu wuerfeln
+  lda(KTK)+ai(0xFF)+ci(0x12), B(BEQ,'p_ax0'), ci(0x05), B(BNE,'p_ax'),   # v146z37: auch Karte 0x05 (Max)
+  'p_ax0:', lda(0x7E22DA)+ai(0x01C0), B(BNE,'p_ax'), ('jmp','p_zuf'), 'p_ax:',   # v146z39: Bronze-Axt 0C / Ritterzerschmetterer 0E / Atomaxt 10 (ohne Spinnenklaue)
+  # v146z38 (Max: hier braucht man den Bronze-Speer): Karte 0x29 nur mit Bronze-Speer 14 / Lanze 16 / Laserlanze 18 (22DB Bit 2-4)
+  lda(KTK)+ai(0xFF)+ci(0x29), B(BNE,'p_sp'), lda(0x7E22DA)+ai(0x1C00), B(BNE,'p_sp'), ('jmp','p_zuf'), 'p_sp:',
+  'p_ein:', lda(KTK)+sta(PK)+lda(KTX)+sta(PX)+lda(KTY)+sta(PY),   # v146z30: fuer die Raumsperre
+  lda(KTK)+ai(0xFF), ('jsr','flsave'),
   lda(KTK)+ai(0x7F)+[0xAA]+ldax(0xF8D500)+ai(0xFF), B(BEQ,'p_r1'), ai(0x80), B(BNE,'p_r1'), li(3), B(BRA,'p_r2'),   # v146z6: Durchgang/Haus -> keine Saeuberung
-  'p_r1:', li(1), 'p_r2:', sta(RAUMAKT)+z(RZEIT)+z(SEEN)+z(CLRW)+z(LIVE)+z(PEND), ('jmp','kt_ende'),
+  'p_r1:', li(1), 'p_r2:', sta(RAUMAKT)+z(RMUS)+z(RZEIT)+z(SEEN)+z(CLRW)+z(LIVE)+z(PEND), ('jmp','kt_ende'),
   'treppe:', lda(SIEGEL)+ai(0x1E)+ci(0x1E), B(BEQ,'tr_frei'), li(0xFFA), ('jsr','qp'), ('jmp','land0'),
-  'tr_frei:', li(220)+sta(MELDZ)+lda(FLOOR)+ai(0xFF)+[0x1A]+ci(100), B(BCC,'tr_f'), li(99), 'tr_f:', sta(FLOOR),
+  'tr_frei:', lda(SIEGEL)+ai(0x20), B(BNE,'tr_neu'), li(4)+sta(TUERM), ('jmp','boss'),   # v146z30: jedes Untergeschoss erst den Boss
+  'tr_neu:', li(220)+sta(MELDZ)+lda(FLOOR)+ai(0xFF)+[0x1A]+ci(100), B(BCC,'tr_f'), li(99), 'tr_f:', sta(FLOOR),
   ('jsr','nstock'),
   'land0:', li(0),
   'land:', landx(),
-  'kt_ende:', [0xAB, 0x28, 0x6B],
+  'kt_ende:',
+  # v146z34: Hundeform zur Zielkarte setzen, bevor sie laedt (die Karte laedt Hund-Palette/-Grafik nach 7E:2363)
+  lda(KTK)+ai(0x7F)+[0xAA]+ldax(HFT)+ai(0xFF), B(BEQ,'kt_hx'), SEP, [0x8F,0x63,0x23,0x7E], REP, 'kt_hx:',
+  [0xAB, 0x28, 0x6B],
   # ---- Bossraum betreten (TUERM = 4, Stockwerk mod 5 = 0, Boss noch offen)
   'boss:', lda(BOSSFEST)+ai(0xFF), B(BEQ,'bs_z'), [0x3A], B(BRA,'bs_i'),
   'bs_z:', ('jsr','rnd'), mod(len(BOSSE)),
@@ -283,11 +315,11 @@ t = [
   # v146z22: 'irgendein Monster lebt' haelt den Kampf nur im Endboss-Raum 4A offen (Wellen/Phase 2) - sonst blieben z. B. die
   # Tentakel der Monsterqualle ewig 'lebendig' (3920 KP, im Original verschwinden sie) -> nie Sieg
   lda(0x7E0ADB)+ai(0xFF)+ci(0x4A), B(BNE,'bf_k4'), li(1)+sta(TMP6), 'bf_k4:', ldax(0x7E0060)+[0xCF]+L(BOSSV), B(BEQ,'bf_echt'), ldax(0x7E0060)+[0xCF]+L(TMP3), B(BNE,'bf_n'),
-  'bf_echt:', li(1)+sta(BSEEN),
+  'bf_echt:', li(1)+sta(BSEEN)+sta(TMP6),   # v146z24 (Max: Boss lebt, trotzdem rausgebeamt): lebender Boss haelt den Kampf IMMER offen
   'bf_n:', [0x8A, 0x18, 0x69,0x8E,0x00, 0xAA, 0xE0,0x89,0x4E], B(BCC,'bf_l'),
   lda(TMP6), B(BEQ,'bf_e'), li(0)+[0x60], 'bf_e:', lda(BSEEN)+[0x60],
   # sieg: Flags zurueck, Boss erledigt (SIEGEL Bit 4), Waffen-Orb + Meldung
-  'sieg:', ('jsr','bsrest'), li(1)+sta(SIEGR)+z(BOSSAKT)+lda(SIEGEL)+oi(0x10)+sta(SIEGEL)+li(4)+sta(TUERM),
+  'sieg:', ('jsr','bsrest'), li(1)+sta(SIEGR)+z(BOSSAKT)+lda(SIEGEL)+oi(0x30)+sta(SIEGEL)+li(4)+sta(TUERM),   # v146z30: 0x20 = Boss dieses Untergeschosses erledigt
   lda(0x7E0ABA)+ai(0xFF)+jsl(WINC)+[0xC2,0x30]+li(0xFFE), ('jsr','qp'), [0x60],
   # bsrest: BSNAP -> 7E (ohne Formeln/Talismane/Waffe+N/Waffenbesitz)
   'bsrest:', [0x8B]+sum(([0xA2]+w((BSNAP&0xFFFF)+a-0x2258)+[0xA0]+w(a)+[0xA9]+w(n-1)+[0x54,0x7E,0x30] for a,n in BREST), [])+[0xAB, 0x60],
@@ -349,7 +381,12 @@ t = [
   lda(TOD), B(BEQ,'kb_b'), ('jmp','kb_r'),
   'kb_b:', lda(0x7E0ADB)+ai(0xFF)+ci(0x5E), B(BEQ,'kb_5e'), ('jmp','kb_n5e'),
   # ---- 5E: Ausloeser oben
-  'kb_5e:', lda(WARPT), B(BEQ,'o_1'), ('jmp','kb_r'),
+  'kb_5e:', lda(0x7E4EA3)+ci(TPZ[0]), B(BCC,'tp_n'), ci(TPZ[1]), B(BCS,'tp_n'), lda(0x7E4EA5)+ci(TPZ[2]), B(BCC,'tp_n'), ci(TPZ[3]), B(BCS,'tp_n'),
+  lda(0x004218)+ai(0x8000), B(BEQ,'tp_up'), lda(TPB), B(BNE,'tp_n'), li(1)+sta(TPB), lda(WARPT), B(BNE,'tp_n'),
+  lda(0x7E2363)+ai(0xFF)+sta(HFORM),   # v146z34 (Max: Toaster-Hund nach dem Haendler): Hundeform merken
+  li(300)+sta(BEAM)+li(skp(T_HSKR)&0xFFFF), ('jsr','faden'), ('jmp','kb_r'),   # v146z30: B im Teleporter -> Haendlerraum
+  'tp_up:', z(TPB), 'tp_n:',
+  lda(WARPT), B(BEQ,'o_1'), ('jmp','kb_r'),
   'o_1:', lda(0x7E4EA3)+ci(OBEN[0]), B(BCC,'o_aus'), ci(OBEN[1]), B(BCS,'o_aus'),
   lda(0x7E4EA5)+ci(OBEN[2]), B(BCC,'o_aus'), ci(OBEN[3]), B(BCS,'o_aus'),
   lda(INOBEN), B(BEQ,'o_2'), ('jmp','kb_r'),
@@ -377,7 +414,8 @@ t = [
   'kb_b5:', ('jmp','kb_r'),
   # ---- Pool-Raum: Saeuberung
   'kb_pool:', lda(RAUMAKT)+ci(1), B(BEQ,'kp_1'), ('jmp','kb_r'),
-  'kp_1:', lda(WARPT), B(BEQ,'kp_2'), ('jmp','kb_r'),
+  'kp_1:', lda(RMUS), B(BNE,'kp_m1'), li(1)+sta(RMUS)+lda(0x7E0ADB)+ai(0x7F)+[0x0A,0x0A, 0x18, 0x69]+w(skp(T_RMUS)&0xFFFF), ('jsr','faden'), 'kp_m1:',   # v146z30: Original-Raummusik
+  lda(WARPT), B(BEQ,'kp_2'), ('jmp','kb_r'),
   'kp_2:', lda(CLRW), B(BEQ,'kp_z'), [0x1A]+sta(CLRW)+ci(150), B(BCS,'kp_beam'), ('jmp','kb_r'),
   'kp_beam:', li(2)+sta(RAUMAKT), ('jsr','warp5e'), ('jmp','kb_r'),
   'kp_z:', lda(RZEIT)+ci(0x7000), B(BCS,'kp_z1'), [0x1A]+sta(RZEIT), 'kp_z1:', ai(7), B(BEQ,'kp_z2'), ('jmp','kb_r'),

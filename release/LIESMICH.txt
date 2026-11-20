@@ -1,4 +1,4 @@
-Souls of Evermore – Mod für Secret of Evermore (deutsch)  (Beta, Stand v146)
+Souls of Evermore – Mod für Secret of Evermore (deutsch)  (Beta, Stand v147)
 =====================================================================
 
 Ein Patch für die DEUTSCHE Version von Secret of Evermore (SNES).
@@ -14,7 +14,7 @@ Passende ROM
 Patch anwenden
 --------------
 1. ROM Patcher JS im Browser öffnen (oder Floating IPS / "Flips").
-2. Deine ROM und die Datei Souls-of-Evermore-v146-beta.bps auswählen.
+2. Deine ROM und die Datei Souls-of-Evermore-v147-beta.bps auswählen.
 3. "Apply patch" – fertig. Ergebnis: 4 MB ROM, läuft z. B. in OpenEmu, snes9x, bsnes, Mesen.
 
 Was ist neu?
@@ -49,6 +49,10 @@ Souls Cave (Eingang am Brunnen, neu in v146):
 - Verwandelnde Städte: Dschungeldorf, Nobilia, Ivor Tower, eigene Stadt - alle Menschen werden Monster, Häuser betretbar
 - Goldener Vulgor immer da, +100 % je Sieg, Gift/Heilung nach Säureregen, Verwirrung nach Wegschubsen
 - Gegner-Info (Name, KP, EP, Geld, Anzahl) bei jedem Treffer; Speichern in der Cave gesperrt
+- Neu in v147: je Untergeschoss 4 Räume -> Treppe -> Boss; Raum erst nach dem Säubern verlassbar
+- Händler-Teleporter auf dem Schachbrett; Flügel in der Cave = Notausgang (Tod, raus am Brunnen)
+- Eigene Musik je Raum, Hund passend zur Epoche, stärkere Gegner (KP 20x Level), keine Moskitos/Ratten
+- Axt-Räume ab Bronze-Axt, Speer-Raum ab Bronze-Speer; zwei Baumdrachen; Minitaurus mit starkem Raptor
 
 Sonstiges:
 - Kein Game Over mehr (alle Einstellungen). Der Junge wacht mit vollen LP am Eingang des Raums wieder auf (in Bossräumen an Ort und Stelle),
