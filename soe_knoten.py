@@ -273,16 +273,19 @@ t = [
   # bflag: Z = 0 wenn das Sieg-Flag gesetzt ist
   'bflag:', ('jsr','bfl_lade'), lda(TMP3), B(BEQ,'bf_tot'), ldax(0x7E2258)+andl(TMP3)+ai(0xFF)+[0x60],
   # v146o: kein Sieg-Flag -> Boss (Vorlage BOSSV oder 2. Vorlage) lebt? ja: BSEEN = 1, A = 0. nein: A = BSEEN (1 = Sieg)
-  'bf_tot:', lda(BOSSI)+[0xAA]+ldax(T_BOSS+16)+sta(TMP3)+lxi(0x3DE5),
+  'bf_tot:', lda(BOSSI)+[0xAA]+ldax(T_BOSS+16)+sta(TMP3)+z(TMP6)+lxi(0x3DE5),   # TMP6 = irgendein Monster lebt
   # v146u (Max: Ventilatoren - Phase 2 kam nicht mehr): JEDES lebende Monster (Vorlage C536..DF3A) zaehlt als "Kampf laeuft"
   'bf_l:', ldax(0x7E0060), ci(0xC536), B(BCC,'bf_n'), ci(0xDF3B), B(BCS,'bf_n'),
   'bf_v:', ldax(0x7E002A), B(BEQ,'bf_n'),
   # v146z2 (Max: Endboss-Raum 4A = mehrere Wellen, nach den Raptoren kam der Sieg): BSEEN nur, wenn der ECHTE Boss
   # (Vorlage BOSSV oder 2. Vorlage TMP3) lebt; andere Monster halten den Kampf nur offen (A = 0).
-  ldax(0x7E0060)+[0xCF]+L(BOSSV), B(BEQ,'bf_echt'), ldax(0x7E0060)+[0xCF]+L(TMP3), B(BEQ,'bf_echt'), li(0)+[0x60],
-  'bf_echt:', li(1)+sta(BSEEN)+li(0)+[0x60],
+  # v146z22 (Max: Monsterqualle gab keinen Orb): NICHT beim ersten lebenden Nicht-Boss abbrechen (Tentakel standen vor der Qualle)
+  # v146z22: 'irgendein Monster lebt' haelt den Kampf nur im Endboss-Raum 4A offen (Wellen/Phase 2) - sonst blieben z. B. die
+  # Tentakel der Monsterqualle ewig 'lebendig' (3920 KP, im Original verschwinden sie) -> nie Sieg
+  lda(0x7E0ADB)+ai(0xFF)+ci(0x4A), B(BNE,'bf_k4'), li(1)+sta(TMP6), 'bf_k4:', ldax(0x7E0060)+[0xCF]+L(BOSSV), B(BEQ,'bf_echt'), ldax(0x7E0060)+[0xCF]+L(TMP3), B(BNE,'bf_n'),
+  'bf_echt:', li(1)+sta(BSEEN),
   'bf_n:', [0x8A, 0x18, 0x69,0x8E,0x00, 0xAA, 0xE0,0x89,0x4E], B(BCC,'bf_l'),
-  lda(BSEEN)+[0x60],
+  lda(TMP6), B(BEQ,'bf_e'), li(0)+[0x60], 'bf_e:', lda(BSEEN)+[0x60],
   # sieg: Flags zurueck, Boss erledigt (SIEGEL Bit 4), Waffen-Orb + Meldung
   'sieg:', ('jsr','bsrest'), li(1)+sta(SIEGR)+z(BOSSAKT)+lda(SIEGEL)+oi(0x10)+sta(SIEGEL)+li(4)+sta(TUERM),
   lda(0x7E0ABA)+ai(0xFF)+jsl(WINC)+[0xC2,0x30]+li(0xFFE), ('jsr','qp'), [0x60],
