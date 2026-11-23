@@ -1,0 +1,27 @@
+# Oeffentlich sind NUR Website, Bilder, Schriften, README und LIESMICH.
+# Code, Doku und alte Patches liegen im privaten Repo NumDog/souls-of-evermore-privat
+# (lokal Zweig voll-privat, Remote "privat"). Patches nur als GitHub-Release hochladen.
+/*
+!/.gitignore
+!/index.html
+!/README.md
+!/img/
+!/fonts/
+!/release/
+/release/*
+!/release/LIESMICH.txt
+.DS_Store
+# nicht mehr benutzte Bilder
+/img/albtraum.jpg
+/img/ende.png
+/img/geld_liegt.jpg
+/img/geld_zurueck.jpg
+/img/info.png
+/img/kreis.png
+/img/menue.png
+/img/orb.png
+/img/qr.png
+/img/qr_btc.png
+/img/qr_eth.png
+/img/qr_sol.png
+/img/soulscave_brunnen.jpg

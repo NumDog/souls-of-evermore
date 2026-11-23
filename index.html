@@ -1,0 +1,853 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Souls of Evermore – Mod für Secret of Evermore</title>
+<meta name="description" content="Souls of Evermore: Fan-Mod für die deutsche SNES-Version von Secret of Evermore – Schwierigkeit bis x10, New Game+, Zufallsmodi, Dark-Souls-Tod, Souls Cave, Goldener Vulgor.">
+<meta name="theme-color" content="#0a0a0a">
+<link rel="stylesheet" href="fonts/fonts.css">
+<style>
+  /* ================================================================
+     Design nach name-wallet.com: fast schwarz, Outfit-Überschriften
+     zweifarbig, Inter als Text, JetBrains Mono für Kleinkram,
+     Glas-Kopfleiste, glühende Knöpfe, Pillen-Chips, große Karten.
+     Statt NameWallet-Grün hier Seelen-Gold, Rot bleibt.
+     ================================================================ */
+  :root {
+    --bg: #0a0a0a; --bg2: #0f0f10; --panel: #161617; --panel2: #1d1d1f; --panel-in: #232326;
+    --line: #2e2e2e; --line2: #3a3a3d;
+    --ink: #f0f0f0; --mut: #a3a3a8; --dim: #6e6e75;
+    --rot: #e50914; --rot2: #ff1a26; --rot-glow: rgba(229, 9, 20, .45);
+    --gold: #f2b233; --gold2: #ffd479; --gold-glow: rgba(242, 178, 51, .35);
+    --display: "Outfit", -apple-system, sans-serif;
+    --sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+    --fantasy: "Cinzel", "Outfit", Georgia, serif;
+    --r: 18px; --ease: cubic-bezier(.2, .8, .2, 1);
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; scroll-padding-top: 84px; -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font: 17px/1.65 var(--sans); overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+  img { max-width: 100%; }
+  a { color: var(--rot2); text-underline-offset: 3px; }
+  a:hover { color: #ff4d57; }
+  b, strong { color: #fff; font-weight: 650; }
+  .pix { image-rendering: pixelated; image-rendering: crisp-edges; }
+  ::selection { background: var(--rot); color: #fff; }
+
+  /* ---------- Hintergrund: Glut-Schein + Funken ---------- */
+  .bg-glow { position: fixed; inset: 0; z-index: -2; pointer-events: none;
+    background:
+      radial-gradient(60vw 50vh at 85% -5%, rgba(229, 9, 20, .13), transparent 70%),
+      radial-gradient(50vw 45vh at 5% 15%, rgba(242, 178, 51, .08), transparent 70%),
+      radial-gradient(70vw 60vh at 50% 110%, rgba(229, 9, 20, .07), transparent 70%);
+  }
+  #glut { position: fixed; inset: 0; z-index: -1; pointer-events: none; width: 100%; height: 100%; }
+
+  /* ---------- Hinweisleiste ---------- */
+  .leiste {
+    text-align: center; font-size: .82rem; color: var(--mut); padding: 8px 16px;
+    background: linear-gradient(90deg, transparent, rgba(242, 178, 51, .08), transparent), #0c0c0d;
+    border-bottom: 1px solid var(--line);
+  }
+  .leiste a { color: var(--ink); text-decoration-color: var(--rot2); }
+  .leiste a:hover { color: var(--rot2); }
+  .leiste b { color: var(--gold); letter-spacing: .14em; font-weight: 700; font-size: .78rem; }
+
+  /* ---------- Kopfleiste (Glas) ---------- */
+  .kopf {
+    position: sticky; top: 0; z-index: 50;
+    background: rgba(6, 6, 8, .78); backdrop-filter: blur(14px) saturate(140%); -webkit-backdrop-filter: blur(14px) saturate(140%);
+    border-bottom: 1px solid var(--line);
+  }
+  .kopf-in { max-width: 1240px; margin: 0 auto; padding: 12px 16px; display: flex; align-items: center; gap: 20px; }
+  .marke { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--ink); flex: none; }
+  .marke:hover { color: var(--ink); }
+  .marke-zeichen { width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center;
+    background: radial-gradient(circle at 50% 70%, #ff7a1a, #b30610 60%, #3a0205); box-shadow: 0 0 18px var(--rot-glow), inset 0 1px 0 rgba(255, 255, 255, .25);
+    font-size: 18px; }
+  .marke-text { font-family: var(--fantasy); font-weight: 700; letter-spacing: .06em; line-height: 1.05; font-size: 1.02rem; }
+  .marke-text small { display: block; font-family: var(--mono); font-size: .6rem; letter-spacing: .22em; color: var(--gold); font-weight: 500; margin-top: 3px; }
+  .nav { display: flex; gap: 4px; margin-left: auto; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
+  .nav a { color: var(--mut); text-decoration: none; font-size: .9rem; padding: 6px 10px; border-radius: 8px; position: relative; transition: color .2s; }
+  .nav a:hover { color: var(--ink); }
+  .nav a.aktiv { color: var(--rot2); }
+  .nav a.aktiv::after { content: ""; position: absolute; left: 10px; right: 10px; bottom: 0; height: 2px; background: var(--rot); border-radius: 2px; box-shadow: 0 0 8px var(--rot-glow); }
+  .kopf .knopf { flex: none; }
+  .menue-knopf { display: none; margin-left: auto; background: none; border: 1px solid var(--line2); color: var(--ink); border-radius: 10px; width: 42px; height: 40px; cursor: pointer; }
+  .menue-knopf span, .menue-knopf span::before, .menue-knopf span::after { display: block; width: 18px; height: 2px; background: currentColor; margin: 0 auto; position: relative; transition: transform .3s var(--ease), background .2s; }
+  .menue-knopf span::before, .menue-knopf span::after { content: ""; position: absolute; left: 0; }
+  .menue-knopf span::before { top: -6px; } .menue-knopf span::after { top: 6px; }
+  .kopf.offen .menue-knopf span { background: transparent; }
+  .kopf.offen .menue-knopf span::before { transform: translateY(6px) rotate(45deg); }
+  .kopf.offen .menue-knopf span::after { transform: translateY(-6px) rotate(-45deg); }
+
+  /* ---------- Knöpfe ---------- */
+  .knopf {
+    display: inline-flex; align-items: center; gap: 8px; text-decoration: none; cursor: pointer;
+    font: 600 .98rem/1.2 var(--sans); padding: 15px 26px; border-radius: 999px; border: 0;
+    background: linear-gradient(#ff1a26, #e50914); color: #fff;
+    box-shadow: 0 0 0 1px rgba(255, 80, 90, .35) inset, 0 8px 28px -6px var(--rot-glow), 0 0 22px -4px var(--rot-glow);
+    transition: transform .25s var(--ease), box-shadow .25s var(--ease), filter .2s, background .2s;
+  }
+  .knopf:hover { color: #fff; transform: translateY(-2px); filter: brightness(1.08); box-shadow: 0 0 0 1px rgba(255, 80, 90, .5) inset, 0 14px 36px -6px var(--rot-glow), 0 0 34px -2px var(--rot-glow); }
+  .knopf:active { transform: translateY(0) scale(.98); }
+  .knopf.klein { padding: 10px 18px; font-size: .88rem; }
+  .knopf.geist { background: transparent; color: var(--ink); box-shadow: 0 0 0 1px var(--line2) inset; }
+  .knopf.geist:hover { box-shadow: 0 0 0 1px #6a6a70 inset; background: rgba(255, 255, 255, .04); }
+  .knopf svg { width: 17px; height: 17px; flex: none; }
+
+  /* ---------- Held ---------- */
+  .held { max-width: 1240px; margin: 0 auto; padding: clamp(48px, 9vh, 110px) 16px 72px;
+    display: grid; grid-template-columns: 1.05fr .95fr; gap: clamp(32px, 5vw, 72px); align-items: center; }
+  .held > * { min-width: 0; }
+  .oben { font: 650 .78rem/1.3 var(--sans); letter-spacing: .22em; text-transform: uppercase; color: var(--rot2); display: inline-flex; align-items: center; gap: 14px; margin: 0 0 22px; }
+  .oben::before, .oben::after { content: ""; width: 34px; height: 1px; background: currentColor; opacity: .7; flex: none; }
+  .held .oben::after { display: none; }
+  h1, h2, h3 { font-family: var(--display); font-weight: 700; letter-spacing: -.02em; text-wrap: balance; margin: 0; }
+  h1 { font-size: clamp(2.6rem, 6.2vw, 4.6rem); line-height: 1.02; letter-spacing: -.03em; }
+  .g { color: var(--gold); text-shadow: 0 0 34px rgba(242, 178, 51, .28); }
+  .r { color: var(--rot2); text-shadow: 0 0 34px rgba(229, 9, 20, .45); }
+  .held p.lead { font-size: clamp(1.05rem, 1.6vw, 1.2rem); color: var(--mut); margin: 26px 0 34px; max-width: 34em; }
+  .knoepfe { display: flex; flex-wrap: wrap; gap: 12px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 30px; }
+  .chip { display: inline-flex; align-items: center; gap: 8px; font-size: .84rem; color: var(--mut); padding: 8px 14px; border-radius: 999px; border: 1px solid var(--line2); background: rgba(255, 255, 255, .02); }
+  .chip i { font-style: normal; color: var(--rot2); font-size: .9em; }
+  .hinweis { font-size: .86rem; color: var(--dim); margin: 16px 0 0; }
+
+  /* Bildschirm mit Titelbild */
+  .schirm { position: relative; perspective: 1200px; }
+  .schirm-rahmen {
+    position: relative; border-radius: 22px; padding: 14px; background: linear-gradient(160deg, #222225, #111113);
+    border: 1px solid var(--line2);
+    box-shadow: 0 40px 80px -30px rgba(0, 0, 0, .9), 0 0 90px -20px var(--rot-glow), 0 0 0 1px rgba(255, 255, 255, .03) inset;
+    transform: rotateY(-7deg) rotateX(3deg); transition: transform .6s var(--ease);
+  }
+  .schirm-bild { position: relative; border-radius: 12px; overflow: hidden; background: #000; aspect-ratio: 8 / 7; }
+  .schirm-bild img { display: block; width: 100%; height: 100%; object-fit: cover; }
+  .schirm-bild::after { content: ""; position: absolute; inset: 0; pointer-events: none;
+    background: repeating-linear-gradient(0deg, rgba(0, 0, 0, .22) 0 1px, transparent 1px 3px), radial-gradient(ellipse at center, transparent 55%, rgba(0, 0, 0, .55)); }
+  .schirm-bild::before { content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none;
+    background: linear-gradient(115deg, transparent 30%, rgba(255, 255, 255, .09) 45%, transparent 60%); background-size: 250% 100%; animation: glanz 7s ease-in-out infinite; }
+  @keyframes glanz { 0%, 60% { background-position: 130% 0; } 100% { background-position: -130% 0; } }
+  .schirm-led { position: absolute; right: 26px; bottom: -1px; width: 46px; height: 3px; border-radius: 3px; background: var(--rot2); box-shadow: 0 0 12px var(--rot2); animation: pulsen 2.4s ease-in-out infinite; }
+  @keyframes pulsen { 50% { opacity: .35; } }
+  .protokoll { margin-top: 18px; border: 1px solid var(--line); border-radius: 14px; background: rgba(12, 12, 13, .8); padding: 14px 18px; font: 400 .8rem/2 var(--mono); color: #8d8d94; height: 152px; overflow: hidden; position: relative;
+    -webkit-mask-image: linear-gradient(#000 55%, transparent); mask-image: linear-gradient(#000 55%, transparent); }
+  .protokoll-spur { animation: rollen 26s linear infinite; }
+  .protokoll div div { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .protokoll em { font-style: normal; color: var(--rot2); }
+  .protokoll u { text-decoration: none; color: var(--gold); }
+  @keyframes rollen { to { transform: translateY(-50%); } }
+  .unterschrift { font: 500 .7rem/1.3 var(--mono); letter-spacing: .2em; color: var(--dim); text-transform: uppercase; text-align: right; margin: 14px 0 0; }
+
+  /* ---------- Zahlen-Streifen ---------- */
+  .zahlen { border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); background: rgba(255, 255, 255, .015); }
+  .zahlen-in { max-width: 1240px; margin: 0 auto; padding: 34px 16px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; text-align: center; }
+  .zahl b { display: block; font: 700 clamp(2rem, 4vw, 2.9rem)/1 var(--display); color: var(--gold); letter-spacing: -.02em; }
+  .zahl:nth-child(even) b { color: var(--rot2); }
+  .zahl span { display: block; margin-top: 8px; font-size: .86rem; color: var(--mut); }
+
+  /* ---------- Abschnitte ---------- */
+  main { max-width: 1240px; margin: 0 auto; padding: 0 16px 40px; }
+  section { padding: clamp(72px, 10vw, 120px) 0 0; }
+  .kopfzeile { text-align: center; max-width: 760px; margin: 0 auto 48px; }
+  .kopfzeile h2 { font-size: clamp(2rem, 4.6vw, 3rem); line-height: 1.08; }
+  .kopfzeile p { color: var(--mut); margin: 18px auto 0; font-size: 1.06rem; }
+  h3 { font-size: 1.3rem; line-height: 1.2; }
+
+  /* Einblenden beim Scrollen */
+  .rein { opacity: 0; transform: translateY(26px); transition: opacity .9s var(--ease), transform .9s var(--ease); transition-delay: var(--v, 0s); }
+  .rein.da { opacity: 1; transform: none; }
+  .ohne-js .rein { opacity: 1; transform: none; }
+
+  /* ---------- Karten ---------- */
+  .karte {
+    position: relative; background: linear-gradient(180deg, var(--panel2), var(--panel));
+    border: 1px solid var(--line); border-radius: var(--r); overflow: hidden;
+    transition: border-color .3s, transform .4s var(--ease), box-shadow .4s var(--ease), opacity .9s var(--ease);
+  }
+  .karte:hover { border-color: var(--line2); }
+  .karte.leucht::before { /* Lichtkegel folgt der Maus */
+    content: ""; position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: opacity .3s; z-index: 0;
+    background: radial-gradient(420px circle at var(--mx, 50%) var(--my, 50%), rgba(229, 9, 20, .12), transparent 60%);
+  }
+  .karte.leucht:hover::before { opacity: 1; }
+  .karte > * { position: relative; }
+
+  /* Video */
+  .video { position: relative; width: 100%; aspect-ratio: 16 / 9; background: #000; }
+  .video iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+  .video-gross { border-radius: 22px; overflow: hidden; border: 1px solid var(--line2); box-shadow: 0 40px 90px -40px var(--rot-glow), 0 30px 60px -30px #000; }
+  .leise { color: var(--dim); font-size: .88rem; }
+  .mitte { text-align: center; }
+
+  /* Bosse */
+  .bosse { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; }
+  .bosse .karte.da:hover { transform: translateY(-4px); box-shadow: 0 30px 60px -30px var(--rot-glow); }
+  .bosse .video { border-bottom: 1px solid var(--line); }
+  .bosse .inhalt { padding: 22px 24px 26px; }
+  .ort { font: 500 .72rem/1 var(--mono); letter-spacing: .18em; text-transform: uppercase; color: var(--gold); margin: 0 0 10px; }
+  .bosse h3 { color: var(--rot2); font-size: 1.5rem; margin-bottom: 12px; }
+
+  /* Listen mit Glut-Punkt */
+  ul.punkte { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+  ul.punkte li { position: relative; padding-left: 22px; color: #cfcfd4; }
+  ul.punkte li::before { content: ""; position: absolute; left: 2px; top: .68em; width: 7px; height: 7px; border-radius: 50%; background: var(--rot2); box-shadow: 0 0 10px var(--rot2); }
+  ul.punkte.gold li::before { background: var(--gold); box-shadow: 0 0 10px var(--gold); }
+
+  /* Große Funktionskarten (wie NameWallet) */
+  .gross { display: grid; gap: 28px; }
+  .gross .karte { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(24px, 4vw, 56px); align-items: center; padding: clamp(20px, 3vw, 32px); }
+  .gross .karte:nth-child(even) .bildfeld { order: 2; }
+  .bildfeld { position: relative; border-radius: 14px; overflow: hidden; border: 1px solid var(--line2); background: #000; box-shadow: 0 30px 60px -30px #000; }
+  .bildfeld.doppel { display: grid; gap: 2px; background: var(--line2); }
+  .bildfeld img { display: block; width: 100%; height: auto; transition: transform 1.2s var(--ease); }
+  .karte:hover .bildfeld img { transform: scale(1.035); }
+  .marke-klein, .gross .marke-klein { font: 500 .74rem/1 var(--mono); letter-spacing: .2em; text-transform: uppercase; color: var(--gold); margin: 0 0 14px; }
+  .gross h3 { font-size: clamp(1.7rem, 3vw, 2.3rem); color: var(--rot2); text-shadow: 0 0 30px rgba(229, 9, 20, .35); margin-bottom: 16px; }
+  .gross p { color: var(--mut); margin: 0; font-size: 1.04rem; }
+  .gross .karte:nth-child(even) h3 { color: var(--gold); text-shadow: 0 0 30px rgba(242, 178, 51, .25); }
+  .gross .karte:nth-child(even) .marke-klein { color: var(--rot2); }
+  .gross .karte:nth-child(odd) .marke-klein { color: var(--gold); }
+
+  /* Cave */
+  .cave { display: grid; grid-template-columns: 1.1fr .9fr; gap: 28px; align-items: start; }
+  .cave > * { min-width: 0; }
+  .cave > .karte { padding: clamp(22px, 3vw, 34px); }
+  .cave figure { margin: 0; }
+  .cave figcaption { font: 500 .72rem/1.4 var(--mono); letter-spacing: .16em; text-transform: uppercase; color: var(--dim); margin-top: 14px; }
+  .cave .bald { grid-column: 1 / -1; padding: clamp(22px, 3vw, 34px); }
+  .cave .bald ul.punkte { display: block; columns: 2; column-gap: 44px; }
+  .cave .bald ul.punkte li { break-inside: avoid; margin-bottom: 14px; }
+  .stempel { display: inline-block; font: 600 .68rem/1 var(--mono); letter-spacing: .16em; text-transform: uppercase; padding: 6px 10px; border-radius: 999px; border: 1px solid rgba(242, 178, 51, .4); color: var(--gold); margin-bottom: 16px; }
+
+  /* Und noch mehr */
+  .mehr-titel { text-align: center; margin: 72px 0 28px; font-size: clamp(1.5rem, 3vw, 2rem); }
+  .mehr-raster { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+  .mehr-raster .karte { padding: 22px 24px; }
+  .mehr-raster h4 { font: 650 1.06rem/1.3 var(--display); margin: 0 0 8px; color: #fff; letter-spacing: -.01em; }
+  .mehr-raster p { margin: 0; color: var(--mut); font-size: .97rem; }
+
+  /* Anleitung */
+  ol.schritte { list-style: none; counter-reset: s; padding: 0; margin: 0 auto; max-width: 880px; display: grid; gap: 14px; }
+  ol.schritte li { counter-increment: s; position: relative; padding: 22px 24px 22px 84px; background: linear-gradient(180deg, var(--panel2), var(--panel)); border: 1px solid var(--line); border-radius: var(--r); color: #d4d4d8; }
+  ol.schritte li::before { content: counter(s, decimal-leading-zero); position: absolute; left: 24px; top: 21px; font: 700 1.5rem/1 var(--mono); color: var(--rot2); text-shadow: 0 0 16px var(--rot-glow); }
+  code { font: 500 .88em var(--mono); background: #000; border: 1px solid var(--line2); padding: 2px 7px; border-radius: 6px; color: var(--gold2); overflow-wrap: anywhere; }
+
+  /* Tabelle */
+  .tabelle { max-width: 880px; margin: 0 auto; border: 1px solid var(--line); border-radius: var(--r); overflow: hidden; background: var(--panel); }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 14px 20px; text-align: left; border-bottom: 1px solid var(--line); }
+  tr:last-child td { border-bottom: 0; }
+  th { font: 600 .72rem/1.3 var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--dim); background: #121213; }
+  td:first-child { font-weight: 650; color: #fff; white-space: nowrap; }
+  td:not(:first-child) { font-family: var(--mono); color: var(--mut); font-size: .95rem; }
+  tbody tr { transition: background .2s; }
+  tbody tr:hover { background: rgba(255, 255, 255, .025); }
+  .stufe { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 10px; vertical-align: 1px; }
+
+  /* Galerie */
+  .galerie { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+  .galerie figure { margin: 0; cursor: zoom-in; }
+  @media (min-width: 901px) { .galerie figure:last-child:nth-child(3n+1) { grid-column: 2; } }
+  .galerie .bildfeld { aspect-ratio: 4 / 3; }
+  .galerie img { width: 100%; height: 100%; object-fit: cover; }
+  .galerie figure:hover img { transform: scale(1.05); }
+  .galerie figcaption { color: var(--mut); font-size: .9rem; padding: 12px 4px 0; }
+  .leinwand { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; padding: 16px; background: rgba(0, 0, 0, .88); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); opacity: 0; pointer-events: none; transition: opacity .3s; }
+  .leinwand.auf { opacity: 1; pointer-events: auto; cursor: zoom-out; }
+  .leinwand img { display: block; margin: 0 auto; max-width: min(1000px, 100%); max-height: 80vh; border-radius: 14px; border: 1px solid var(--line2); transform: scale(.94); transition: transform .4s var(--ease); }
+  .leinwand.auf img { transform: none; }
+  .leinwand p { color: var(--mut); text-align: center; margin: 14px 0 0; }
+
+  /* Forum + Kontakt */
+  .zwei-spalten { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
+  .forum { padding: clamp(26px, 4vw, 44px); display: flex; flex-direction: column; gap: 18px; }
+  .forum p { margin: 0; color: var(--mut); }
+  .forum h3 { font-size: 1.7rem; }
+  .forum .oben { margin: 0; }
+
+  /* FAQ */
+  .faq { max-width: 880px; margin: 0 auto; display: grid; gap: 12px; }
+  .faq details { background: linear-gradient(180deg, var(--panel2), var(--panel)); border: 1px solid var(--line); border-radius: 16px; transition: border-color .3s, opacity .9s var(--ease), transform .9s var(--ease); }
+  .faq details[open] { border-color: var(--line2); }
+  .faq summary { list-style: none; cursor: pointer; padding: 20px 56px 20px 24px; font: 600 1.05rem/1.4 var(--display); position: relative; }
+  .faq summary::-webkit-details-marker { display: none; }
+  .faq summary::after { content: "+"; position: absolute; right: 22px; top: 50%; transform: translateY(-50%); font: 300 1.6rem/1 var(--sans); color: var(--rot2); transition: transform .3s var(--ease); }
+  .faq details[open] summary::after { transform: translateY(-50%) rotate(45deg); }
+  .faq details p { margin: 0; padding: 0 24px 22px; color: var(--mut); }
+
+  /* Versionen: Zeitleiste */
+  .zeitleiste { max-width: 880px; margin: 0 auto; position: relative; padding-left: 34px; }
+  .zeitleiste::before { content: ""; position: absolute; left: 7px; top: 8px; bottom: 8px; width: 2px; background: linear-gradient(var(--rot), var(--line) 30%, var(--line)); }
+  .version { position: relative; padding-bottom: 30px; }
+  .version::before { content: ""; position: absolute; left: -34px; top: 6px; width: 16px; height: 16px; border-radius: 50%; background: var(--bg); border: 2px solid var(--line2); }
+  .version.neu::before { border-color: var(--rot2); background: var(--rot); box-shadow: 0 0 0 5px rgba(229, 9, 20, .18), 0 0 18px var(--rot2); }
+  .version h3 { font-size: 1.15rem; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+  .version.neu h3 { font-size: 1.45rem; }
+  .marker { font: 600 .66rem/1 var(--mono); letter-spacing: .16em; text-transform: uppercase; padding: 5px 9px; border-radius: 999px; background: rgba(229, 9, 20, .14); color: var(--rot2); border: 1px solid rgba(229, 9, 20, .4); }
+  .version ul { margin: 0; padding-left: 18px; color: #c4c4ca; }
+  .version li { margin: 4px 0; }
+  .version li::marker { color: var(--dim); }
+  .aeltere > summary { list-style: none; cursor: pointer; display: inline-flex; margin: 4px 0 30px; }
+  .aeltere > summary::-webkit-details-marker { display: none; }
+  .aeltere[open] > summary { display: none; }
+
+
+  /* Tester-Aufruf */
+  .aufruf { position: relative; overflow: hidden; border-radius: 24px; padding: clamp(28px, 5vw, 56px);
+    border: 1px solid rgba(229, 9, 20, .45);
+    background: radial-gradient(120% 140% at 0% 0%, rgba(229, 9, 20, .22), transparent 55%), radial-gradient(100% 120% at 100% 100%, rgba(242, 178, 51, .14), transparent 55%), linear-gradient(180deg, var(--panel2), var(--panel));
+    box-shadow: 0 40px 90px -40px var(--rot-glow); }
+  .aufruf h2 { font-size: clamp(2rem, 4.6vw, 3rem); line-height: 1.08; margin-bottom: 16px; }
+  .aufruf > p { color: var(--mut); max-width: 46em; margin: 0 0 30px; font-size: 1.06rem; }
+  .aufruf-schritte { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 32px; }
+  .aufruf-schritte div { background: rgba(0, 0, 0, .35); border: 1px solid var(--line2); border-radius: 16px; padding: 20px 22px; }
+  .aufruf-schritte b { display: block; font: 700 1.1rem/1.3 var(--display); margin-bottom: 6px; }
+  .aufruf-schritte span { color: var(--mut); font-size: .95rem; }
+  .aufruf-schritte i { font: 700 .8rem/1 var(--mono); font-style: normal; color: var(--rot2); display: block; margin-bottom: 10px; letter-spacing: .14em; }
+  .puls { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: var(--rot2); box-shadow: 0 0 0 0 var(--rot-glow); animation: puls 1.8s ease-out infinite; vertical-align: 1px; }
+  @keyframes puls { 0% { box-shadow: 0 0 0 0 rgba(255, 26, 38, .6); } 100% { box-shadow: 0 0 0 12px rgba(255, 26, 38, 0); } }
+  footer { margin-top: 90px; border-top: 1px solid var(--line); color: var(--dim); text-align: center; padding: 34px 16px 44px; font-size: .86rem; }
+  footer p { max-width: 760px; margin: 0 auto; }
+
+  /* ---------- Handy & Tablet ---------- */
+  @media (max-width: 1500px) {
+    .nav a.weg { display: none; }
+  }
+  @media (max-width: 900px) {
+    .menue-knopf { display: grid; place-items: center; }
+    .kopf .nav { position: absolute; left: 0; right: 0; top: 100%; flex-direction: column; align-items: stretch; gap: 0; margin: 0;
+      background: #0b0b0d; border-bottom: 1px solid var(--line); box-shadow: 0 30px 60px rgba(0, 0, 0, .7);
+      padding: 8px 16px 16px; display: none; }
+    .kopf.offen .nav { display: flex; }
+    .nav a, .nav a.weg { display: block; padding: 13px 4px; font-size: 1rem; border-bottom: 1px solid var(--line); border-radius: 0; }
+    .nav a.aktiv::after { display: none; }
+    .kopf-in > .knopf { display: none; }
+    .held { grid-template-columns: 1fr; padding-top: 40px; }
+    .schirm-rahmen { transform: none !important; }
+    .bosse, .galerie { grid-template-columns: repeat(2, 1fr); }
+    .gross .karte, .cave, .zwei-spalten { grid-template-columns: 1fr; }
+    .cave .bald ul.punkte { columns: 1; }
+    .gross .karte:nth-child(even) .bildfeld { order: 0; }
+    .zahlen-in { grid-template-columns: repeat(2, 1fr); row-gap: 28px; }
+  }
+  @media (max-width: 600px) {
+    body { font-size: 16px; }
+    .bosse, .galerie, .mehr-raster { grid-template-columns: 1fr; }
+    .aufruf-schritte { grid-template-columns: 1fr; }
+    .knoepfe .knopf { flex: 1 1 100%; justify-content: center; text-align: center; }
+    ol.schritte li { padding: 56px 20px 20px; }
+    ol.schritte li::before { left: 20px; top: 20px; }
+    th, td { padding: 12px 12px; }
+    .leiste { font-size: .76rem; }
+    .marke-text small { display: none; }
+    .oben { letter-spacing: .16em; gap: 10px; }
+    .oben::before, .oben::after { width: 18px; }
+    .zeitleiste { padding-left: 28px; }
+    .version::before { left: -28px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+    html { scroll-behavior: auto; }
+    .rein { opacity: 1; transform: none; }
+  }
+</style>
+<noscript><style>.rein { opacity: 1 !important; transform: none !important; }</style></noscript>
+</head>
+<body>
+<div class="bg-glow" aria-hidden="true"></div>
+<canvas id="glut" aria-hidden="true"></canvas>
+
+<div class="leiste"><b>BETA</b> — aktuell v424 · <a href="#mithelfen">Tester gesucht: Fehler melden &amp; mithelfen</a></div>
+
+<header class="kopf" id="kopf">
+  <div class="kopf-in">
+    <a class="marke" href="#top" aria-label="Souls of Evermore – nach oben">
+      <span class="marke-zeichen" aria-hidden="true">🔥</span>
+      <span class="marke-text">Souls of Evermore<small>SNES · FAN-MOD</small></span>
+    </a>
+    <button class="menue-knopf" id="menueKnopf" aria-label="Menü öffnen" aria-expanded="false" aria-controls="nav"><span></span></button>
+    <nav class="nav" id="nav" aria-label="Hauptmenü">
+      <a href="#neu">Neu</a>
+      <a href="#mithelfen">Mithelfen</a>
+      <a href="#video" class="weg">Video</a>
+      <a href="#bosse">Bosse</a>
+      <a href="#soulscave">Souls Cave</a>
+      <a href="#funktionen" class="weg">Was ist neu</a>
+      <a href="#anleitung">So spielst du</a>
+      <a href="#versionen">Versionen</a>
+      <a href="#faq">FAQ</a>
+      <a href="#forum" class="weg">Forum</a>
+    </nav>
+    <a class="knopf klein" href="https://github.com/NumDog/souls-of-evermore/releases/download/v424-beta/Souls-of-Evermore-v424-beta.bps" download>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11m0 0-4.5-4.5M12 15l4.5-4.5M5 20h14"/></svg>Download
+    </a>
+  </div>
+</header>
+
+<div id="top"></div>
+<header class="held">
+  <div>
+    <p class="oben rein">Fan-Mod · Secret of Evermore (DE)</p>
+    <h1 class="rein" style="--v:.08s"><span class="g">Evermore.</span><br>Jetzt mit <span class="r">Seelen.</span></h1>
+    <p class="lead rein" style="--v:.16s">Eine Fan-Mod für die deutsche SNES-Version von <i>Secret of Evermore</i> – <b>härter, zufälliger</b>, mit <b>Dark-Souls-Tod</b>, <b>New Game+</b> und einem eigenen Zufalls-Dungeon mit 99 Untergeschossen.</p>
+    <div class="knoepfe rein" style="--v:.24s">
+      <a class="knopf" href="https://github.com/NumDog/souls-of-evermore/releases/download/v424-beta/Souls-of-Evermore-v424-beta.bps" download>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11m0 0-4.5-4.5M12 15l4.5-4.5M5 20h14"/></svg>Patch herunterladen (v424 Beta)
+      </a>
+      <a class="knopf geist" href="#anleitung">So spielst du</a>
+    </div>
+    <p class="hinweis rein" style="--v:.28s">Nur der Patch – du brauchst deine eigene, legal erworbene deutsche ROM. · <a href="https://github.com/NumDog/souls-of-evermore/releases" target="_blank" rel="noopener">Alle Releases</a></p>
+    <div class="chips rein" style="--v:.32s">
+      <span class="chip"><i>◆</i> Schwierigkeit bis Albtraum x10</span>
+      <span class="chip"><i>↻</i> New Game+ bis +99</span>
+      <span class="chip"><i>▼</i> Souls Cave · 99 Untergeschosse</span>
+      <span class="chip"><i>✚</i> Tod wie in Dark Souls</span>
+      <span class="chip"><i>₿</i> Börse: Bitcoin, Gold &amp; Silber</span>
+    </div>
+  </div>
+
+  <div class="schirm rein" style="--v:.2s">
+    <div class="schirm-rahmen" id="schirm">
+      <div class="schirm-bild"><img class="pix" src="img/titel.png" alt="Titelbild: SOULS of EVERMORE – Remake 2026" width="768" height="672"></div>
+      <span class="schirm-led" aria-hidden="true"></span>
+    </div>
+    <div class="protokoll" aria-hidden="true">
+      <div class="protokoll-spur">
+        <div>&gt; Schwierigkeit: <em>Albtraum x10</em></div>
+        <div>&gt; <u>USDT</u> und <u>EP</u> bleiben hier!</div>
+        <div>&gt; Tarantelaxt <u>+2</u></div>
+        <div>&gt; Untergeschoss <em>42</em> erreicht</div>
+        <div>&gt; <em>Goldener Vulgor</em> besiegt – Waffen-Orb</div>
+        <div>&gt; Höllenfaust<u>+1</u> L6</div>
+        <div>&gt; Boss-Seele: <em>Lavarex</em></div>
+        <div>&gt; BTC <u>113 $</u> · Gold <u>1469</u> · Silber <u>23,9</u></div>
+        <div>&gt; Laserschwert <u>+15</u> · New Game <em>+1</em></div>
+        <div>&gt; Schwierigkeit: <em>Albtraum x10</em></div>
+        <div>&gt; <u>USDT</u> und <u>EP</u> bleiben hier!</div>
+        <div>&gt; Tarantelaxt <u>+2</u></div>
+        <div>&gt; Untergeschoss <em>42</em> erreicht</div>
+        <div>&gt; <em>Goldener Vulgor</em> besiegt – Waffen-Orb</div>
+        <div>&gt; Höllenfaust<u>+1</u> L6</div>
+        <div>&gt; Boss-Seele: <em>Lavarex</em></div>
+        <div>&gt; BTC <u>113 $</u> · Gold <u>1469</u> · Silber <u>23,9</u></div>
+        <div>&gt; Laserschwert <u>+15</u> · New Game <em>+1</em></div>
+      </div>
+    </div>
+    <p class="unterschrift">Echtes Titelbild aus der Mod</p>
+  </div>
+</header>
+
+<div class="zahlen">
+  <div class="zahlen-in">
+    <div class="zahl rein"><b data-bis="99">99</b><span>Untergeschosse in der Souls Cave</span></div>
+    <div class="zahl rein" style="--v:.08s"><b data-bis="10" data-vor="x">x10</b><span>Albtraum-Schwierigkeit</span></div>
+    <div class="zahl rein" style="--v:.16s"><b data-bis="99" data-vor="+">+99</b><span>Waffen, Formeln &amp; New Game+</span></div>
+    <div class="zahl rein" style="--v:.24s"><b data-bis="999">999</b><span>Level-Grenze statt 99</span></div>
+  </div>
+</div>
+
+<main>
+
+<section id="neu">
+  <div class="kopfzeile rein">
+    <p class="oben">Neu</p>
+    <h2><span class="g">Neue Story.</span> <span class="r">Neue Börse.</span></h2>
+    <p>Die Souls Cave wächst: eine neue Geschichte bis ins 99.&nbsp;Untergeschoss, ein Boss, der nicht totzukriegen ist, Warp-Items und ein eigenes Tauschsystem mit Bitcoin, Gold und Silber.</p>
+  </div>
+  <div class="gross">
+    <article class="karte leucht rein">
+      <div class="bildfeld doppel">
+        <img src="img/story_katze.jpg" alt="Die Katze sitzt auf dem Brunnen: „Nicht schon wieder! Bulldog, friss bloß die Katze nicht!“" width="790" height="608" loading="lazy">
+        <img src="img/story_tochter.jpg" alt="Auf dem Schachbrett in Untergeschoss 1: „Rette das Dschungeldorf!“" width="849" height="655" loading="lazy">
+      </div>
+      <div><p class="marke-klein">Neue Story</p><h3>Befreie Feuerauges Tochter</h3>
+        <p>Eine neue Geschichte beginnt auf dem Schachbrett der Souls Cave: Befreie die Tochter von Feuerauge. Kämpfe dich durch bis ins <b>99. Untergeschoss</b> – dort wartet ein <b>uraltes Raumschiff</b> mit einer neuen Story auf euch.</p></div>
+    </article>
+    <article class="karte leucht rein">
+      <div class="bildfeld doppel">
+        <img src="img/raptor_boss.jpg" alt="Raptor+1 im Dschungel – der neue Raptor-Boss" width="848" height="652" loading="lazy">
+        <img src="img/raptor_hundekuchen.jpg" alt="Raptor-Belohnung: Hundekuchen +1!" width="841" height="645" loading="lazy">
+      </div>
+      <div><p class="marke-klein">Jahreszeiten</p><h3>Der Raptor, der immer wiederkommt</h3>
+        <p>Ein neuer <b>Raptor-Boss</b>, der sich unendlich wiederbelebt und dabei jedes Mal stärker wird. Als Beute lässt er zufällig <b>Hundekuchen, Honig, Nektar und Blätter-Upgrades</b> fallen – damit verstärkst du deine Items.</p></div>
+    </article>
+    <article class="karte leucht rein">
+      <div class="bildfeld doppel">
+        <img src="img/boerse_chart.jpg" alt="Bitcoin-Kurs im Spiel, Zeitraum 07.2012 bis 05.2013" width="842" height="558" loading="lazy">
+        <img src="img/boerse_haendler.jpg" alt="Händler-Menü mit dem neuen Punkt „Börse“" width="846" height="447" loading="lazy">
+      </div>
+      <div><p class="marke-klein">Neues Tauschsystem</p><h3>Die Börse: Bitcoin, Gold, Silber</h3>
+        <p>Investiere in <b>Bitcoin, Gold oder Silber</b> und handle mit <b>USDT</b> – direkt beim Händler unter „Börse“. Behalte die Kurse im Auge, denn die Zeit läuft immer weiter: <b>1 Minute Spielzeit = 1 Stunde</b>, jeder Monster-Kill = 1 Stunde, jeder Boss-Kill = 1 Stunde. Mit jeder Stunde ändern sich die Kurse.</p></div>
+    </article>
+    <article class="karte leucht rein">
+      <div class="bildfeld"><img src="img/warp_ring.jpg" alt="Warp-Ring mit Symbolen für die Gebiete" width="796" height="676" loading="lazy"></div>
+      <div><p class="marke-klein">Warp-Ring</p><h3>Warp-Items zum Verdienen</h3>
+        <p>Im neuen Story-Dungeon verdienst du dir <b>Warp-Items</b>. Sie landen im Ring – jedes mit eigenem Symbol – und bringen dich schnell in die Gebiete der Welt.</p></div>
+    </article>
+    <article class="karte leucht rein">
+      <div class="bildfeld"><img src="img/items_beschreibung.jpg" alt="Gegenstände-Menü: Schleifstab – Schwerter +10 %. Je +1: nochmal +10 %." width="847" height="650" loading="lazy"></div>
+      <div><p class="marke-klein">Gegenstände</p><h3>Jedes Item erklärt</h3>
+        <p>Im Beutel steht jetzt bei jedem Gegenstand, was er wirklich macht – z. B. Schleifstab: „Schwerter +10 %. Je +1: nochmal +10 %.“ <b>Upgrades für Talismane</b> findest du jetzt im neuen Dungeon.</p></div>
+    </article>
+    <article class="karte leucht rein">
+      <div class="bildfeld doppel">
+        <img src="img/hp_leiste.jpg" alt="Lebensleiste oben: Raptor+1 mit 35/120 KP" width="851" height="652" loading="lazy">
+        <img src="img/karte_start.jpg" alt="Karte des Raums mit eigener Position, Gegnern, NPCs, Truhen und Türen" width="840" height="647" loading="lazy">
+      </div>
+      <div><p class="marke-klein">Überblick</p><h3>Monster-HP-Leiste &amp; Karte mit Start</h3>
+        <p>Oben siehst du immer die <b>Lebensleiste</b> des zuletzt getroffenen Gegners – mit Namen, Stufe und KP. Mit <b>Start</b> öffnest du eine <b>Karte</b> des Raums. Sie zeigt deine <b>eigene Position</b>, die <b>Gegner</b>, <b>NPCs</b>, <b>Truhen</b> und <b>Türen</b> – so weißt du immer, wo du bist und was noch wartet.</p></div>
+    </article>
+  </div>
+</section>
+
+<section id="mithelfen">
+  <div class="aufruf rein">
+    <p class="oben"><span class="puls" aria-hidden="true"></span> Tester gesucht</p>
+    <h2><span class="g">Spiel es.</span> <span class="r">Brich es.</span> Hilf mit.</h2>
+    <p>Souls of Evermore ist noch in der Beta – und wird mit jeder Rückmeldung besser. Spiel die aktuelle Version, such nach Fehlern und erzähl, was dir gefällt oder fehlt. Jeder gefundene Fehler und jede Idee hilft, das Spiel weiterzuentwickeln.</p>
+    <div class="aufruf-schritte">
+      <div><i>01</i><b>Spielen</b><span>Patch herunterladen, auf deine deutsche ROM anwenden und los – am besten auch mal in der Souls Cave und an der Börse.</span></div>
+      <div><i>02</i><b>Fehler melden</b><span>Hängt etwas, stimmt ein Wert nicht oder klingt etwas komisch? Schreib kurz, wo es passiert ist – am besten mit Screenshot und Spielstand.</span></div>
+      <div><i>03</i><b>Ideen einbringen</b><span>Neue Bosse, Items, Story oder Balance: Im Forum sammeln wir Vorschläge für die nächsten Versionen.</span></div>
+    </div>
+    <div class="knoepfe">
+      <a class="knopf" href="https://github.com/NumDog/souls-of-evermore/discussions" target="_blank" rel="noopener">Fehler im Forum melden</a>
+      <a class="knopf geist" href="mailto:numdoks@gmail.com?subject=Souls%20of%20Evermore%20%E2%80%93%20Fehler">Per E-Mail melden</a>
+      <a class="knopf geist" href="https://github.com/NumDog/souls-of-evermore/discussions/new?category=ideas" target="_blank" rel="noopener">Idee einreichen</a>
+    </div>
+  </div>
+</section>
+
+<section id="video">
+  <div class="kopfzeile rein">
+    <p class="oben">Video</p>
+    <h2><span class="g">Sieh selbst,</span> <span class="r">wie es brennt.</span></h2>
+  </div>
+  <div class="video video-gross rein">
+    <iframe src="https://www.youtube-nocookie.com/embed/Nc-lK3ntQjA" title="Souls of Evermore – Video" loading="lazy"
+      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+  </div>
+  <p class="leise mitte" style="margin-top:16px">Direkt auf YouTube: <a href="https://youtu.be/Nc-lK3ntQjA" target="_blank" rel="noopener">youtu.be/Nc-lK3ntQjA</a></p>
+</section>
+
+<section id="bosse">
+  <div class="kopfzeile rein">
+    <p class="oben">Boss-Remakes</p>
+    <h2><span class="g">Bekannte Bosse.</span> <span class="r">Neue Tricks.</span></h2>
+    <p>Die Bosse kämpfen nicht mehr wie im Original – sie heilen sich, verwirren dich und rufen Verstärkung. Wer gewinnt, bekommt einen <b>Waffen-Orb</b> (ausgerüstete Waffe +1, bis +99).</p>
+  </div>
+  <div class="bosse">
+    <article class="karte leucht rein">
+      <div class="video"><iframe src="https://www.youtube-nocookie.com/embed/XmDFVOErhAE" title="Lavarex – Boss-Remake" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe></div>
+      <div class="inhalt"><p class="ort">im Vulkan</p><h3>Lavarex</h3>
+        <ul class="punkte"><li>Heilt sich bei halben Lebenspunkten voll – Normal 1×, Schwer 2×</li><li>Krafthauch-Kreis, 10 s verdrehte Steuerung und <b>starkes Gift</b></li><li>Zwei zufällige Gegner springen dir zur Seite</li><li>Nach jeder Heilung hält er mehr aus</li></ul></div>
+    </article>
+    <article class="karte leucht rein" style="--v:.1s">
+      <div class="video"><iframe src="https://www.youtube-nocookie.com/embed/dUBcW0qePDs" title="Vigor – Boss-Remake" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe></div>
+      <div class="inhalt"><p class="ort">in der Arena</p><h3>Vigor</h3>
+        <ul class="punkte"><li>Heilt sich wie Lavarex – Normal 1×, Schwer 2×</li><li>Verwirrung und zwei Verstärkungen aus 8 Gegnerarten</li><li>Stirbst du, geht es direkt bei „Der Kampf kann beginnen“ weiter</li></ul></div>
+    </article>
+    <article class="karte leucht rein" style="--v:.2s">
+      <div class="video"><iframe src="https://www.youtube-nocookie.com/embed/vEApjF3-0SU" title="Goldener Vulgor – Boss-Remake" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe></div>
+      <div class="inhalt"><p class="ort">in Vulgors Kammer</p><h3>Goldener Vulgor</h3>
+        <ul class="punkte"><li>Einmal pro Durchgang nach dem ersten Sieg</li><li>Fünfmal so stark, mit Larven und Herzkammer</li><li>Danach: Vulgors Rache – zehn starke Raptoren</li></ul></div>
+    </article>
+  </div>
+</section>
+
+<section id="soulscave">
+  <div class="kopfzeile rein">
+    <p class="oben">Neu: Die Souls Cave</p>
+    <h2><span class="g">99 Untergeschosse.</span> <span class="r">Ein Leben.</span></h2>
+    <p>Ein eigener Zufalls-Dungeon mit 99 Untergeschossen – Eingang am Brunnen. Nimm alles mit hinein und farme Waffen, Orbs, Formeln, Erfahrung und Gold. Die Gegner passen sich deinem Level an und werden mit jedem Stockwerk um 10&nbsp;% stärker.</p>
+  </div>
+  <div class="cave">
+    <div class="karte leucht rein">
+      <ul class="punkte">
+        <li><b>Das Schachbrett ist der Knotenpunkt</b> jedes Stockwerks – ohne Monster. Von dort führen vier Zugänge in zufällig gewürfelte Räume aus dem ganzen Spiel, jedes Mal neu.</li>
+        <li><b>Säubern:</b> Erledige alle Monster eines Raums – dann wirst du zurück zum Schachbrett gebracht und der Zugang wird versiegelt.</li>
+        <li><b>Bosse:</b> Auf jedem 5. Untergeschoss (U5, U10, U15 …) wartet oben ein zufälliger Boss, deutlich stärker als im Spiel. Sieg bringt einen Waffen-Orb.</li>
+        <li><b>Die große Treppe</b> in der Mitte öffnet sich erst, wenn alle Zugänge gesäubert und der Boss besiegt ist.</li>
+        <li><b>Beute:</b> Jedes Monster lässt etwas fallen, selten sogar eine Formel, Waffe, einen Talisman oder eine Rüstung. Truhen, Kürbisse und Schnüffelstellen der Räume sind wieder voll.</li>
+        <li><b>Tod wie in Dark Souls:</b> Stirbst du, ist alles weg, was du in der Höhle gefunden hast – du stehst wieder mit dem Stand vom Betreten am Brunnen. Nur die seltene <b>Gotteshand</b> bringt dich mitsamt Beute heraus.</li>
+      </ul>
+    </div>
+    <div class="rein" style="--v:.12s">
+      <figure>
+        <div class="bildfeld"><img src="img/story_katze.jpg" alt="Der Brunnen mit der Katze – Eingang zur Souls Cave" width="790" height="608" loading="lazy"></div>
+        <figcaption>Der Brunnen: hier geht es hinab in die Souls Cave.</figcaption>
+      </figure>
+    </div>
+    <div class="karte bald rein">
+      <span class="stempel">Geplant – als Nächstes</span>
+      <ul class="punkte gold">
+        <li><b>Ab Untergeschoss 2 nur noch Bosse:</b> Beim Betreten eines Stockwerks werden vier zufällige Bosse fest auf die vier Türen verteilt – neu laden würfelt nichts neu. Jeder Boss gibt zufällig eine Waffe, eine Formel oder einen Talisman (ganz selten sogar die Bazooka). Sind alle vier besiegt, öffnet sich die Treppe.</li>
+        <li><b>Marathon auf Untergeschoss 10:</b> alle Bosse hintereinander in zufälliger Reihenfolge – als Belohnung +1 auf jede Waffe und jede Formel, die du schon hast.</li>
+        <li><b>Untergeschoss 1</b> mit festen Räumen: Dschungeldorf, eine Stadt voller Monster, Nobilia-Markt und der Feuerdrachen-Raum.</li>
+        <li><b>Rüstungen wachsen mit:</b> jedes weitere Exemplar einer Rüstung (gekauft, gefunden oder aus der Story) gibt +1&nbsp;%, bis +999.</li>
+        <li><b>Teleporter neben der Treppe</b>, der in jede Karte beamen kann.</li>
+        <li><b>Story fairer:</b> Im Zufallsgenerator außerhalb der Höhle gibt es keine Waffen, Formeln und Rüstungen mehr – die holst du dir in der Souls Cave.</li>
+        <li><b>Untergeschoss 99:</b> Dort liegt das abgestürzte Raumschiff, von dem Feuerauge erzählt. Wer es erreicht, erlebt das große Finale.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section id="funktionen">
+  <div class="kopfzeile rein">
+    <p class="oben">Was ist neu?</p>
+    <h2><span class="g">Dasselbe Abenteuer.</span> <span class="r">Neue Regeln.</span></h2>
+  </div>
+  <div class="gross">
+    <article class="karte leucht rein">
+      <div class="bildfeld"><img src="img/randomia.jpg" alt="Einstellungsmenü: Gegner Randomia, Schwierigkeit Schwer x1,5, Händler Randomia" width="847" height="648" loading="lazy"></div>
+      <div><p class="marke-klein">Vor dem Start</p><h3>Einstellungen vor dem Start</h3>
+        <p>Gegner original, ähnlich, aus dem Gebiet oder komplettes Chaos – fest oder je Raum neu. Schwierigkeit von <b>Sehr leicht x0,5</b> bis <b>Albtraum x10</b>, Fundsachen und Händler wahlweise zufällig.</p></div>
+    </article>
+    <article class="karte leucht rein">
+      <div class="bildfeld doppel">
+        <img src="img/tod_kreis.jpg" alt="Der blaue Kreis markiert die Todesstelle" width="963" height="719" loading="lazy">
+        <img src="img/tod_zurueckgeholt.jpg" alt="129 USDT und 256 EP zurückgeholt!" width="955" height="622" loading="lazy">
+      </div>
+      <div><p class="marke-klein">Sterben kostet</p><h3>Tod wie bei Dark Souls</h3>
+        <p>Statt Hauptmenü wachst du am Raumeingang auf – aber deine <b>USDT und EP</b> bleiben an der Todesstelle liegen, ein blauer Kreis zeigt sie. Gehst du hin, holst du <b>USDT und EP zurück</b>. Stirbst du vorher noch einmal, ist beides weg!</p></div>
+    </article>
+    <article class="karte leucht rein">
+      <div class="bildfeld"><img class="pix" src="img/gold.png" alt="Goldener Vulgor" width="768" height="672" loading="lazy"></div>
+      <div><p class="marke-klein">Einmal pro Durchgang</p><h3>Der Goldene Vulgor</h3>
+        <p>Nach dem ersten Sieg wartet einmal pro Durchgang ein goldener Vulgor – fünfmal so stark. Wer stirbt, landet vor dem Eingang und versucht es erneut.</p></div>
+    </article>
+    <article class="karte leucht rein">
+      <div class="bildfeld"><img src="img/orb_gold.jpg" alt="Waffen-Orb am goldenen Vulgor" width="768" height="594" loading="lazy"></div>
+      <div><p class="marke-klein">Belohnung</p><h3>Waffen-Orb &amp; Vulgors Rache</h3>
+        <p>Der Sieg bringt einen <b>Waffen-Orb</b>: deine ausgerüstete Waffe wird +1. Danach stürmen zehn starke Raptoren die Arena.</p></div>
+    </article>
+    <article class="karte leucht rein">
+      <div class="bildfeld"><img src="img/ngplus.jpg" alt="New Game +1 im Lade-Menü" width="768" height="587" loading="lazy"></div>
+      <div><p class="marke-klein">Nach dem Abspann</p><h3>New Game+</h3>
+        <p>Nach dem Abspann startest du mit Level, Waffen und Ausrüstung neu – die Gegner werden mit jedem Durchgang stärker, Waffen sammeln +N.</p></div>
+    </article>
+  </div>
+
+  <h3 class="mehr-titel rein"><span class="g">Und noch mehr</span></h3>
+  <div class="mehr-raster">
+    <div class="karte leucht rein"><h4>Waffen +N bis +99</h4><p>Findest du eine Waffe doppelt oder bekommst einen Waffen-Orb, wird sie +1 stärker (je +1 = 50 % mehr Grundkraft) – im Ringmenü steht „+N“ und die echte Kraft. Mit New Game+ geht es weiter bis +99.</p></div>
+    <div class="karte leucht rein" style="--v:.06s"><h4>Talismane mit genauer Beschreibung</h4><p>Im Beutel (Gegenstände) steht jetzt, was jeder Talisman wirklich bringt, z. B. „Angriff +10“ oder „Rüstung +6 %“. Doppelt bekommen (Fund, Tausch, New Game+) gibt +1 – jede Stufe gibt den Bonus nochmal. Die Mythenschärpe gibt jetzt +10 % Erfahrung und Geld, der Schleifstab +10 % Schwertkraft (beide taten im Original nichts).</p></div>
+    <div class="karte leucht rein"><h4>Formeln +N</h4><p>Bekommst du eine Formel doppelt (Fund oder New Game+), wird sie „Hitzeblitz+1“ – je +1 macht sie 25 % stärker (+4 = doppelt), so werden Formeln mit jedem Durchgang stärker. Das Level steigt weiter durch Zaubern; die Zauberleiste zeigt beides, z. B. „Höllenfaust+1 L6“.</p></div>
+    <div class="karte leucht rein" style="--v:.06s"><h4>Startwaffe je Modus</h4><p>Knochenknüppel, Drachentöter oder gleich das Laserschwert – samt Spruch vom Jungen.</p></div>
+    <div class="karte leucht rein"><h4>Zufall</h4><p>Kürbisse, Schnüffelstellen und Händler-Sortiment je nach Einstellung neu gemischt.</p></div>
+    <div class="karte leucht rein" style="--v:.06s"><h4>Belohnung</h4><p>Erfahrung und Geld wachsen mit der Schwierigkeit.</p></div>
+    <div class="karte leucht rein"><h4>Vulgor</h4><p>Doppelt so viele Larven im ersten Kampf.</p></div>
+    <div class="karte leucht rein" style="--v:.06s"><h4>Infoseite</h4><p>Im Einstellungsmenü – mit A rufst du sie auf.</p></div>
+  </div>
+</section>
+
+<section id="anleitung">
+  <div class="kopfzeile rein">
+    <p class="oben">So spielst du</p>
+    <h2><span class="g">In fünf Schritten</span> <span class="r">ins Spiel.</span></h2>
+  </div>
+  <ol class="schritte">
+    <li class="rein">Besorge dir deine eigene <b>deutsche ROM</b> von <i>Secret of Evermore</i> (SNES). Prüfsumme der passenden Datei (ohne Kopfteil): <code>CRC32 27F60E77</code>.</li>
+    <li class="rein">Lade den <a href="https://github.com/NumDog/souls-of-evermore/releases/download/v424-beta/Souls-of-Evermore-v424-beta.bps" download>Patch (BPS)</a> herunter.</li>
+    <li class="rein">Öffne den <a href="https://www.marcrobledo.com/RomPatcher.js/" target="_blank" rel="noopener">Rom Patcher JS</a> im Browser (oder Floating IPS / Flips), wähle deine ROM und den Patch und klicke auf „Patch anwenden“.</li>
+    <li class="rein">Starte die neue ROM in deinem Emulator (z. B. OpenEmu, snes9x, Mesen, RetroArch). Im Titelbild steht dann <b>SOULS of EVERMORE</b>.</li>
+    <li class="rein">Bei „Neues Spiel“ erscheint das Einstellungsmenü: Gegner, Schwierigkeit, Fundsachen und Händler wählen – mit <b>Start</b> geht’s los.</li>
+  </ol>
+</section>
+
+<section id="schwierigkeit">
+  <div class="kopfzeile rein">
+    <p class="oben">Schwierigkeitsstufen</p>
+    <h2><span class="g">Von Sehr leicht</span> <span class="r">bis Albtraum.</span></h2>
+  </div>
+  <div class="tabelle rein">
+    <table>
+      <thead><tr><th>Stufe</th><th>Gegner (Leben &amp; Angriff)</th><th>Erfahrung &amp; Geld</th></tr></thead>
+      <tbody>
+        <tr><td><span class="stufe" style="background:#60a5fa"></span>Sehr leicht</td><td>x0,5</td><td>x0,5</td></tr>
+        <tr><td><span class="stufe" style="background:#22d3ee"></span>Leicht</td><td>x0,75</td><td>x0,75</td></tr>
+        <tr><td><span class="stufe" style="background:#4ade80"></span>Normal</td><td>wie im Original</td><td>wie im Original</td></tr>
+        <tr><td><span class="stufe" style="background:#facc15"></span>Schwer</td><td>x1,5</td><td>x1,5</td></tr>
+        <tr><td><span class="stufe" style="background:#f2b233"></span>Sehr schwer</td><td>x2</td><td>x2</td></tr>
+        <tr><td><span class="stufe" style="background:#fb7a1a"></span>Extrem</td><td>x3</td><td>x3</td></tr>
+        <tr><td><span class="stufe" style="background:#ff1a26"></span>Wahnsinn</td><td>x5</td><td>x5</td></tr>
+        <tr><td><span class="stufe" style="background:#9b0010;box-shadow:0 0 10px #ff1a26"></span>Albtraum</td><td>x10</td><td>x10</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section id="galerie">
+  <div class="kopfzeile rein">
+    <p class="oben">Aus dem Spiel</p>
+    <h2><span class="g">Bilder</span> <span class="r">aus der Mod.</span></h2>
+  </div>
+  <div class="galerie">
+    <figure class="rein"><div class="bildfeld"><img src="img/jedi1.jpg" alt="" loading="lazy"></div><figcaption>Schwer gewählt? Dann bringt der Hund das Laserschwert …</figcaption></figure>
+    <figure class="rein" style="--v:.06s"><div class="bildfeld"><img src="img/jedi2.jpg" alt="" loading="lazy"></div><figcaption>„Verdammt, wir haben SCHWER eingestellt!“</figcaption></figure>
+    <figure class="rein" style="--v:.12s"><div class="bildfeld"><img src="img/jedi3.jpg" alt="" loading="lazy"></div><figcaption>„Ab jetzt bin ich ein Jedi und du bist mein haariger Kumpel!“</figcaption></figure>
+    <figure class="rein"><div class="bildfeld"><img src="img/chaos.jpg" alt="" loading="lazy"></div><figcaption>Chaos-Modus: fremde Gegner in jedem Raum</figcaption></figure>
+    <figure class="rein" style="--v:.12s"><div class="bildfeld"><img src="img/raptoren.jpg" alt="" loading="lazy"></div><figcaption>Vulgors Rache: zehn Raptoren</figcaption></figure>
+    <figure class="rein"><div class="bildfeld"><img src="img/tarantel.jpg" alt="" loading="lazy"></div><figcaption>Waffen sammeln +N – Tarantelaxt +2</figcaption></figure>
+    <figure class="rein" style="--v:.06s"><div class="bildfeld"><img src="img/laser15.jpg" alt="" loading="lazy"></div><figcaption>… bis zum Laserschwert +15 im New Game+</figcaption></figure>
+  </div>
+</section>
+
+<section id="forum">
+  <div class="zwei-spalten">
+    <div class="karte leucht forum rein">
+      <p class="oben">Ideen &amp; Forum</p>
+      <h3><span class="g">Deine Idee</span> für die nächste Version?</h3>
+      <p>Du hast eine Idee für die nächste Version, einen Fehler gefunden oder willst einfach von deinem Albtraum-Durchgang erzählen? Im Forum sammeln wir Ideen und beantworten Fragen.</p>
+      <div class="knoepfe">
+        <a class="knopf" href="https://github.com/NumDog/souls-of-evermore/discussions" target="_blank" rel="noopener">Zum Forum (GitHub Discussions)</a>
+        <a class="knopf geist" href="https://github.com/NumDog/souls-of-evermore/discussions/new?category=ideas" target="_blank" rel="noopener">Neue Idee einreichen</a>
+      </div>
+      <p class="leise">Zum Schreiben brauchst du ein kostenloses GitHub-Konto.</p>
+    </div>
+    <div class="karte leucht forum rein" id="kontakt" style="--v:.1s">
+      <p class="oben">Kontakt</p>
+      <h3><span class="r">Fehler</span> gefunden?</h3>
+      <p>Souls of Evermore ist ein Hobby-Projekt von <b>Max Gisbrecht</b>. Fehler gefunden? Schreib mir an <a href="mailto:numdoks@gmail.com">numdoks@gmail.com</a> – am besten mit Screenshot und Spielstand – oder poste es im <a href="#forum">Forum</a>.</p>
+    </div>
+  </div>
+</section>
+
+<section id="faq">
+  <div class="kopfzeile rein">
+    <p class="oben">Häufige Fragen</p>
+    <h2><span class="g">Fragen?</span> <span class="r">Antworten.</span></h2>
+  </div>
+  <div class="faq">
+    <details class="rein"><summary>Welche ROM brauche ich?</summary><p>Die <b>deutsche</b> SNES-Version von <i>Secret of Evermore</i>, ohne Änderungen. Die passende Datei hat (ohne 512-Byte-Kopfteil) die Prüfsumme <code>CRC32 27F60E77</code>. Der Patch funktioniert nicht mit der englischen oder französischen Version.</p></details>
+    <details class="rein"><summary>Wo bekomme ich die ROM?</summary><p>ROMs werden hier nicht verteilt. Erstelle eine Sicherungskopie deines eigenen Moduls (z. B. mit einem Retrode oder ähnlichem Gerät).</p></details>
+    <details class="rein"><summary>Funktioniert das auf echter Hardware?</summary><p>Getestet ist die Mod in Emulatoren (OpenEmu/snes9x, Mesen). Die ROM wird auf 4 MB erweitert – auf echter Hardware brauchst du ein Flash-Modul, das 4-MB-HiROM unterstützt (z. B. SD2SNES/FXPak). Ungetestet.</p></details>
+    <details class="rein"><summary>Kann ich meine alten Spielstände weiterverwenden?</summary><p>Spielstände aus dem Original lassen sich laden, die Mod-Einstellungen (Schwierigkeit, Zufall …) wählst du aber nur beim Start eines neuen Spiels. Für das volle Erlebnis lieber neu beginnen.</p></details>
+    <details class="rein"><summary>Wie funktioniert New Game+?</summary><p>Spiel das Spiel bis zum Ende und schau dir den Abspann komplett bis zum „ENDE“-Bildschirm an – erst dann wird dein New-Game+-Stand gespeichert. Danach das Spiel neu starten und im Lade-Menü <b>„New Game +1“</b> auswählen: du beginnst mit Level, Waffen und Ausrüstung von vorn, die Gegner sind stärker. Jeder weitere Durchgang erhöht die Stufe (+2, +3 …).</p></details>
+    <details class="rein"><summary>Was passiert, wenn ich sterbe?</summary><p>Du wachst am Eingang des Raumes auf, in Bossräumen vor dem Boss-Eingang. Deine USDT und EP bleiben an der Todesstelle liegen (blauer Kreis) – lauf hin, um sie zurückzuholen. Stirbst du vorher noch einmal, sind sie weg.</p></details>
+    <details class="rein"><summary>Ich habe einen Fehler gefunden!</summary><p>Super – bitte im <a href="#forum">Forum</a> melden oder per E-Mail, am besten mit Screenshot und Spielstand.</p></details>
+  </div>
+</section>
+
+<section id="versionen">
+  <div class="kopfzeile rein">
+    <p class="oben">Versionen</p>
+    <h2><span class="g">Was sich</span> <span class="r">geändert hat.</span></h2>
+  </div>
+  <div class="zeitleiste">
+    <div class="version neu rein">
+      <h3>v424 Beta <span class="marker">aktuell</span></h3>
+      <ul><li><b>Neue Story</b>: Befreie Feuerauges Tochter – bis ins 99. Untergeschoss, wo ein uraltes Raumschiff wartet</li><li><b>Raptor-Boss</b>, der sich unendlich wiederbelebt und stärker wird – Beute: Hundekuchen, Honig, Nektar und Blätter-Upgrades</li><li><b>Börse</b>: Bitcoin, Gold und Silber mit USDT handeln, die Zeit läuft mit (1 Minute, jeder Kill, jeder Boss = 1 Stunde)</li><li><b>Warp-Items</b> zum Verdienen, <b>Talisman-Upgrades</b> im neuen Dungeon, jedes Item mit Beschreibung</li><li><b>Monster-HP-Leiste</b> und <b>Karte mit Start</b> (eigene Position, Gegner, NPCs, Truhen, Türen)</li><li>Tod: <b>USDT und EP</b> bleiben an der Todesstelle, Randomia-Modi im Einstellungsmenü, EP und Geld wachsen mit der Gesamtstärke der Gegner</li></ul>
+      <p style="margin:16px 0 0"><a class="knopf klein" href="https://github.com/NumDog/souls-of-evermore/releases/download/v424-beta/Souls-of-Evermore-v424-beta.bps" download>v424 herunterladen</a></p>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <p><i>Secret of Evermore</i> © 1995 Square / Square Enix. Dies ist ein nicht-kommerzielles Fan-Projekt ohne Verbindung zu Square Enix oder Nintendo.<br>
+  Es wird keine ROM verteilt – nur ein Patch für deine eigene Kopie.</p>
+</footer>
+
+<div class="leinwand" id="leinwand" role="dialog" aria-modal="true" aria-label="Bild groß"><div><img alt=""><p></p></div></div>
+
+<script>
+(() => {
+  const ruhig = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // Menü am Handy
+  const kopf = document.getElementById('kopf'), mk = document.getElementById('menueKnopf');
+  mk.addEventListener('click', () => { const auf = kopf.classList.toggle('offen'); mk.setAttribute('aria-expanded', auf); });
+  document.querySelectorAll('#nav a').forEach(a => a.addEventListener('click', () => { kopf.classList.remove('offen'); mk.setAttribute('aria-expanded', 'false'); }));
+
+  // Einblenden beim Scrollen + Zahlen hochzählen
+  const zaehle = el => {
+    const bis = +el.dataset.bis, vor = el.dataset.vor || '', t0 = performance.now(), d = 1400;
+    const schritt = t => { const p = Math.min(1, (t - t0) / d), e = 1 - Math.pow(1 - p, 3);
+      el.textContent = vor + Math.round(bis * e); if (p < 1) requestAnimationFrame(schritt); };
+    requestAnimationFrame(schritt);
+  };
+  if ('IntersectionObserver' in window && !ruhig) {
+    const io = new IntersectionObserver(es => es.forEach(e => {
+      if (!e.isIntersecting) return;
+      e.target.classList.add('da');
+      e.target.querySelectorAll('[data-bis]').forEach(zaehle);
+      io.unobserve(e.target);
+    }), { rootMargin: '0px 0px -8% 0px', threshold: .08 });
+    document.querySelectorAll('.rein').forEach(el => io.observe(el));
+  } else document.querySelectorAll('.rein').forEach(el => el.classList.add('da'));
+
+  // Aktiver Menüpunkt
+  const links = [...document.querySelectorAll('#nav a')];
+  const ziele = links.map(a => document.querySelector(a.getAttribute('href'))).filter(Boolean);
+  const markiere = () => {
+    const y = scrollY + innerHeight * .3; let akt = null;
+    ziele.forEach(z => { if (z.getBoundingClientRect().top + scrollY <= y) akt = z.id; });
+    links.forEach(a => a.classList.toggle('aktiv', a.getAttribute('href') === '#' + akt));
+  };
+  addEventListener('scroll', markiere, { passive: true }); markiere();
+
+  // Lichtkegel auf Karten
+  document.querySelectorAll('.leucht').forEach(k => k.addEventListener('pointermove', e => {
+    const r = k.getBoundingClientRect();
+    k.style.setProperty('--mx', (e.clientX - r.left) + 'px'); k.style.setProperty('--my', (e.clientY - r.top) + 'px');
+  }));
+
+  // Titelbild kippt mit der Maus
+  const schirm = document.getElementById('schirm');
+  if (!ruhig && matchMedia('(hover: hover)').matches) {
+    schirm.parentElement.addEventListener('pointermove', e => {
+      const r = schirm.getBoundingClientRect(), px = (e.clientX - r.left) / r.width - .5, py = (e.clientY - r.top) / r.height - .5;
+      schirm.style.transform = `rotateY(${px * 10}deg) rotateX(${-py * 8}deg)`;
+    });
+    schirm.parentElement.addEventListener('pointerleave', () => schirm.style.transform = '');
+  }
+
+  // Galerie groß ansehen
+  const lw = document.getElementById('leinwand'), lwImg = lw.querySelector('img'), lwTxt = lw.querySelector('p');
+  document.querySelectorAll('.galerie figure').forEach(f => f.addEventListener('click', () => {
+    const img = f.querySelector('img'); lwImg.src = img.src; lwImg.className = img.className;
+    lwTxt.textContent = f.querySelector('figcaption').textContent; lw.classList.add('auf');
+  }));
+  const zu = () => lw.classList.remove('auf');
+  lw.addEventListener('click', zu); addEventListener('keydown', e => { if (e.key === 'Escape') zu(); });
+
+  // Glut: aufsteigende Funken wie am Leuchtfeuer
+  const c = document.getElementById('glut');
+  if (ruhig || !c.getContext) return;
+  const ctx = c.getContext('2d'); let w, h, dpr;
+  const groesse = () => { dpr = Math.min(devicePixelRatio || 1, 2); w = c.width = innerWidth * dpr; h = c.height = innerHeight * dpr; };
+  groesse(); addEventListener('resize', groesse);
+  const neu = unten => ({ x: Math.random() * w, y: unten ? h + Math.random() * 40 * dpr : Math.random() * h,
+    r: (Math.random() * 1.6 + .6) * dpr, v: (Math.random() * .5 + .25) * dpr, p: Math.random() * 6.28,
+    gold: Math.random() < .45, a: Math.random() * .5 + .35 });
+  const funken = Array.from({ length: Math.round(Math.min(70, innerWidth / 22)) }, () => neu(false));
+  const male = () => {
+    if (!document.hidden) {
+      ctx.clearRect(0, 0, w, h); ctx.globalCompositeOperation = 'lighter';
+      for (const f of funken) {
+        f.y -= f.v; f.p += .02; f.x += Math.sin(f.p) * .35 * dpr;
+        const blink = f.a * (.6 + .4 * Math.sin(f.p * 3));
+        const g = ctx.createRadialGradient(f.x, f.y, 0, f.x, f.y, f.r * 4);
+        g.addColorStop(0, f.gold ? `rgba(255,212,121,${blink})` : `rgba(255,60,40,${blink})`); g.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = g; ctx.beginPath(); ctx.arc(f.x, f.y, f.r * 4, 0, 6.28); ctx.fill();
+        if (f.y < -20) Object.assign(f, neu(true));
+      }
+    }
+    requestAnimationFrame(male);
+  };
+  male();
+})();
+</script>
+</body>
+</html>

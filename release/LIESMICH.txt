@@ -1,0 +1,102 @@
+Souls of Evermore – Mod für Secret of Evermore (deutsch)  (Beta, Stand v424)
+=====================================================================
+
+Ein Patch für die DEUTSCHE Version von Secret of Evermore (SNES).
+Die ROM ist NICHT enthalten. Du brauchst deine eigene, legal erstellte Kopie.
+
+Passende ROM
+------------
+- Secret of Evermore (Deutschland), ohne 512-Byte-Header
+- CRC32: 27F60E77
+- Mit Header (.smc mit 512 Byte mehr) vorher den Header entfernen.
+  ROM Patcher JS (https://www.marcrobledo.com/RomPatcher.js/) kann das automatisch.
+
+Patch anwenden
+--------------
+1. ROM Patcher JS im Browser öffnen (oder Floating IPS / "Flips").
+2. Deine ROM und die Datei Souls-of-Evermore-v424-beta.bps auswählen.
+3. "Apply patch" – fertig. Ergebnis: 4 MB ROM, läuft z. B. in OpenEmu, snes9x, bsnes, Mesen.
+
+Was ist neu?
+------------
+Einstellungsmenü nach "Neues Spiel":
+- Gegner: Original / Ähnlich / Gebiet / Chaos, jeweils fest oder "je Raum neu"
+- Schwierigkeit: Sehr leicht x0,5 (Start mit Laserschwert, Atomaxt, Laserlanze, Bazooka + Munition) / Leicht x0,75 / Normal (Original) / Schwer x1,5 / Sehr schwer x2 / Extrem x3 / Wahnsinn x5 / Albtraum x10
+  (Lebenspunkte und Angriff der Gegner; Erfahrung und Geld wachsen im selben Maß mit)
+- Fundsachen: Original oder Zufall (fest pro Durchgang / immer neu)
+- Händler: Original oder Zufall mit Original-Preisen, ohne doppelte Waren
+- Treffer-Info: an/aus (Name, KP, Erfahrung, Geld des getroffenen Gegners über der Lebensleiste; B schaltet, A zeigt die Infoseiten)
+
+New Game+:
+- Nach dem Abspann ("ENDE") geht es mit Level, Ausrüstung und Formeln weiter: "New Game +N"
+- Gegner pro Zyklus stärker (NG+1 x3, NG+2 x4 ... bis x10) plus Level-Bonus
+- Story-Gegenstände (Bronze-Axt, Bronze-Speer, Telekinese, Enthüller, Matschpfeffer) kommen neu
+
+Waffen und Formeln:
+- Waffe doppelt geschenkt/gefunden = "+1" (jeweils +50 % Kraft, bis +15), im Ring-Menü mit echter Kraft sichtbar
+- Formel doppelt gelernt = Stufe +1
+- Startwaffe je nach Einstellung: Knochenknüppel, Drachentöter oder Laserschwert
+  (auf Schwer mit kleinem Spruch des Jungen)
+
+Zufall:
+- Sonderfunde (Rüstung, Waffe, Formel): Chaos 100 % -> -10 % pro Fund, Gebiet 50 % -> -5 %,
+  Ähnlich 5 %, Original auf Schwer 5 %; ab Extrem (x3) in allen Modi 100 % -> -5 % pro Fund
+- Waffen aus dem Zufall gibt es pro Durchgang nur einmal, mit Meldung "<Waffe> erhalten!"
+- Zauberperlen- und Matschpfeffer-Fundstellen bleiben original (Story)
+
+Souls Cave (Eingang am Brunnen, neu in v146):
+- Alle Bosse im Zufall (11 Kämpfe) mit Boss-Musik; schwache Boss-Gegner mindestens 2000 KP
+- Verwandelnde Städte: Dschungeldorf, Nobilia, Chaosturm, eigene Stadt - alle Menschen werden Monster, Häuser betretbar
+- Goldener Vulgor immer da, +100 % je Sieg, Gift/Heilung nach Säureregen, Verwirrung nach Wegschubsen
+- Gegner-Info (Name, KP, EP, Geld, Anzahl) bei jedem Treffer; Speichern in der Cave gesperrt
+- Neu in v424: neue Story (Feuerauges Tochter befreien, Raumschiff in Untergeschoss 99), Raptor-Boss der sich
+  wiederbelebt (Beute: Hundekuchen, Honig, Nektar, Blaetter-Upgrades), Boerse mit Bitcoin/Gold/Silber und USDT,
+  Warp-Items, Talisman-Upgrades, Item-Beschreibungen, Monster-HP-Leiste, Karte mit Start, Tod: USDT und EP bleiben liegen.
+- Neu in v193: HP-Leiste für Gegner oben (roter Balken, Name), Boss-Seelen (Bosse mit Stufe +N wieder spielen),
+  Laden in der Cave wieder offen, Abspann hängt nicht mehr an der Brunnen-Katze, Waffen +25 % je Plus
+- Neu in v184: Cave-Aufbau - Untergeschoss 1 mit festen Städten (links Dschungeldorf, rechts Nobilia, oben Chaosturm) und unten
+  dem Feuerdrachen (Sieg bei halben KP); ab Untergeschoss 2 drei zufällige Boss-Türen; 3 von 4 Türen öffnen die Treppe,
+  alle 4 geben einen Gebiets-Warp; Marathon in Untergeschoss 10, 20, ...
+  Warp-Ring: Endbosskristall, Gebiets-Warps (Piratendorf, Chaosturm, Piratenschiff, Wüstenstadt, Raumstation, Feuerdrache,
+  Dschungeldorf, Nobilia) und Warp auf das tiefste Untergeschoss, mit eigenen Symbolen; Hilfen "Schritt vor" (bei Steckenbleiben)
+  und "Ton reparieren" (lädt die Musik neu)
+  Gegner in der Cave: feste Stärke je Untergeschoss (Start Level 15), unabhängig vom eigenen Level, jede Art mit eigenem Faktor
+  (x0,5 bis x2); EP und Geld wachsen mit (Bosse x8)
+  Waffen und Rüstungen +10 % je Plus (bis +99); Rüstungshändler verkaufen auch Waffen (5000 bis 40000, Kauf gibt +1);
+  Rüstungen zeigen ihre Abwehr im Laden; Startwaffe je Schwierigkeit (Normal Drachentöter, ab Schwer Laserschwert)
+  Farbige Fund-Meldungen (Waffe blau, Zauber lila, Talisman gold, Rüstung grün); Musik je Karte; Bazooka-Ton wieder an
+  Goldener Vulgor: die Brücke bricht sofort; Geldwechsel in der Cave 1:1; Figuren und Stände in der Cave nicht ansprechbar
+- Neu in v169: Die Katze aus dem Intro sitzt am Brunnen (Höhlendorf, Dschungeldorf) und miaut, der Hund springt ihr nach;
+  unten erzählt Feuerauge ihre Geschichte (Text unten wie im Intro); Untergeschoss 1: links Dschungeldorf, rechts Stadt, oben Nobilia-Markt
+- Neu in v168: Cave-Eingang neu - in den Brunnen hineinlaufen (B entfällt), Junge und Hund versinken, Wasserfall-Sturz,
+  Aufprall auf dem Schachbrett; beim ersten Besuch springt zuerst der Hund in den Brunnen; Feuerauge erklärt die Cave
+  (Geschichte vom Raumschiff in Untergeschoss 99); Fix: Dialogfenster schließen sauber
+- Neu in v164: rote Schleuse (Omnitopia) als Händler-Teleporter mit Öffnen und Hineinsinken; Endbosskristall -> Station vor dem Endboss;
+  Fix Item-Meldungen außerhalb der Cave
+- Neu in v158: Endbosskristall nach dem Marathon (außerhalb der Cave: Warp zur Omnitopia-Station vor den Endboss);
+  Rüstung +1 % je weiterem Exemplar (max. doppelt); Orakelknochen = Händler -5 % je Stufe (max 50 %); KP-Anzeige aktuell/max; Gotteshand 1/100
+- Neu in v154: Boss-Marathon auf U5/U10/... (alle Bosse zufällig, danach alle Waffen/Talismane/Formeln +1; Tod nach einem Boss -> Schachbrett)
+- Boss-Orb = alle Waffen +1; Beute ohne Bücken, jeder 4. Gegner; Talisman-/Formel-/Waffen-Funde geben +1, wenn schon vorhanden
+- Treppe optisch zu bis alle 4 Räume erledigt; Flügel = 100000 Schaden; Cave-Erfahrung x2 statt 50 x Level
+- Neu in v147: je Untergeschoss 4 Räume -> Treppe -> Boss; Raum erst nach dem Säubern verlassbar
+- Händler-Teleporter auf dem Schachbrett; Flügel in der Cave = Notausgang (Tod, raus am Brunnen)
+- Eigene Musik je Raum, Hund passend zur Epoche, stärkere Gegner (KP 20x Level), keine Moskitos/Ratten
+- Axt-Räume ab Bronze-Axt, Speer-Raum ab Bronze-Speer; zwei Baumdrachen; Minitaurus mit starkem Raptor
+
+Sonstiges:
+- Kein Game Over mehr (alle Einstellungen). Der Junge wacht mit vollen LP am Eingang des Raums wieder auf (in Bossräumen an Ort und Stelle),
+  sein Geld bleibt an der Todesstelle liegen; dort hinlaufen holt es zurück (stirbt man vorher erneut, ist es weg)
+- Vulgor mit doppelten Lavawürmern; nach der Belohnung (neue Waffe) rächen ihn bis zu 10 starke Raptoren. Mindestschaden im NG+
+- Geräusche fremder Gegner (Zufall, Rache-Raptoren) sind stumm statt falsch
+- Sicherheitsnetz: Fällt der Ton aus, läuft das Spiel stumm weiter statt zu hängen
+
+Bekannte Grenzen (Beta)
+-----------------------
+- Fremde Gegner (Chaos/Ähnlich) haben teils falsche Farben.
+- Gebiet hat eine feste Gegnerliste bisher nur für Prähistorika; andere Epochen lernen beim Spielen.
+- Noch nicht komplett durchgespielt. Fehler gern melden (Screenshot + Spielstand).
+
+Rechtliches
+-----------
+Secret of Evermore ist (c) Square / Square Enix. Dies ist ein nicht-kommerzielles Fan-Projekt.
+Der Patch enthält keine Daten des Originalspiels außer den geänderten Stellen.
