@@ -49,7 +49,7 @@ Souls Cave (Eingang am Brunnen, neu in v146):
 - Verwandelnde Städte: Dschungeldorf, Nobilia, Chaosturm, eigene Stadt - alle Menschen werden Monster, Häuser betretbar
 - Goldener Vulgor immer da, +100 % je Sieg, Gift/Heilung nach Säureregen, Verwirrung nach Wegschubsen
 - Gegner-Info (Name, KP, EP, Geld, Anzahl) bei jedem Treffer; Speichern in der Cave gesperrt
-- Neu in v424: neue Story (Feuerauges Tochter befreien, Raumschiff in Untergeschoss 99), Raptor-Boss der sich
+- Neu in v424: neue Story (mit Feuerauge und ihrer Tochter die Souls Cave erkunden, Raumschiff in Untergeschoss 99), Raptor-Boss der sich
   wiederbelebt (Beute: Hundekuchen, Honig, Nektar, Blaetter-Upgrades), Boerse mit Bitcoin/Gold/Silber und USDT,
   Warp-Items, Talisman-Upgrades, Item-Beschreibungen, Monster-HP-Leiste, Karte mit Start, Tod: USDT und EP bleiben liegen.
 - Neu in v193: HP-Leiste für Gegner oben (roter Balken, Name), Boss-Seelen (Bosse mit Stufe +N wieder spielen),
