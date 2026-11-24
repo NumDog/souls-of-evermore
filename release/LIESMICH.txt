@@ -1,4 +1,4 @@
-Souls of Evermore – Mod für Secret of Evermore (deutsch)  (Beta, Stand v438)
+Souls of Evermore – Mod für Secret of Evermore (deutsch)  (Beta, Stand v526)
 =====================================================================
 
 Ein Patch für die DEUTSCHE Version von Secret of Evermore (SNES).
@@ -14,7 +14,7 @@ Passende ROM
 Patch anwenden
 --------------
 1. ROM Patcher JS im Browser öffnen (oder Floating IPS / "Flips").
-2. Deine ROM und die Datei Souls-of-Evermore-v438-beta.bps auswählen.
+2. Deine ROM und die Datei Souls-of-Evermore-v526-beta.bps auswählen.
 3. "Apply patch" – fertig. Ergebnis: 4 MB ROM, läuft z. B. in OpenEmu, snes9x, bsnes, Mesen.
 
 Was ist neu?
@@ -49,6 +49,9 @@ Souls Cave (Eingang am Brunnen, neu in v146):
 - Verwandelnde Städte: Dschungeldorf, Nobilia, Chaosturm, eigene Stadt - alle Menschen werden Monster, Häuser betretbar
 - Goldener Vulgor immer da, +100 % je Sieg, Gift/Heilung nach Säureregen, Verwirrung nach Wegschubsen
 - Gegner-Info (Name, KP, EP, Geld, Anzahl) bei jedem Treffer; Speichern in der Cave gesperrt
+- Neu in v526: B-Schlag wieder in Blickrichtung, sieben Spielstand-Fehler behoben (Kaeufe in der Cave bleiben beim Tod),
+  Warp-Ring aufgeraeumt (Landeplatz Piratendorf, Piratenschiff und Wuestenstadt entfernt), Gegnerfarben nach Tod/Laden,
+  Rueckstoss-Animation, Pool-Raum- und Schleusen-Haenger behoben, Uhr im Speichermenue.
 - Neu in v438: neues HUD (Lebenszahl gross, roter Lebens-, goldener EP- und silberner Ladebalken, Level unter dem Foto),
   Waffen laden 30 % schneller (bei vollem Balken: tippen = Schlag, halten = weiter aufladen), Sterbekreis gibt genau die
   verlorenen EP zurueck, Nina (Feuerauges Tochter) in Untergeschoss 10 befreien und selbst steuern, Musik aus/an im
