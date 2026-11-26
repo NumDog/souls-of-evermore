@@ -365,7 +365,7 @@
 <div class="bg-glow" aria-hidden="true"></div>
 <canvas id="glut" aria-hidden="true"></canvas>
 
-<div class="leiste"><b>BETA</b> — aktuell v526 · <a href="#mithelfen">Tester gesucht: Fehler melden &amp; mithelfen</a></div>
+<div class="leiste"><b>BETA</b> — aktuell v653 · <a href="#mithelfen">Tester gesucht: Fehler melden &amp; mithelfen</a></div>
 
 <header class="kopf" id="kopf">
   <div class="kopf-in">
@@ -376,7 +376,8 @@
     <button class="menue-knopf" id="menueKnopf" aria-label="Menü öffnen" aria-expanded="false" aria-controls="nav"><span></span></button>
     <nav class="nav" id="nav" aria-label="Hauptmenü">
       <a href="#neu">Neu</a>
-      <a href="#mithelfen">Mithelfen</a>
+      <a href="#wirtschaft">Wirtschaft</a>
+      <a href="#mithelfen" class="weg">Mithelfen</a>
       <a href="#video" class="weg">Video</a>
       <a href="#bosse">Bosse</a>
       <a href="#soulscave">Souls Cave</a>
@@ -386,7 +387,7 @@
       <a href="#faq">FAQ</a>
       <a href="#forum" class="weg">Forum</a>
     </nav>
-    <a class="knopf klein" href="https://github.com/NumDog/souls-of-evermore/releases/download/v526-beta/Souls-of-Evermore-v526-beta.bps" download>
+    <a class="knopf klein" href="https://github.com/NumDog/souls-of-evermore/releases/download/v653-beta/Souls-of-Evermore-v653-beta.bps" download>
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11m0 0-4.5-4.5M12 15l4.5-4.5M5 20h14"/></svg>Download
     </a>
   </div>
@@ -399,8 +400,8 @@
     <h1 class="rein" style="--v:.08s"><span class="g">Evermore.</span><br>Jetzt mit <span class="r">Seelen.</span></h1>
     <p class="lead rein" style="--v:.16s">Eine Fan-Mod für die deutsche SNES-Version von <i>Secret of Evermore</i> – <b>härter, zufälliger</b>, mit <b>Dark-Souls-Tod</b>, <b>New Game+</b> und einem eigenen Zufalls-Dungeon mit 99 Untergeschossen.</p>
     <div class="knoepfe rein" style="--v:.24s">
-      <a class="knopf" href="https://github.com/NumDog/souls-of-evermore/releases/download/v526-beta/Souls-of-Evermore-v526-beta.bps" download>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11m0 0-4.5-4.5M12 15l4.5-4.5M5 20h14"/></svg>Patch herunterladen (v526 Beta)
+      <a class="knopf" href="https://github.com/NumDog/souls-of-evermore/releases/download/v653-beta/Souls-of-Evermore-v653-beta.bps" download>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11m0 0-4.5-4.5M12 15l4.5-4.5M5 20h14"/></svg>Patch herunterladen (v653 Beta)
       </a>
       <a class="knopf geist" href="#anleitung">So spielst du</a>
     </div>
@@ -505,6 +506,32 @@
       <div><p class="marke-klein">Überblick</p><h3>Monster-HP-Leiste &amp; Karte mit Start</h3>
         <p>Oben siehst du immer die <b>Lebensleiste</b> des zuletzt getroffenen Gegners – mit Namen, Stufe und KP. Mit <b>Start</b> öffnest du eine <b>Karte</b> des Raums. Sie zeigt deine <b>eigene Position</b>, die <b>Gegner</b>, <b>NPCs</b>, <b>Truhen</b> und <b>Türen</b> – so weißt du immer, wo du bist und was noch wartet.</p></div>
     </article>
+  </div>
+</section>
+
+<section id="wirtschaft">
+  <div class="kopfzeile rein">
+    <p class="oben">Neu in v653</p>
+    <h2><span class="g">Echtes Geld.</span> <span class="r">Deine eigene Welt.</span></h2>
+    <p>Eine Wirtschaft mit Bitcoin-Kursen, Inflation und Halving, dazu eine Randomia-Welt, die du selbst würfelst.</p>
+  </div>
+  <h3 class="mehr-titel rein" style="margin-top:0"><span class="g">Wirtschaft</span></h3>
+  <div class="mehr-raster">
+    <div class="karte leucht rein"><h4>Dollar &amp; Bitcoin zum Tageskurs</h4><p>Bezahlt wird in Dollar (USDT). Bitcoin, Gold und Silber handelst du zum echten historischen Tageskurs. Das Börsen-Datum beginnt am 01.05.2013 und läuft im New Game+ weiter.</p></div>
+    <div class="karte leucht rein" style="--v:.06s"><h4>Inflation</h4><p>Die Ladenpreise steigen wie im echten Leben, im Schnitt um 2,7 % pro Jahr – alle 30 Spieltage ein Stück. Die Uhr läuft mit Spielminuten, Monster- und Boss-Kills und im New Game+ weiter. Oben zeigt „INFL“, wie teuer es schon geworden ist.</p></div>
+    <div class="karte leucht rein"><h4>Halving bei jedem Boss</h4><p>Jeder Boss zahlt eine Block-Belohnung wie beim echten Bitcoin: 25 BTC, nach dem Halving 12,5, dann 6,25 … je nach Spieldatum.</p></div>
+    <div class="karte leucht rein" style="--v:.06s"><h4>Marathon-Wallets</h4><p>Jeder Boss-Marathon bringt eine Wallet mit 1000 BTC.</p></div>
+  </div>
+  <h3 class="mehr-titel rein"><span class="r">Randomia-Welt</span></h3>
+  <div class="mehr-raster">
+    <div class="karte leucht rein"><h4>Welt-Seed &amp; Welt-Würfel</h4><p>Deine Randomia-Welt entsteht aus einer Seed – gleiche Seed, gleiche Welt. Mit dem Welt-Würfel gibt es eine neue Welt auf Knopfdruck.</p></div>
+    <div class="karte leucht rein" style="--v:.06s"><h4>Dörfer, Märkte &amp; Figuren gemischt</h4><p>Dorfbewohner, Marktstände und das Aussehen der Story-Figuren werden neu verteilt – aus, je Gebiet oder in der ganzen Welt.</p></div>
+    <div class="karte leucht rein" style="grid-column:1/-1"><h4>Zombie-Apokalypse &amp; Boss-Würfeln</h4><p>Auf Wunsch werden Menschen zu Monstern – gemischt oder fest. Beim Boss-Würfeln landen die Bosse auf 8 Plätzen neu verteilt. Neu im Cave-Pool und im Boss-Marathon: Cybermax.</p></div>
+  </div>
+  <h3 class="mehr-titel rein"><span class="g">Komfort &amp; New Game+</span></h3>
+  <div class="mehr-raster">
+    <div class="karte leucht rein"><h4>New Game+ nimmt mehr mit</h4><p>Cave-Fortschritt, Würfel und weitere Fortschritte gehen ins New Game+ mit. Auf Sehr leicht und Leicht gibt es kein New Game+.</p></div>
+    <div class="karte leucht rein" style="--v:.06s"><h4>Brunnen, Karte &amp; Musik</h4><p>Der Brunnen bringt dich ins tiefste erreichte Untergeschoss. Die Karte mit Start zeigt jetzt Händler und die Schnüffelstellen des Hundes, im Labyrinth-Wald ein eigenes Schaubild. In der Souls Cave läuft die Musik aus der Titel-Demo.</p></div>
   </div>
 </section>
 
@@ -657,7 +684,7 @@
   </div>
   <ol class="schritte">
     <li class="rein">Besorge dir deine eigene <b>deutsche ROM</b> von <i>Secret of Evermore</i> (SNES). Prüfsumme der passenden Datei (ohne Kopfteil): <code>CRC32 27F60E77</code>.</li>
-    <li class="rein">Lade den <a href="https://github.com/NumDog/souls-of-evermore/releases/download/v526-beta/Souls-of-Evermore-v526-beta.bps" download>Patch (BPS)</a> herunter.</li>
+    <li class="rein">Lade den <a href="https://github.com/NumDog/souls-of-evermore/releases/download/v653-beta/Souls-of-Evermore-v653-beta.bps" download>Patch (BPS)</a> herunter.</li>
     <li class="rein">Öffne den <a href="https://www.marcrobledo.com/RomPatcher.js/" target="_blank" rel="noopener">Rom Patcher JS</a> im Browser (oder Floating IPS / Flips), wähle deine ROM und den Patch und klicke auf „Patch anwenden“.</li>
     <li class="rein">Starte die neue ROM in deinem Emulator (z. B. OpenEmu, snes9x, Mesen, RetroArch). Im Titelbild steht dann <b>SOULS of EVERMORE</b>.</li>
     <li class="rein">Bei „Neues Spiel“ erscheint das Einstellungsmenü: Gegner, Schwierigkeit, Fundsachen und Händler wählen – mit <b>Start</b> geht’s los.</li>
@@ -745,9 +772,13 @@
   </div>
   <div class="zeitleiste">
     <div class="version neu rein">
-      <h3>v526 Beta <span class="marker">aktuell</span></h3>
+      <h3>v653 Beta <span class="marker">aktuell</span></h3>
+      <ul><li><b>Wirtschaft</b>: Dollar, Bitcoin zum echten Tageskurs, Börsen-Datum ab 01.05.2013 läuft im New Game+ weiter, Inflation der Ladenpreise (ca. 2,7 % pro Jahr, Anzeige „INFL“)</li><li><b>Halving</b>: jeder Boss zahlt eine Block-Belohnung (25 → 12,5 → 6,25 … BTC nach Spieldatum), Marathon-Wallets mit 1000 BTC</li><li><b>Randomia-Welt</b> aus Welt-Seed, Welt-Würfel</li><li>Dörfer, Märkte und Story-Figuren mischen, Zombie-Apokalypse, Boss-Würfeln auf 8 Plätzen, Cybermax im Cave-Pool und Marathon</li><li>New Game+ nimmt Cave-Fortschritt und Würfel mit, kein New Game+ auf Sehr leicht und Leicht; Brunnen führt ins tiefste Untergeschoss, Karte zeigt Händler und Schnüffelstellen, Schaubild für den Labyrinth-Wald, Cave-Musik aus der Titel-Demo</li></ul>
+      <p style="margin:16px 0 0"><a class="knopf klein" href="https://github.com/NumDog/souls-of-evermore/releases/download/v653-beta/Souls-of-Evermore-v653-beta.bps" download>v653 herunterladen</a></p>
+    </div>
+    <div class="version rein">
+      <h3>v526 Beta</h3>
       <ul><li><b>B-Schlag</b> geht wieder in Blickrichtung (nach Schrägschlägen ging er ins Leere)</li><li><b>Spielstände</b>: sieben Fehler behoben (Warps, Würfel, Story-Merker und Geld überschrieben sich gegenseitig); Käufe in der Cave bleiben beim Tod erhalten</li><li><b>Warp-Ring</b> aufgeräumt: „Landeplatz Piratendorf“, Piratenschiff und Wüstenstadt entfernt, keine falschen Warps mehr</li><li>Gegnerfarben nach Tod oder Laden wieder richtig, Rückstoß-Animation beim Getroffenwerden, Pool-Raum- und Schleusen-Hänger behoben</li><li>Speichermenü: Uhr färbt „Leer“ nicht mehr orange</li></ul>
-      <p style="margin:16px 0 0"><a class="knopf klein" href="https://github.com/NumDog/souls-of-evermore/releases/download/v526-beta/Souls-of-Evermore-v526-beta.bps" download>v526 herunterladen</a></p>
     </div>
     <div class="version rein">
       <h3>v438 Beta</h3>

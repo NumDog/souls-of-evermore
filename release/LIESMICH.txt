@@ -1,4 +1,4 @@
-Souls of Evermore – Mod für Secret of Evermore (deutsch)  (Beta, Stand v526)
+Souls of Evermore – Mod für Secret of Evermore (deutsch)  (Beta, Stand v653)
 =====================================================================
 
 Ein Patch für die DEUTSCHE Version von Secret of Evermore (SNES).
@@ -14,7 +14,7 @@ Passende ROM
 Patch anwenden
 --------------
 1. ROM Patcher JS im Browser öffnen (oder Floating IPS / "Flips").
-2. Deine ROM und die Datei Souls-of-Evermore-v526-beta.bps auswählen.
+2. Deine ROM und die Datei Souls-of-Evermore-v653-beta.bps auswählen.
 3. "Apply patch" – fertig. Ergebnis: 4 MB ROM, läuft z. B. in OpenEmu, snes9x, bsnes, Mesen.
 
 Was ist neu?
@@ -49,6 +49,13 @@ Souls Cave (Eingang am Brunnen, neu in v146):
 - Verwandelnde Städte: Dschungeldorf, Nobilia, Chaosturm, eigene Stadt - alle Menschen werden Monster, Häuser betretbar
 - Goldener Vulgor immer da, +100 % je Sieg, Gift/Heilung nach Säureregen, Verwirrung nach Wegschubsen
 - Gegner-Info (Name, KP, EP, Geld, Anzahl) bei jedem Treffer; Speichern in der Cave gesperrt
+- Neu in v653: Wirtschaft mit Dollar, Bitcoin zum echten Tageskurs (Boersen-Datum ab 01.05.2013, laeuft im NG+ weiter),
+  Inflation der Ladenpreise (ca. 2,7 % pro Jahr, je 30 Spieltage, Anzeige INFL), Block-Belohnung fuer jeden Boss nach Halving (25 -> 12,5 -> 6,25 ... BTC),
+  Marathon-Wallets 1000 BTC, Randomia-Welt aus Welt-Seed,
+  Welt-Wuerfel; Doerfer/Maerkte/Story-Figuren mischen, Zombie-Apokalypse,
+  Boss-Wuerfeln (8 Plaetze), Cybermax im Cave-Pool und Marathon; NG+ nimmt Cave-Fortschritt und Wuerfel mit, kein NG+ auf Sehr leicht/Leicht; Brunnen ->
+  tiefstes Untergeschoss; Karte mit Start zeigt Haendler und Schnueffelstellen,
+  Schaubild fuer den Labyrinth-Wald; Cave-Musik aus der Titel-Demo.
 - Neu in v526: B-Schlag wieder in Blickrichtung, sieben Spielstand-Fehler behoben (Kaeufe in der Cave bleiben beim Tod),
   Warp-Ring aufgeraeumt (Landeplatz Piratendorf, Piratenschiff und Wuestenstadt entfernt), Gegnerfarben nach Tod/Laden,
   Rueckstoss-Animation, Pool-Raum- und Schleusen-Haenger behoben, Uhr im Speichermenue.
