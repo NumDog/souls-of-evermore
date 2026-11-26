@@ -205,6 +205,8 @@
   .gross { display: grid; gap: 28px; }
   .gross .karte { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(24px, 4vw, 56px); align-items: center; padding: clamp(20px, 3vw, 32px); }
   .gross .karte:nth-child(even) .bildfeld { order: 2; }
+  .gross .karte .bildfeld.links { order: 0; }
+  .gross .karte .bildfeld.rechts { order: 2; }
   .bildfeld { position: relative; border-radius: 14px; overflow: hidden; border: 1px solid var(--line2); background: #000; box-shadow: 0 30px 60px -30px #000; }
   .bildfeld.doppel { display: grid; gap: 2px; background: var(--line2); }
   .bildfeld img { display: block; width: 100%; height: auto; transition: transform 1.2s var(--ease); }
@@ -255,6 +257,8 @@
   /* Galerie */
   .galerie { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
   .galerie figure { margin: 0; cursor: zoom-in; }
+  .galerie.galerie-eins { grid-template-columns: 1fr; max-width: 640px; margin: 0 auto; }
+  .galerie.galerie-eins figure { grid-column: auto !important; }
   @media (min-width: 901px) { .galerie figure:last-child:nth-child(3n+1) { grid-column: 2; } }
   .galerie .bildfeld { aspect-ratio: 4 / 3; }
   .galerie img { width: 100%; height: 100%; object-fit: cover; }
@@ -314,6 +318,27 @@
   .aufruf-schritte i { font: 700 .8rem/1 var(--mono); font-style: normal; color: var(--rot2); display: block; margin-bottom: 10px; letter-spacing: .14em; }
   .puls { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: var(--rot2); box-shadow: 0 0 0 0 var(--rot-glow); animation: puls 1.8s ease-out infinite; vertical-align: 1px; }
   @keyframes puls { 0% { box-shadow: 0 0 0 0 rgba(255, 26, 38, .6); } 100% { box-shadow: 0 0 0 12px rgba(255, 26, 38, 0); } }
+  .bildfeld.sprites { background: radial-gradient(ellipse at center, #1b1b1f, #0a0a0b); padding: 18px; }
+  .bildfeld.sprites img { image-rendering: pixelated; }
+  /* Karte: Überschrift oben, Bilder nebeneinander, Text darunter */
+  .gross .karte.gestapelt { display: block; }
+  .gestapelt h3 { margin-bottom: 22px; }
+  .bildpaar { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; align-items: center; margin-bottom: 22px; }
+  .gestapelt > p:last-child { margin: 0; }
+  @media (max-width: 600px) { .bildpaar { grid-template-columns: 1fr; } }
+  /* HP-Leiste mit Legende */
+  .gross .karte.hpkarte { display: block; }
+  .hpkarte > p { color: var(--mut); margin: 0 0 18px; }
+  .hpkarte h3 { margin-bottom: 12px; }
+  .hpbild { position: relative; margin: 34px 0 22px; border-radius: 12px; overflow: visible; background: #000; border: 1px solid var(--line2); padding: 10px; }
+  .hpbild img { display: block; width: 100%; height: auto; image-rendering: pixelated; }
+  .hpbild .nr { position: absolute; top: -14px; transform: translateX(-50%); width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center;
+    font: 700 .78rem/1 var(--mono); color: #fff; background: var(--rot); box-shadow: 0 0 0 2px var(--bg), 0 0 12px var(--rot-glow); }
+  .hplegende { list-style: none; counter-reset: h; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px 28px; }
+  .hplegende li { counter-increment: h; position: relative; padding-left: 38px; color: var(--mut); font-size: .97rem; }
+  .hplegende li::before { content: counter(h); position: absolute; left: 0; top: 1px; width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center;
+    font: 700 .78rem/1 var(--mono); color: #fff; background: var(--rot); }
+  @media (max-width: 600px) { .hplegende { grid-template-columns: 1fr; } .hpbild .nr { width: 20px; height: 20px; font-size: .66rem; top: -11px; } .hpbild { padding: 6px; } }
   footer { margin-top: 90px; border-top: 1px solid var(--line); color: var(--dim); text-align: center; padding: 34px 16px 44px; font-size: .86rem; }
   footer p { max-width: 760px; margin: 0 auto; }
 
@@ -335,7 +360,7 @@
     .bosse, .galerie { grid-template-columns: repeat(2, 1fr); }
     .gross .karte, .cave, .zwei-spalten { grid-template-columns: 1fr; }
     .cave .bald ul.punkte { columns: 1; }
-    .gross .karte:nth-child(even) .bildfeld { order: 0; }
+    .gross .karte:nth-child(even) .bildfeld, .gross .karte .bildfeld.rechts { order: 0; }
     .zahlen-in { grid-template-columns: repeat(2, 1fr); row-gap: 28px; }
   }
   @media (max-width: 600px) {
@@ -375,17 +400,18 @@
     </a>
     <button class="menue-knopf" id="menueKnopf" aria-label="Menü öffnen" aria-expanded="false" aria-controls="nav"><span></span></button>
     <nav class="nav" id="nav" aria-label="Hauptmenü">
-      <a href="#neu">Neu</a>
-      <a href="#wirtschaft">Wirtschaft</a>
-      <a href="#mithelfen" class="weg">Mithelfen</a>
       <a href="#video" class="weg">Video</a>
       <a href="#bosse">Bosse</a>
-      <a href="#soulscave">Souls Cave</a>
-      <a href="#funktionen" class="weg">Was ist neu</a>
+      <a href="#boerse">Börse</a>
+      <a href="#quest">Satoshi</a>
+      <a href="#warps">Warps</a>
+      <a href="#mehr">Mehr</a>
+      <a href="#story" class="weg">Story</a>
+      <a href="#soulscave" class="weg">Souls Cave</a>
       <a href="#anleitung">So spielst du</a>
-      <a href="#versionen">Versionen</a>
+      <a href="#versionen" class="weg">Versionen</a>
       <a href="#faq">FAQ</a>
-      <a href="#forum" class="weg">Forum</a>
+      <a href="#mithelfen" class="weg">Mithelfen</a>
     </nav>
     <a class="knopf klein" href="https://github.com/NumDog/souls-of-evermore/releases/download/v653-beta/Souls-of-Evermore-v653-beta.bps" download>
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11m0 0-4.5-4.5M12 15l4.5-4.5M5 20h14"/></svg>Download
@@ -397,21 +423,23 @@
 <header class="held">
   <div>
     <p class="oben rein">Fan-Mod · Secret of Evermore (DE)</p>
-    <h1 class="rein" style="--v:.08s"><span class="g">Evermore.</span><br>Jetzt mit <span class="r">Seelen.</span></h1>
-    <p class="lead rein" style="--v:.16s">Eine Fan-Mod für die deutsche SNES-Version von <i>Secret of Evermore</i> – <b>härter, zufälliger</b>, mit <b>Dark-Souls-Tod</b>, <b>New Game+</b> und einem eigenen Zufalls-Dungeon mit 99 Untergeschossen.</p>
+    <h1 class="rein" style="--v:.08s"><span class="g">Finde die Bitcoins</span><br>von <span class="r">Satoshi Nakamoto!</span></h1>
+    <p class="lead rein" style="--v:.16s"><b>Souls of Evermore</b> macht aus dem SNES-Klassiker <i>Secret of Evermore</i> ein neues Abenteuer: eine <b>neue Story</b>, die <b>neue spielbare Begleiterin Nina</b>, eine <b>Bitcoin-Börse</b>, Boss-Remakes und die <b>Souls Cave</b> mit 99 Untergeschossen – härter, mit Dark-Souls-Tod und New Game+.</p>
     <div class="knoepfe rein" style="--v:.24s">
       <a class="knopf" href="https://github.com/NumDog/souls-of-evermore/releases/download/v653-beta/Souls-of-Evermore-v653-beta.bps" download>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11m0 0-4.5-4.5M12 15l4.5-4.5M5 20h14"/></svg>Patch herunterladen (v653 Beta)
       </a>
       <a class="knopf geist" href="#anleitung">So spielst du</a>
     </div>
-    <p class="hinweis rein" style="--v:.28s">Nur der Patch – du brauchst deine eigene, legal erworbene deutsche ROM. · <a href="https://github.com/NumDog/souls-of-evermore/releases" target="_blank" rel="noopener">Alle Releases</a></p>
+    <p class="hinweis rein" style="--v:.28s">Nur der Patch – du brauchst deine eigene, legal erworbene deutsche ROM. Fan-Projekt, alle Bitcoins im Spiel sind Spielgeld. · <a href="https://github.com/NumDog/souls-of-evermore/releases" target="_blank" rel="noopener">Alle Releases</a></p>
     <div class="chips rein" style="--v:.32s">
+      <span class="chip"><i>₿</i> Quest: Satoshis Wallet</span>
+      <span class="chip"><i>♥</i> Neue Begleiterin Nina</span>
       <span class="chip"><i>◆</i> Schwierigkeit bis Albtraum x10</span>
       <span class="chip"><i>↻</i> New Game+ bis +99</span>
       <span class="chip"><i>▼</i> Souls Cave · 99 Untergeschosse</span>
       <span class="chip"><i>✚</i> Tod wie in Dark Souls</span>
-      <span class="chip"><i>₿</i> Börse: Bitcoin, Gold &amp; Silber</span>
+      <span class="chip"><i>$</i> Börse ab 2013 mit echtem Kurs</span>
     </div>
   </div>
 
@@ -457,81 +485,169 @@
 
 <main>
 
-<section id="neu">
+<section id="video">
   <div class="kopfzeile rein">
-    <p class="oben">Neu</p>
-    <h2><span class="g">Neue Story.</span> <span class="r">Neue Börse.</span></h2>
-    <p>Die Souls Cave wächst: eine neue Geschichte bis ins 99.&nbsp;Untergeschoss, ein Boss, der nicht totzukriegen ist, Warp-Items und ein eigenes Tauschsystem mit Bitcoin, Gold und Silber.</p>
+    <p class="oben">Video</p>
+    <h2><span class="g">Sieh selbst,</span> <span class="r">wie es brennt.</span></h2>
+  </div>
+  <div class="video video-gross rein">
+    <iframe src="https://www.youtube-nocookie.com/embed/YUGin7G2TJk" title="Souls of Evermore – Video" loading="lazy"
+      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+  </div>
+  <p class="leise mitte" style="margin-top:16px">Direkt auf YouTube: <a href="https://youtu.be/YUGin7G2TJk" target="_blank" rel="noopener">youtu.be/YUGin7G2TJk</a></p>
+</section>
+
+<section id="bosse">
+  <div class="kopfzeile rein">
+    <p class="oben">Boss-Remakes</p>
+    <h2><span class="g">Bekannte Bosse.</span> <span class="r">Neue Regeln.</span></h2>
+    <p>Wer das Original kennt, erlebt die Bosse neu: Sie wachsen mit jedem Sieg, tauschen die Plätze und zahlen feste Belohnungen.</p>
   </div>
   <div class="gross">
     <article class="karte leucht rein">
-      <div class="bildfeld doppel">
-        <img src="img/story_katze.jpg" alt="Die Katze sitzt auf dem Brunnen: „Nicht schon wieder! Bulldog, friss bloß die Katze nicht!“" width="790" height="608" loading="lazy">
-        <img src="img/story_tochter.jpg" alt="Auf dem Schachbrett in Untergeschoss 1: „Rette das Dschungeldorf!“" width="849" height="655" loading="lazy">
+      <div class="bildfeld"><img src="img/raptoren_nina.jpg" alt="Raptoren-Kampf im Dschungel mit Dominic, Nina und dem Hund" width="858" height="657" loading="lazy"></div>
+      <div><p class="marke-klein">Jahreszeiten</p><h3>Die Raptoren</h3>
+        <p>Der Kampf startet über das <b>fallende Blatt</b>. Ab dem zweiten Mal kommen sie <b>doppelt</b>, und jeder Sieg macht sie <b>+1</b> stärker. Als Belohnung gibt es – je nach <b>Jahreszeit</b> – <b>Upgrades für deine Heil-Items</b>: Jedes Upgrade macht Blätter, Nektar, Honig oder Hundekuchen <b>+1 stärker</b>. Blätter, Nektar und Honig heilen dann 10&nbsp;% mehr pro Stufe, der Hundekuchen sogar 50&nbsp;% – bis +99. Im Beutel siehst du es direkt, z.&nbsp;B. „Blätter +5“.</p></div>
+    </article>
+    <article class="karte leucht rein">
+      <div class="bildfeld"><img src="img/vulgor_gold_herz.jpg" alt="Kampf in Vulgors goldener Herzkammer, Stufe +9 in der Lebensleiste" width="674" height="522" loading="lazy"></div>
+      <div><p class="marke-klein">Einmal pro Durchgang</p><h3>Der Goldene Vulgor</h3>
+        <p>Startet <b>fünfmal so stark</b> und wächst mit jedem Sieg weiter – seine <b>Larven</b> und die <b>Rache-Raptoren</b> danach wachsen mit. Die Stufe steht in der Lebensleiste.</p></div>
+    </article>
+  </div>
+  <div class="mehr-raster" style="margin-top:16px">
+    <div class="karte leucht rein"><h4>Cybermax</h4><p>Neu im Boss-Pool der Souls Cave und im Boss-Marathon.</p></div>
+    <div class="karte leucht rein" style="--v:.06s"><h4>Boss-Würfeln</h4><p>Die Bosse tauschen ihre Plätze in der Welt – die Story läuft trotzdem normal weiter.</p></div>
+    <div class="karte leucht rein"><h4>Boss-Marathon</h4><p>In der Souls Cave alle Bosse hintereinander, in zufälliger Reihenfolge.</p></div>
+    <div class="karte leucht rein" style="--v:.06s"><h4>Feste Belohnungen</h4><p>Was ein Boss fallen lässt, steht pro Welt fest. Neuladen bringt keine andere Beute.</p></div>
+  </div>
+</section>
+
+<section id="boerse">
+  <div class="kopfzeile rein">
+    <p class="oben">Die Börse</p>
+    <h2><span class="g">Bitcoin ab 2013.</span> <span class="r">Mit echtem Kurs.</span></h2>
+    <p>Im Spiel läuft ein eigener Kalender. Er beginnt am <b>01.05.2013</b> mit dem echten Bitcoin-Tageskurs und läuft weiter – auch im New Game+.</p>
+  </div>
+  <div class="gross">
+    <article class="karte leucht rein gestapelt">
+      <p class="marke-klein">Beim Händler</p><h3>Dollar gegen Bitcoin</h3>
+      <div class="bildpaar">
+        <div class="bildfeld"><img src="img/boerse_chart.jpg" alt="Bitcoin-Kurs im Spiel" width="842" height="558" loading="lazy"></div>
+        <div class="bildfeld"><img src="img/boerse_haendler.jpg" alt="Händler-Menü mit dem Punkt „Börse“" width="846" height="447" loading="lazy"></div>
       </div>
-      <div><p class="marke-klein">Neue Story</p><h3>Spiele mit Feuerauge und ihrer Tochter</h3>
-        <p>Spiele mit <b>Feuerauge und ihrer Tochter</b> und erkunde die Tiefen der mysteriösen <b>Souls Cave</b>. Kämpfe dich durch bis ins <b>99. Untergeschoss</b> – dort wartet ein <b>uraltes Raumschiff</b> mit einer neuen Story auf euch.</p></div>
+      <p>Bezahlt wird in <b>Dollar</b>. Beim Händler unter „Börse“ tauschst du Dollar gegen <b>Bitcoin</b> und zurück. Die Zeit läuft mit: <b>1 Minute Spielzeit, jeder Monster-Kill und jeder Boss = 1 Stunde</b> – mit jeder Stunde ändert sich der Kurs.</p>
     </article>
+  </div>
+  <div class="mehr-raster" style="margin-top:16px">
+    <div class="karte leucht rein"><h4>Inflation</h4><p>Die Ladenpreise steigen mit der Zeit, im Schnitt um 2,7 % pro Jahr. Oben zeigt „INFL“, wie teuer es schon geworden ist.</p></div>
+    <div class="karte leucht rein" style="--v:.06s"><h4>Halving</h4><p>Jeder besiegte Boss ist ein gefundener Block – mit der echten Block-Belohnung des Jahres: 25 BTC, später 12,5, dann 6,25 …</p></div>
+    <div class="karte leucht rein"><h4>Waffen kosten Dollar</h4><p>Waffen gibt es beim Händler für 25 000 bis 100 000 Dollar.</p></div>
+    <div class="karte leucht rein" style="--v:.06s"><h4>Nur für Bitcoin</h4><p>Besondere Gegenstände bekommst du ausschließlich gegen Bitcoin.</p></div>
+  </div>
+</section>
+
+<section id="quest">
+  <div class="aufruf rein">
+    <p class="oben"><span class="puls" aria-hidden="true"></span> Quest</p>
+    <h2><span class="g">Satoshis</span> <span class="r">Wallet.</span></h2>
+    <p>Irgendwo in der Welt hat Satoshi Nakamoto Spuren hinterlassen: Papierfetzen, Hinweise, Menschen, die mehr wissen, als sie sagen. Wer alles zusammensetzt, kann Satoshis Wallet an der Börse öffnen – was dann kommt, findest du selbst heraus.</p>
+    <div class="aufruf-schritte" style="grid-template-columns:1fr;margin-bottom:0">
+      <div><i>Souls Cave</i><b>Marathon-Wallets</b><span>Wer einen Boss-Marathon übersteht, findet eine Wallet – sie öffnet sich nur mit den richtigen Wörtern.</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="warps">
+  <div class="kopfzeile rein">
+    <p class="oben">Warps erspielen</p>
+    <h2><span class="g">Schneller reisen –</span> <span class="r">wenn du es verdienst.</span></h2>
+  </div>
+  <div class="gross">
     <article class="karte leucht rein">
-      <div class="bildfeld doppel">
-        <img src="img/raptor_boss.jpg" alt="Raptor+1 im Dschungel – der neue Raptor-Boss" width="848" height="652" loading="lazy">
-        <img src="img/raptor_hundekuchen.jpg" alt="Raptor-Belohnung: Hundekuchen +1!" width="841" height="645" loading="lazy">
-      </div>
-      <div><p class="marke-klein">Jahreszeiten</p><h3>Der Raptor, der immer wiederkommt</h3>
-        <p>Ein neuer <b>Raptor-Boss</b>, der sich unendlich wiederbelebt und dabei jedes Mal stärker wird. Als Beute lässt er zufällig <b>Hundekuchen, Honig, Nektar und Blätter-Upgrades</b> fallen – damit verstärkst du deine Items.</p></div>
-    </article>
-    <article class="karte leucht rein">
-      <div class="bildfeld doppel">
-        <img src="img/boerse_chart.jpg" alt="Bitcoin-Kurs im Spiel, Zeitraum 07.2012 bis 05.2013" width="842" height="558" loading="lazy">
-        <img src="img/boerse_haendler.jpg" alt="Händler-Menü mit dem neuen Punkt „Börse“" width="846" height="447" loading="lazy">
-      </div>
-      <div><p class="marke-klein">Neues Tauschsystem</p><h3>Die Börse: Bitcoin, Gold, Silber</h3>
-        <p>Investiere in <b>Bitcoin, Gold oder Silber</b> und handle mit <b>USDT</b> – direkt beim Händler unter „Börse“. Behalte die Kurse im Auge, denn die Zeit läuft immer weiter: <b>1 Minute Spielzeit = 1 Stunde</b>, jeder Monster-Kill = 1 Stunde, jeder Boss-Kill = 1 Stunde. Mit jeder Stunde ändern sich die Kurse.</p></div>
-    </article>
-    <article class="karte leucht rein">
-      <div class="bildfeld"><img src="img/warp_ring.jpg" alt="Warp-Ring mit Symbolen für die Gebiete, oben Landeplatz Piratendorf" width="816" height="660" loading="lazy"></div>
-      <div><p class="marke-klein">Warp-Ring</p><h3>Warp-Items zum Verdienen</h3>
-        <p>Im neuen Story-Dungeon verdienst du dir <b>Warp-Items</b>. Sie landen im Ring – jedes mit eigenem Symbol – und bringen dich schnell in die Gebiete der Welt.</p></div>
-    </article>
-    <article class="karte leucht rein">
-      <div class="bildfeld"><img src="img/items_beschreibung.jpg" alt="Gegenstände-Menü: Schleifstab – Schwerter +10 %. Je +1: nochmal +10 %." width="847" height="650" loading="lazy"></div>
-      <div><p class="marke-klein">Gegenstände</p><h3>Jedes Item erklärt</h3>
-        <p>Im Beutel steht jetzt bei jedem Gegenstand, was er wirklich macht – z. B. Schleifstab: „Schwerter +10 %. Je +1: nochmal +10 %.“ <b>Upgrades für Talismane</b> findest du jetzt im neuen Dungeon.</p></div>
-    </article>
-    <article class="karte leucht rein">
-      <div class="bildfeld doppel">
-        <img src="img/hp_leiste.jpg" alt="Lebensleiste oben: Raptor+1 mit 35/120 KP" width="851" height="652" loading="lazy">
-        <img src="img/karte_start.jpg" alt="Karte des Raums mit eigener Position, Gegnern, NPCs, Truhen und Türen" width="840" height="647" loading="lazy">
-      </div>
-      <div><p class="marke-klein">Überblick</p><h3>Monster-HP-Leiste &amp; Karte mit Start</h3>
-        <p>Oben siehst du immer die <b>Lebensleiste</b> des zuletzt getroffenen Gegners – mit Namen, Stufe und KP. Mit <b>Start</b> öffnest du eine <b>Karte</b> des Raums. Sie zeigt deine <b>eigene Position</b>, die <b>Gegner</b>, <b>NPCs</b>, <b>Truhen</b> und <b>Türen</b> – so weißt du immer, wo du bist und was noch wartet.</p></div>
+      <div class="bildfeld"><img src="img/warp_ring.jpg" alt="Warp-Ring mit Symbolen für die Gebiete" width="816" height="660" loading="lazy"></div>
+      <div><p class="marke-klein">Warp-Ring</p><h3>Warps im Ring</h3>
+        <ul class="punkte">
+          <li><b>Gebiets-Warps</b> bekommst du, sobald du ein Gebiet besucht hast.</li>
+          <li><b>Untergeschoss-Warps</b> gibt es nur, wenn du mit der Gotteshand lebend aus der Cave zurückkommst. Wer stirbt, verliert den Fortschritt.</li>
+          <li>Der <b>Brunnen</b> führt dorthin, wo der Warp-Ring hinzeigt.</li>
+          <li><b>Boss-Warps</b> erspielst du dir – zurück zu Bossen, die du kennst.</li>
+          <li><b>Endboss-Kristalle</b> bringen dich vor den Endboss.</li>
+          <li>Und manche Warps gibt es nur, wenn du die richtigen Geheimnisse kennst …</li>
+        </ul></div>
     </article>
   </div>
 </section>
 
-<section id="wirtschaft">
+<section id="mehr">
   <div class="kopfzeile rein">
-    <p class="oben">Neu in v653</p>
-    <h2><span class="g">Echtes Geld.</span> <span class="r">Deine eigene Welt.</span></h2>
-    <p>Eine Wirtschaft mit Bitcoin-Kursen, Inflation und Halving, dazu eine Randomia-Welt, die du selbst würfelst.</p>
+    <p class="oben">Und noch mehr</p>
+    <h2><span class="g">Alles, was</span> <span class="r">sonst noch neu ist.</span></h2>
   </div>
-  <h3 class="mehr-titel rein" style="margin-top:0"><span class="g">Wirtschaft</span></h3>
   <div class="mehr-raster">
-    <div class="karte leucht rein"><h4>Dollar &amp; Bitcoin zum Tageskurs</h4><p>Bezahlt wird in Dollar (USDT). Bitcoin, Gold und Silber handelst du zum echten historischen Tageskurs. Das Börsen-Datum beginnt am 01.05.2013 und läuft im New Game+ weiter.</p></div>
-    <div class="karte leucht rein" style="--v:.06s"><h4>Inflation</h4><p>Die Ladenpreise steigen wie im echten Leben, im Schnitt um 2,7 % pro Jahr – alle 30 Spieltage ein Stück. Die Uhr läuft mit Spielminuten, Monster- und Boss-Kills und im New Game+ weiter. Oben zeigt „INFL“, wie teuer es schon geworden ist.</p></div>
-    <div class="karte leucht rein"><h4>Halving bei jedem Boss</h4><p>Jeder Boss zahlt eine Block-Belohnung wie beim echten Bitcoin: 25 BTC, nach dem Halving 12,5, dann 6,25 … je nach Spieldatum.</p></div>
-    <div class="karte leucht rein" style="--v:.06s"><h4>Marathon-Wallets</h4><p>Jeder Boss-Marathon bringt eine Wallet mit 1000 BTC.</p></div>
+    <div class="karte leucht rein"><h4>Nina spielt mit</h4><p>Bogen mit Aufladeschüssen, eigenes Level, eigener Sterbekreis – normale Schüsse kosten keine Pfeile. Gegner greifen jetzt auch Nina an, und stirbst du in der Cave, fällt auch sie aufs Eintrittslevel zurück.</p></div>
+    <div class="karte leucht rein" style="--v:.06s"><h4>Souls Cave</h4><p>Ein Zufalls-Dungeon mit 99 Untergeschossen, Eingang am Brunnen.</p></div>
+    <div class="karte leucht rein"><h4>Randomia-Welt</h4><p>Gegner, Fundsachen, Händler, Dörfer und Märkte neu gemischt – aus einer Welt-Seed: gleiche Seed, gleiche Welt.</p></div>
+    <div class="karte leucht rein" style="--v:.06s"><h4>Level 999 &amp; +N</h4><p>Level bis 999, Waffen, Formeln, Talismane und Rüstungen werden mit jedem Doppel-Fund +1 stärker.</p></div>
+    <div class="karte leucht rein"><h4>Neues HUD</h4><p>Große Lebenszahl, Balken für Leben, EP und Laden, Gegner-Leiste oben, Karte mit Start.</p></div>
+    <div class="karte leucht rein" style="--v:.06s"><h4>Musikbox</h4><p>Mit L+R wählst du überall die Musik.</p></div>
+    <div class="karte leucht rein" style="grid-column:1/-1"><h4>Original-Bugs behoben</h4><p>Viele Fehler aus dem Original-Spiel sind repariert.</p></div>
   </div>
-  <h3 class="mehr-titel rein"><span class="r">Randomia-Welt</span></h3>
-  <div class="mehr-raster">
-    <div class="karte leucht rein"><h4>Welt-Seed &amp; Welt-Würfel</h4><p>Deine Randomia-Welt entsteht aus einer Seed – gleiche Seed, gleiche Welt. Mit dem Welt-Würfel gibt es eine neue Welt auf Knopfdruck.</p></div>
-    <div class="karte leucht rein" style="--v:.06s"><h4>Dörfer, Märkte &amp; Figuren gemischt</h4><p>Dorfbewohner, Marktstände und das Aussehen der Story-Figuren werden neu verteilt – aus, je Gebiet oder in der ganzen Welt.</p></div>
-    <div class="karte leucht rein" style="grid-column:1/-1"><h4>Zombie-Apokalypse &amp; Boss-Würfeln</h4><p>Auf Wunsch werden Menschen zu Monstern – gemischt oder fest. Beim Boss-Würfeln landen die Bosse auf 8 Plätzen neu verteilt. Neu im Cave-Pool und im Boss-Marathon: Cybermax.</p></div>
+</section>
+
+<section id="story">
+  <div class="kopfzeile rein">
+    <p class="oben">Neue Story</p>
+    <h2><span class="g">Nina, Feuerauge</span> <span class="r">und die Souls Cave.</span></h2>
   </div>
-  <h3 class="mehr-titel rein"><span class="g">Komfort &amp; New Game+</span></h3>
-  <div class="mehr-raster">
-    <div class="karte leucht rein"><h4>New Game+ nimmt mehr mit</h4><p>Cave-Fortschritt, Würfel und weitere Fortschritte gehen ins New Game+ mit. Auf Sehr leicht und Leicht gibt es kein New Game+.</p></div>
-    <div class="karte leucht rein" style="--v:.06s"><h4>Brunnen, Karte &amp; Musik</h4><p>Der Brunnen bringt dich ins tiefste erreichte Untergeschoss. Die Karte mit Start zeigt jetzt Händler und die Schnüffelstellen des Hundes, im Labyrinth-Wald ein eigenes Schaubild. In der Souls Cave läuft die Musik aus der Titel-Demo.</p></div>
+  <div class="gross">
+    <article class="karte leucht rein">
+      <div class="bildfeld video links"><iframe src="https://www.youtube-nocookie.com/embed/YUGin7G2TJk" title="Souls of Evermore – Video" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe></div>
+      <div><p class="marke-klein">Neue Story</p><h3>Spiele mit Feuerauge und ihrer Tochter</h3>
+        <p>Spiele mit <b>Feuerauge und ihrer Tochter</b> und erkunde die Tiefen der mysteriösen <b>Souls Cave</b>. Kämpfe dich durch bis ins <b>99. Untergeschoss</b> – dort wartet ein <b>uraltes Raumschiff</b> mit einer neuen Story auf euch.</p></div>
+    </article>
+    <article class="karte leucht rein">
+      <div class="bildfeld links"><img src="img/nina_team.jpg" alt="Junge, Hund und Nina mit Bogen, unten das HUD mit allen dreien" width="872" height="662" loading="lazy"></div>
+      <div><p class="marke-klein">Zu dritt unterwegs</p><h3>Nina spielt mit</h3>
+        <p>Nina ist deine dritte Figur: Sie kämpft mit dem <b>Bogen</b> und hat eigene KP und ein eigenes Level. Unten zeigt das neue <b>HUD</b> alle drei – Junge, Hund und Nina – mit Namen, KP und Level. Oben rechts laufen <b>Datum und Kurse</b> für Bitcoin, Gold und Silber mit, oben in der Mitte die Lebensleiste des Gegners.</p></div>
+    </article>
+    <article class="karte leucht rein">
+      <div class="bildfeld rechts"><img src="img/items_beschreibung.jpg" alt="Gegenstände-Menü: Schleifstab – Schwerter +10 %. Je +1: nochmal +10 %." width="847" height="650" loading="lazy"></div>
+      <div><p class="marke-klein">Gegenstände</p><h3>Jedes Item erklärt</h3>
+        <p>Im Beutel steht jetzt bei jedem Gegenstand, was er wirklich macht – z. B. Schleifstab: „Schwerter +10 %. Je +1: nochmal +10 %.“ <b>Upgrades für Talismane</b> findest du jetzt im neuen Dungeon.</p></div>
+    </article>
+    <article class="karte leucht rein hpkarte">
+      <p class="marke-klein">Überblick</p><h3>Monster-HP-Leiste</h3>
+      <p>Oben im Bild steht immer der Gegner, den du zuletzt getroffen hast. So liest du die Leiste:</p>
+      <div class="hpbild">
+        <img class="pix" src="img/hp_leiste_vulgor.png" alt="Gegner-Leiste: VULGORS HERZKA+9 4193/4200 12K, grünes T, 18K" width="1220" height="144" loading="lazy">
+        <span class="nr" style="left:5%">1</span><span class="nr" style="left:29%">2</span><span class="nr" style="left:47%">3</span><span class="nr" style="left:61.5%">4</span><span class="nr" style="left:76.5%">5</span><span class="nr" style="left:86.5%">6</span><span class="nr" style="left:94%">7</span>
+      </div>
+      <ol class="hplegende">
+        <li><b>Bildchen</b> – wer zuletzt getroffen wurde, als kleines Sprite.</li>
+        <li><b>Name</b> des Gegners, bei langen Namen gekürzt (hier „Vulgors Herzkammer“).</li>
+        <li><b>+9</b> – die Stufe. Bosse werden mit jedem Sieg und jedem New Game+ stärker.</li>
+        <li><b>4193/4200</b> – aktuelle und maximale KP.</li>
+        <li><b>12K</b> – so viele Erfahrungspunkte bringt der Sieg.</li>
+        <li><b>Grünes Ⓣ 18K</b> – so viel Geld (Dollar/USDT) bringt der Sieg.</li>
+        <li><b>Roter Balken</b> – zeigt die KP und wird mit jedem Treffer kürzer.</li>
+      </ol>
+    </article>
+    <article class="karte leucht rein">
+      <div class="bildfeld rechts"><img src="img/karte_start.jpg" alt="Karte des Raums mit eigener Position, Gegnern, NPCs, Truhen und Türen" width="840" height="647" loading="lazy"></div>
+      <div><p class="marke-klein">Mit Start</p><h3>Karte des Raums</h3>
+        <p>Mit <b>Start</b> öffnest du eine Karte: Sie zeigt deine <b>Position</b>, <b>Gegner</b>, <b>NPCs</b>, <b>Truhen</b>, <b>Türen</b>, <b>Händler</b> und die <b>Schnüffelstellen</b> des Hundes. Im Labyrinth-Wald gibt es ein eigenes Schaubild, und im Brückenraum zeigt eine gelbe Linie den sicheren Weg, auf dem keine Brücke einstürzt.</p></div>
+    </article>
+    <article class="karte leucht rein">
+      <div class="bildfeld sprites links"><img class="pix" src="img/junge_schraeg_axt.webp" alt="Der Junge schräg nach oben und unten mit Axt-Schwung, je 5 Bilder" width="1774" height="887" loading="lazy"></div>
+      <div><p class="marke-klein">Bewegung</p><h3>Jetzt auch schräg</h3>
+        <p>Der Junge läuft und schlägt jetzt auch <b>diagonal</b> – mit eigenen Schrägbildern für jede Waffe, auch beim <b>Speerwurf</b>.</p></div>
+    </article>
+    <article class="karte leucht rein">
+      <div class="bildfeld sprites rechts"><img class="pix" src="img/nina_animationsblatt.webp" alt="Ninas Animationsblatt: Laufen, Angriff, Zauber, Liegen und Rücken" width="1536" height="1024" loading="lazy"></div>
+      <div><p class="marke-klein">Neu gezeichnet</p><h3>Ninas Animationen</h3>
+        <p>Nina hat ein komplett <b>neu gezeichnetes Animationsblatt</b>: Laufen, Bogen, Zauber, Liegen – und auch sie läuft <b>schräg</b>.</p></div>
+    </article>
   </div>
 </section>
 
@@ -550,43 +666,6 @@
       <a class="knopf geist" href="mailto:numdoks@gmail.com?subject=Souls%20of%20Evermore%20%E2%80%93%20Fehler">Per E-Mail melden</a>
       <a class="knopf geist" href="https://github.com/NumDog/souls-of-evermore/discussions/new?category=ideas" target="_blank" rel="noopener">Idee einreichen</a>
     </div>
-  </div>
-</section>
-
-<section id="video">
-  <div class="kopfzeile rein">
-    <p class="oben">Video</p>
-    <h2><span class="g">Sieh selbst,</span> <span class="r">wie es brennt.</span></h2>
-  </div>
-  <div class="video video-gross rein">
-    <iframe src="https://www.youtube-nocookie.com/embed/Nc-lK3ntQjA" title="Souls of Evermore – Video" loading="lazy"
-      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
-  </div>
-  <p class="leise mitte" style="margin-top:16px">Direkt auf YouTube: <a href="https://youtu.be/Nc-lK3ntQjA" target="_blank" rel="noopener">youtu.be/Nc-lK3ntQjA</a></p>
-</section>
-
-<section id="bosse">
-  <div class="kopfzeile rein">
-    <p class="oben">Boss-Remakes</p>
-    <h2><span class="g">Bekannte Bosse.</span> <span class="r">Neue Tricks.</span></h2>
-    <p>Die Bosse kämpfen nicht mehr wie im Original – sie heilen sich, verwirren dich und rufen Verstärkung. Wer gewinnt, bekommt einen <b>Waffen-Orb</b> (ausgerüstete Waffe +1, bis +99).</p>
-  </div>
-  <div class="bosse">
-    <article class="karte leucht rein">
-      <div class="video"><iframe src="https://www.youtube-nocookie.com/embed/XmDFVOErhAE" title="Lavarex – Boss-Remake" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe></div>
-      <div class="inhalt"><p class="ort">im Vulkan</p><h3>Lavarex</h3>
-        <ul class="punkte"><li>Heilt sich bei halben Lebenspunkten voll – Normal 1×, Schwer 2×</li><li>Krafthauch-Kreis, 10 s verdrehte Steuerung und <b>starkes Gift</b></li><li>Zwei zufällige Gegner springen dir zur Seite</li><li>Nach jeder Heilung hält er mehr aus</li></ul></div>
-    </article>
-    <article class="karte leucht rein" style="--v:.1s">
-      <div class="video"><iframe src="https://www.youtube-nocookie.com/embed/dUBcW0qePDs" title="Vigor – Boss-Remake" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe></div>
-      <div class="inhalt"><p class="ort">in der Arena</p><h3>Vigor</h3>
-        <ul class="punkte"><li>Heilt sich wie Lavarex – Normal 1×, Schwer 2×</li><li>Verwirrung und zwei Verstärkungen aus 8 Gegnerarten</li><li>Stirbst du, geht es direkt bei „Der Kampf kann beginnen“ weiter</li></ul></div>
-    </article>
-    <article class="karte leucht rein" style="--v:.2s">
-      <div class="video"><iframe src="https://www.youtube-nocookie.com/embed/vEApjF3-0SU" title="Goldener Vulgor – Boss-Remake" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe></div>
-      <div class="inhalt"><p class="ort">in Vulgors Kammer</p><h3>Goldener Vulgor</h3>
-        <ul class="punkte"><li>Einmal pro Durchgang nach dem ersten Sieg</li><li>Fünfmal so stark, mit Larven und Herzkammer</li><li>Danach: Vulgors Rache – zehn starke Raptoren</li></ul></div>
-    </article>
   </div>
 </section>
 
@@ -609,7 +688,7 @@
     </div>
     <div class="rein" style="--v:.12s">
       <figure>
-        <div class="bildfeld"><img src="img/story_katze.jpg" alt="Der Brunnen mit der Katze – Eingang zur Souls Cave" width="790" height="608" loading="lazy"></div>
+        <div class="bildfeld"><img src="img/story_katze.jpg" alt="Brunnen mit Katze, Junge, Hund und Nina mit Bogen: „Nicht schon wieder! BullDog, friss bloß die Katze nicht!“" width="863" height="581" loading="lazy"></div>
         <figcaption>Der Brunnen: hier geht es hinab in die Souls Cave.</figcaption>
       </figure>
     </div>
@@ -648,12 +727,7 @@
         <p>Statt Hauptmenü wachst du am Raumeingang auf – aber deine <b>USDT und EP</b> bleiben an der Todesstelle liegen, ein blauer Kreis zeigt sie. Gehst du hin, holst du <b>USDT und EP zurück</b>. Stirbst du vorher noch einmal, ist beides weg!</p></div>
     </article>
     <article class="karte leucht rein">
-      <div class="bildfeld"><img class="pix" src="img/gold.png" alt="Goldener Vulgor" width="768" height="672" loading="lazy"></div>
-      <div><p class="marke-klein">Einmal pro Durchgang</p><h3>Der Goldene Vulgor</h3>
-        <p>Nach dem ersten Sieg wartet einmal pro Durchgang ein goldener Vulgor – fünfmal so stark. Wer stirbt, landet vor dem Eingang und versucht es erneut.</p></div>
-    </article>
-    <article class="karte leucht rein">
-      <div class="bildfeld"><img src="img/orb_gold.jpg" alt="Waffen-Orb am goldenen Vulgor" width="768" height="594" loading="lazy"></div>
+      <div class="bildfeld"><img class="pix" src="img/waffen_orb_meldung.jpg" alt="Meldung: Waffen-Orb: Waffe +1!" width="774" height="180" loading="lazy"></div>
       <div><p class="marke-klein">Belohnung</p><h3>Waffen-Orb &amp; Vulgors Rache</h3>
         <p>Der Sieg bringt einen <b>Waffen-Orb</b>: deine ausgerüstete Waffe wird +1. Danach stürmen zehn starke Raptoren die Arena.</p></div>
     </article>
@@ -718,13 +792,7 @@
     <p class="oben">Aus dem Spiel</p>
     <h2><span class="g">Bilder</span> <span class="r">aus der Mod.</span></h2>
   </div>
-  <div class="galerie">
-    <figure class="rein"><div class="bildfeld"><img src="img/jedi1.jpg" alt="" loading="lazy"></div><figcaption>Schwer gewählt? Dann bringt der Hund das Laserschwert …</figcaption></figure>
-    <figure class="rein" style="--v:.06s"><div class="bildfeld"><img src="img/jedi2.jpg" alt="" loading="lazy"></div><figcaption>„Verdammt, wir haben SCHWER eingestellt!“</figcaption></figure>
-    <figure class="rein" style="--v:.12s"><div class="bildfeld"><img src="img/jedi3.jpg" alt="" loading="lazy"></div><figcaption>„Ab jetzt bin ich ein Jedi und du bist mein haariger Kumpel!“</figcaption></figure>
-    <figure class="rein"><div class="bildfeld"><img src="img/chaos.jpg" alt="" loading="lazy"></div><figcaption>Chaos-Modus: fremde Gegner in jedem Raum</figcaption></figure>
-    <figure class="rein" style="--v:.12s"><div class="bildfeld"><img src="img/raptoren.jpg" alt="" loading="lazy"></div><figcaption>Vulgors Rache: zehn Raptoren</figcaption></figure>
-    <figure class="rein"><div class="bildfeld"><img src="img/tarantel.jpg" alt="" loading="lazy"></div><figcaption>Waffen sammeln +N – Tarantelaxt +2</figcaption></figure>
+  <div class="galerie galerie-eins">
     <figure class="rein" style="--v:.06s"><div class="bildfeld"><img src="img/laser15.jpg" alt="" loading="lazy"></div><figcaption>… bis zum Laserschwert +15 im New Game+</figcaption></figure>
   </div>
 </section>
@@ -771,6 +839,10 @@
     <h2><span class="g">Was sich</span> <span class="r">geändert hat.</span></h2>
   </div>
   <div class="zeitleiste">
+    <div class="version rein">
+      <h3>Nächste Version <span class="marker">in Arbeit</span></h3>
+      <ul><li><b>Waffen kosten Dollar</b> (25 000 bis 100 000), besondere Gegenstände nur für Bitcoin</li><li><b>Boss-Warps</b> zum Erspielen, Speer mit Ladestufen</li><li><b>Nina</b>: Gegner greifen auch sie an, beim Cave-Tod fällt sie aufs Eintrittslevel zurück</li><li>Block-Belohnung nur noch einmal pro Raumbesuch</li><li><b>Goldener Vulgor</b> wächst wie die Raptoren: beim ersten Mal ×5, dann +1 je Sieg und New Game+</li><li><b>Feste Boss-Belohnungen</b> pro Welt – Neuladen ändert nichts mehr</li><li><b>Nina</b> kommt schon am Feuerplatz dazu; Bogen mit zwei Ladestufen, normale Schüsse ohne Pfeile, eigener Sterbekreis</li><li><b>Gotteshand</b> sichert auch den Cave-Fortschritt</li><li><b>Cave-Musik</b>: Gebiets- und Boss-Musik wieder da, Musikbox mit L+R</li><li>Orange KP- und Level-Zahlen, Zauberperle +N; Cybermax erscheint am Auslöser, Grafikfehler in der Herzkammer behoben</li></ul>
+    </div>
     <div class="version neu rein">
       <h3>v653 Beta <span class="marker">aktuell</span></h3>
       <ul><li><b>Wirtschaft</b>: Dollar, Bitcoin zum echten Tageskurs, Börsen-Datum ab 01.05.2013 läuft im New Game+ weiter, Inflation der Ladenpreise (ca. 2,7 % pro Jahr, Anzeige „INFL“)</li><li><b>Halving</b>: jeder Boss zahlt eine Block-Belohnung (25 → 12,5 → 6,25 … BTC nach Spieldatum), Marathon-Wallets mit 1000 BTC</li><li><b>Randomia-Welt</b> aus Welt-Seed, Welt-Würfel</li><li>Dörfer, Märkte und Story-Figuren mischen, Zombie-Apokalypse, Boss-Würfeln auf 8 Plätzen, Cybermax im Cave-Pool und Marathon</li><li>New Game+ nimmt Cave-Fortschritt und Würfel mit, kein New Game+ auf Sehr leicht und Leicht; Brunnen führt ins tiefste Untergeschoss, Karte zeigt Händler und Schnüffelstellen, Schaubild für den Labyrinth-Wald, Cave-Musik aus der Titel-Demo</li></ul>
