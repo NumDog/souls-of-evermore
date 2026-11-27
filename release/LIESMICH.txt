@@ -1,4 +1,4 @@
-Souls of Evermore – Mod für Secret of Evermore (deutsch)  (Beta, Stand v861)
+Souls of Evermore – Mod für Secret of Evermore (deutsch)  (Beta, Stand v883)
 =====================================================================
 
 Ein Patch für die DEUTSCHE Version von Secret of Evermore (SNES).
@@ -14,7 +14,7 @@ Passende ROM
 Patch anwenden
 --------------
 1. ROM Patcher JS im Browser öffnen (oder Floating IPS / "Flips").
-2. Deine ROM und die Datei Souls-of-Evermore-v861-beta.bps auswählen.
+2. Deine ROM und die Datei Souls-of-Evermore-v883-beta.bps auswählen.
 3. "Apply patch" – fertig. Ergebnis: 8 MB ROM, läuft z. B. in OpenEmu, snes9x, bsnes, Mesen.
 
 Was ist neu?
@@ -49,6 +49,8 @@ Souls Cave (Eingang am Brunnen, neu in v146):
 - Verwandelnde Städte: Dschungeldorf, Nobilia, Chaosturm, eigene Stadt - alle Menschen werden Monster, Häuser betretbar
 - Goldener Vulgor immer da, +100 % je Sieg, Gift/Heilung nach Säureregen, Verwirrung nach Wegschubsen
 - Gegner-Info (Name, KP, EP, Geld, Anzahl) bei jedem Treffer; Speichern in der Cave gesperrt
+- Neu in v883: Werte-Tausch zeigt den echten Gegnernamen, Waffenring mit +N und Waffenstufe, Hund verliert keine EP mehr,
+  tote Figuren bleiben liegen, Raptoren-Belohnung x2 bis +8 dann +400 (max. 100 000), Waffe laedt nicht mehr ueber ihre Stufe.
 - Neu in v861: Cave-Gegner waehlbar im Zutaten-Terminal (Level-Kurve ab Level 10 oder Originalwerte +10 % je
   Untergeschoss, starke Gegner oben nur selten), 50 Kills je Raum mit Nachschub und Anzeige RAUM x/50, Feuerauges Haus
   im Dschungeldorf, Randomia "Werte-Tausch", Nina laeuft Treppen/Tueren/Aufzug und wird von Bossen angegriffen, Pfeile
